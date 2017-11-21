@@ -1,1 +1,0 @@
-// Inititalization of sync routine
