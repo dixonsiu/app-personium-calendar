@@ -1,2 +1,24 @@
 <edmx:Edmx Version='1.0' xmlns:edmx='http://schemas.microsoft.com/ado/2007/06/edmx' xmlns:d='http://schemas.microsoft.com/ado/2007/08/dataservices' xmlns:m='http://schemas.microsoft.com/ado/2007/08/dataservices/metadata' xmlns:p='urn:x-personium:xmlns'>
+  <edmx:DataServices m:DataServiceVersion='1.0'>
+    <Schema xmlns='http://schemas.microsoft.com/ado/2006/04/edm' Namespace='CalendarData'>
+      <EntityType Name='vevent' OpenType='true'>
+        <Key>
+          <PropertyRef Name='__id'/>
+        </Key>
+        <Property Name='__id' Type='Edm.String' Nullable='false' DefaultValue='UUID()' p:Format='regEx(&apos;^[a-zA-Z0-9][a-zA-Z0-9-_:]{0,199}$&apos;)'/>
+        <Property Name='__published' Type='Edm.DateTime' Nullable='false' DefaultValue='SYSUTCDATETIME()' />
+        <Property Name='__updated' Type='Edm.DateTime' Nullable='false' DefaultValue='SYSUTCDATETIME()' />
+        <Property Name='srcUrl' Type='Edm.String' Nullable='true' />
+        <Property Name='srcType' Type='Edm.String' Nullable='false' />
+        <Property Name='srcUpdated' Type='Edm.DateTime' Nullable='true' />
+        <Property Name='dtstart' Type='Edm.DateTime' Nullable='true' />
+        <Property Name='dtend' Type='Edm.DateTime' Nullable='true' />
+        <Property Name='summary' Type='Edm.String' Nullable='true' />
+        <Property Name='description' Type='Edm.String' Nullable='true' />
+        <Property Name='location' Type='Edm.String' Nullable='true' />
+        <Property Name='organizer' Type='Edm.String' Nullable='false' />
+        <Property Name='attendees' Type='Edm.String' CollectionKind='List' Nullable='true' />
+      </EntityType>
+    </Schema>
+  </edmx:DataServices>
 </edmx:Edmx>
