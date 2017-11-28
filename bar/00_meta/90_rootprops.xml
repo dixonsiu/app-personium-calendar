@@ -1,0 +1,102 @@
+<multistatus xmlns="DAV:">
+    <response>
+        <href>dcbox:/</href>
+        <propstat>
+            <prop>
+                <resourcetype>
+                    <collection/>
+                </resourcetype>
+                <acl xml:base="https://nks18.zetta.flab.fujitsu.co.jp/app-personium-calendar/__role/__/" xmlns:p="urn:x-dcl:xmlns">
+                </acl>
+            </prop>
+        </propstat>
+    </response>
+    <response>
+        <href>dcbox:/files</href>
+        <propstat>
+            <prop>
+                <resourcetype>
+                    <collection/>
+                </resourcetype>
+                <acl xml:base="https://nks18.zetta.flab.fujitsu.co.jp/app-personium-calendar/__role/__/" xmlns:p="urn:x-dcl:xmlns">
+                    <ace>
+                        <principal>
+                            <href>customer</href>
+                        </principal>
+                        <grant>
+                            <privilege>
+                                <all/>
+                            </privilege>
+                        </grant>
+                    </ace>
+                </acl>
+            </prop>
+        </propstat>
+    </response>
+    <response>
+        <href>dcbox:/Engine</href>
+        <propstat>
+            <prop>
+                <resourcetype>
+                    <collection/>
+                    <p:service xmlns:p="urn:x-personium:xmlns"/>
+                </resourcetype>
+                <acl xml:base="https://nks18.zetta.flab.fujitsu.co.jp/app-personium-calendar/__role/__/" xmlns:p="urn:x-personium:xmlns">
+                    <ace>
+                        <principal>
+                            <href>customer</href>
+                        </principal>
+                        <grant>
+                            <privilege>
+                                <exec/>
+                            </privilege>
+                        </grant>
+                    </ace>
+                </acl>
+                <p:service language="JavaScript" xmlns:D="DAV:" xmlns:p="urn:x-personium:xmlns">
+                    <p:path name="setAccessInfo" src="setAccessInfo.js"/>
+                </p:service>
+                <p:service language="JavaScript" xmlns:D="DAV:" xmlns:p="urn:x-personium:xmlns">
+                    <p:path name="sync" src="sync.js"/>
+                </p:service>
+                <p:service language="JavaScript" xmlns:D="DAV:" xmlns:p="urn:x-personium:xmlns">
+                    <p:path name="updateEvent" src="updateEvent.js"/>
+                </p:service>
+            </prop>
+        </propstat>
+    </response>
+    <response>
+        <href>dcbox:/Engine/__src</href>
+        <propstat>
+            <prop>
+                <resourcetype>
+                    <collection/>
+                </resourcetype>
+            </prop>
+        </propstat>
+    </response>
+    <response>
+        <href>dcbox:/Engine/__src/setAccessInfo.js</href>
+        <propstat>
+            <prop>
+                <getcontenttype>text/javascript</getcontenttype>
+            </prop>
+        </propstat>
+    </response>
+    <response>
+        <href>dcbox:/Engine/__src/sync.js</href>
+        <propstat>
+            <prop>
+                <getcontenttype>text/javascript</getcontenttype>
+            </prop>
+        </propstat>
+    </response>
+    <response>
+        <href>dcbox:/Engine/__src/updateEvent.js</href>
+        <propstat>
+            <prop>
+                <getcontenttype>text/javascript</getcontenttype>
+            </prop>
+        </propstat>
+    </response>
+</multistatus>
