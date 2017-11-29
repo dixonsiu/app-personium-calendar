@@ -441,3 +441,29 @@ Common.openSlide = function() {
     $(".overlay").toggleClass('overlay-on');
     $(".slide-menu").toggleClass('slide-on');
 }
+
+Common.startAnimation = function() {
+    Common.displayMessageByKey("glossary:msg.info.syncingData");
+    $('#updateIcon').prop('disabled', true);
+    $('#updateIcon > i').addClass("fa-spin");
+};
+Common.stopAnimation = function() {
+    Common.displayMessageByKey("glossary:msg.info.syncedData");
+    setTimeout(function() {
+        $('#dispMsg')
+            .empty()
+            .hide();
+    }, 5000);
+    $('#updateIcon').prop('disabled', false);
+    $('#updateIcon > i').removeClass("fa-spin");
+};
+
+Common.displayMessageByKey = function(msg_key) {
+    if (msg_key) {
+        $('#dispMsg').attr("data-i18n", '[html]' + msg_key)
+            .localize()
+            .show();
+    } else {
+        $('#dispMsg').hide();
+    }
+};

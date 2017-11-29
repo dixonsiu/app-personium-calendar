@@ -5,7 +5,6 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title data-i18n="glossary:title"></title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/i18next/8.4.3/i18next.min.js"></script>
@@ -17,23 +16,52 @@
   <script src="./js/common_personium.js"></script>
   <script src="./js/app.js"></script>
   <link href='https://fonts.googleapis.com/css?family=Raleway:400,200' rel='stylesheet' type='text/css'>
+  <!--     Fonts and icons     -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.4.0/css/font-awesome.min.css" />
   <link href='./css/common.css' rel='stylesheet' type='text/css'>
 </head>
 <body>
-  <header>
-    <h1 data-i18n="glossary:title"></h1>
-    <a id="updateGenki" href="#" onclick="syncData();return false;">
-      <img id="reloadIcon" src="./image/parts_ico_reload.png" alt="user">
-    </a>
-    <a href="#" onclick="Common.openSlide();">
-      <img id="menuIcon" src="./image/parts_menu.png">
-    </a>
-  </header>
-  <div id="dispMsg" style="display:none;">
+  <div class="mySpinner">
+      <i class="fa fa-spinner fa-pulse fa-3x fa-fw"></i>
+      <span class="sr-only">Loading...</span>
   </div>
-  <span id="dvMainArea">
-      
-  </span>
+  <div class="myHiddenDiv">
+    <header>
+      <h1 data-i18n="glossary:title"></h1>
+      <a id="updateIcon" href="#" onclick="syncData();return false;">
+        <i class="fa fa-refresh fa-2x fa-fw"></i>
+        <span class="sr-only">Updating...</span>
+      </a>
+      <a id="menuIcon" href="#" onclick="Common.openSlide();">
+        <i class="fa fa-bars fa-2x fa-fw"></i>
+      </a>
+    </header>
+    <div id="dispMsg" style="display:none;"></div>
+    <div class="container-fluid display-table">
+      <div class="row display-parent-div" id="displayParentDiv">
+        <div class="col-md-12 col-sm-12 display-table-cell v-align">
+          <div class="row user-dashboard" id="dashboard">
+            <div class="panel panel-default list-group">
+              <ul class="list menu-list">
+                <li>
+                    <a href="#" class="list-group-item" onclick="ms.openReceivedMsgPanel(); return false;" data-i18n="glossary:Calendars.Google"></a>
+                    <span class="badge" id="receiveBadge"></span>
+                </li>
+                <li>
+                    <a href="#" class="list-group-item" onclick="ms.openSentMsgPanel(); return false;" data-i18n="glossary:Calendars.Office365"></a>
+                    <span class="badge" id="sentBadge"></span>
+                </li>
+                <li>
+                    <a href="#" class="list-group-item allToggle" onclick="ms.createNewMsg(); return false;" data-i18n="add"></a>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
   <div class="slide-menu">
     <h1 data-i18n="menu.title"></h1>
     <table class="menu-title">

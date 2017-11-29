@@ -1,5 +1,10 @@
 {
     "title": "Personiumカレンダー",
+    "Calendars": {
+        "label": "カレンダー",
+        "Google": "Google$t(glossary:Calendars.label)",
+        "Office365": "Office365"
+    },
     "sessionExpiredDialog": {
         "title": "セッション期限切れ",
         "action": "$t(glossary:title)を終了します。",
@@ -10,6 +15,8 @@
     },
     "msg": {
         "info": {
+            "syncingData": "データ連携中です...",
+            "syncedData": "データ連携完了。",
             "description": "{{name}}さん、こにちは。<br>ご自由にこのアプリを修正してください。"
         }
     }

@@ -63,11 +63,95 @@ header > a {
   flex-direction: row;
   align-items: center;
 }
+header > a,
+header > a:focus,
+header > a:hover {
+    outline:none;
+    text-decoration: none;
+}
+header > a > i {
+  color: #FFF !important;
+}
 
-#reloadIcon,
-#menuIcon {
-  width: 32px;
-  height: 32px;
+ul,
+li {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.list {
+  /* border-top: 1px solid #d4d4d4; */
+}
+.list > li {
+  border-bottom: 1px solid #d4d4d4;
+}
+.list > li:last-child {
+  border-bottom: 0 none;
+}
+.list > li > a {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 16px 20px;
+  padding-right: 32px;
+  background-image: url("https://demo.personium.io/HomeApplication/__/icons/parts_list.png");
+  background-position: center right;
+  background-size: 20px 14px;
+  background-repeat: no-repeat;
+  color: #333333;
+}
+.list > li > a > * {
+  flex: 0 0 auto;
+}
+
+.list-icon img {
+  width: 40px;
+  height: 40px;
+}
+.list > li > a > .list-body {
+  flex: 1 1 auto;
+  margin: 0 16px;
+  overflow: hidden;
+}
+.list-body .sizeBody {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+.list-body .sizeCaption {
+  color: #6d6d6d;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+.list-readmore {
+  display: block;
+  margin: 12px 0;
+  padding: 8px;
+  text-align: center;
+  color: #333333;
+}
+
+.menu-list > li {
+  border-bottom:0;
+}
+
+.list-group-item {
+  text-align: left;
+  width: 100%;
+  white-space: nowrap;
+}
+
+a.list-group-item {
+  /*background-color: rgba(255,255,255,0.0);*/
+  color: #030;
+  white-space: nowrap;
+}
+
+a.list-group-item:hover {
+  color: #fff;
+  background-color: #DCDCDC;
 }
 
 .overlay {
@@ -129,6 +213,28 @@ header > a {
     display:block;
     width:100%;
     height:100%;
+}
+
+div.mySpinner {
+  position: fixed;
+  z-index: 999;
+  height: 5em;
+  width: 5em;
+  overflow: show;
+  margin: auto;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+}
+
+div.mySpinner > i {
+  color: #D3D3D3 !important;
+  font-size: 5em;
+}
+
+div.myHiddenDiv {
+  display: none;
 }
 
 @media (max-width: 767px) {
