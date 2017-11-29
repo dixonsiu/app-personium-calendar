@@ -1,4 +1,4 @@
-const APP_URL = "https://nks18.zetta.flab.fujitsu.co.jp/app-personium-calendar/";
+const APP_URL = "https://demo.personium.io/app-personium-calendar/";
 
 getNamesapces = function() {
     return ['common', 'glossary'];
