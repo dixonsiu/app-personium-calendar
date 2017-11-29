@@ -1,7 +1,10 @@
 {
   "Relations": [
     {
-        "Name": "Owner"
+      "Name": "Owner"
+    },
+    {
+      "Name": "Operator"
     },
     {
       "Name": "Friend"

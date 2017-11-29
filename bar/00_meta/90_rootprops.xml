@@ -132,6 +132,16 @@
                             </privilege>
                         </grant>
                     </ace>
+                    <ace>
+                        <principal>
+                            <href>CalendarWriter</href>
+                        </principal>
+                        <grant>
+                            <privilege>
+                                <write/>
+                            </privilege>
+                        </grant>
+                    </ace>
                 </acl>
             </prop>
         </propstat>

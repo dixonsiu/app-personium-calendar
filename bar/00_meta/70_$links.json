@@ -13,6 +13,16 @@
     {
       "FromType": "Relation",
       "FromName": {
+          "Name": "Operator"
+      },
+      "ToType": "Role",
+      "ToName": {
+          "Name": "CalendarWriter"
+      }
+    },
+    {
+      "FromType": "Relation",
+      "FromName": {
           "Name": "Friend"
       },
       "ToType": "Role",
