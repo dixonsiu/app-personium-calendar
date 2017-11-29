@@ -1,0 +1,24 @@
+{
+  "Links": [
+    {
+      "FromType": "Relation",
+      "FromName": {
+          "Name": "Owner"
+      },
+      "ToType": "Role",
+      "ToName": {
+          "Name": "CalendarOwner"
+      }
+    },
+    {
+      "FromType": "Relation",
+      "FromName": {
+          "Name": "Friend"
+      },
+      "ToType": "Role",
+      "ToName": {
+          "Name": "CalendarViewer"
+      }
+    }
+  ]
+}

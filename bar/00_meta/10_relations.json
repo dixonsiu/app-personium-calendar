@@ -1,0 +1,10 @@
+{
+  "Relations": [
+    {
+        "Name": "Owner"
+    },
+    {
+      "Name": "Friend"
+    }
+  ]
+}

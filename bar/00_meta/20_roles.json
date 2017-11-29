@@ -1,7 +1,13 @@
 {
   "Roles": [
     {
-      "Name": "customer"
+        "Name": "CalendarOwner"
+    },
+    {
+      "Name": "CalendarViewer"
+    },
+    {
+        "Name": "CalendarWriter"
     }
   ]
 }
