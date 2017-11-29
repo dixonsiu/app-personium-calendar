@@ -64,7 +64,7 @@
                 <p:service language="JavaScript" xmlns:D="DAV:" xmlns:p="urn:x-personium:xmlns">
                     <p:path name="setAccessInfo" src="setAccessInfo.js"/>
                     <p:path name="sync" src="sync.js"/>
-                    <p:path name="updateEvent" src="updateEvent.js"/>
+                    <p:path name="updateVEvent" src="updateVEvent.js"/>
                 </p:service>
             </prop>
         </propstat>
@@ -96,7 +96,7 @@
         </propstat>
     </response>
     <response>
-        <href>dcbox:/Engine/__src/updateEvent.js</href>
+        <href>dcbox:/Engine/__src/updateVEvent.js</href>
         <propstat>
             <prop>
                 <getcontenttype>text/javascript</getcontenttype>
@@ -124,7 +124,7 @@
                     </ace>
                     <ace>
                         <principal>
-                            <href>CalendarReader</href>
+                            <href>CalendarViewer</href>
                         </principal>
                         <grant>
                             <privilege>
