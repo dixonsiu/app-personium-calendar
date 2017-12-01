@@ -15,7 +15,7 @@
        var personalBoxAccessor = _p.as("client").cell(pjvm.getCellName()).box(pjvm.getBoxName());
        var personalCollectionAccessor = personalBoxAccessor.odata(collectionName);
        var personalEntityAccessor = personalCollectionAccessor.entitySet(entityType);
-       
+
    } catch (e) {
        return {
          status: 500,
@@ -28,6 +28,6 @@
    return {
        status: 200,
        headers: {"Content-Type":"application/json"},
-//       body: [OK]
+       body : ['{"status":"OK"}']
    };
  }

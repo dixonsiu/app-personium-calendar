@@ -35,6 +35,6 @@
    return {
        status: 200,
        headers: {"Content-Type":"application/json"},
-//       body: [OK]
+       body : ['{"status":"OK"}']
    };
  }
