@@ -18,7 +18,7 @@ html,body {
     height: 100%;
 }
 body {
-    background-color: #EDEDED;
+  background-color: #EDEDED;
 }
 header {
   display: flex;
@@ -235,6 +235,11 @@ div.mySpinner > i {
 
 div.myHiddenDiv {
   display: none;
+}
+
+#calendar {
+  max-width: 900px;
+  margin: 0 auto;
 }
 
 @media (max-width: 767px) {

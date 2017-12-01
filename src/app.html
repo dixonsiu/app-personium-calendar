@@ -5,13 +5,18 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title data-i18n="glossary:title"></title>
+  <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.7.0/fullcalendar.min.css">
+  <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.7.0/fullcalendar.print.css" media="print">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.19.3/moment-with-locales.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.7.0/fullcalendar.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/i18next/8.4.3/i18next.min.js"></script>
   <script src="https://unpkg.com/i18next-xhr-backend/i18nextXHRBackend.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/i18next-browser-languagedetector/2.0.0/i18nextBrowserLanguageDetector.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-i18next/1.2.0/jquery-i18next.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  
   <script src="./js/common.js"></script>
   <script src="./js/common_personium.js"></script>
   <script src="./js/app.js"></script>
@@ -38,29 +43,7 @@
       </a>
     </header>
     <div id="dispMsg" style="display:none;"></div>
-    <div class="container-fluid display-table">
-      <div class="row display-parent-div" id="displayParentDiv">
-        <div class="col-md-12 col-sm-12 display-table-cell v-align">
-          <div class="row user-dashboard" id="dashboard">
-            <div class="panel panel-default list-group">
-              <ul class="list menu-list">
-                <li>
-                    <a href="#" class="list-group-item" onclick="ms.openReceivedMsgPanel(); return false;" data-i18n="glossary:Calendars.Google"></a>
-                    <span class="badge" id="receiveBadge"></span>
-                </li>
-                <li>
-                    <a href="#" class="list-group-item" onclick="ms.openSentMsgPanel(); return false;" data-i18n="glossary:Calendars.Office365"></a>
-                    <span class="badge" id="sentBadge"></span>
-                </li>
-                <li>
-                    <a href="#" class="list-group-item allToggle" onclick="ms.createNewMsg(); return false;" data-i18n="add"></a>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <div id='calendar'></div>
   </div>
   <div class="slide-menu">
     <h1 data-i18n="menu.title"></h1>
