@@ -1,0 +1,23 @@
+{
+    "title": "Personium Calendar",
+    "Calendars": {
+        "label": "Calendar",
+        "Google": "Google $t(glossary:Calendars.label)",
+        "Office365": "Office365"
+    },
+    "sessionExpiredDialog": {
+        "title": "Session Expired",
+        "action": "This app will be terminated.",
+        "btnOk": "OK"
+    },
+    "irrecoverableErrorDialog": {
+        "title": "Terminating app ..."
+    },
+    "msg": {
+        "info": {
+            "syncingData": "Synchronizing data ...",
+            "syncedData": "Finish synchronizing data.",
+            "description": "Hello {{name}}!<br>you are free to use this app as base and write your own."
+        }
+    }
+}
