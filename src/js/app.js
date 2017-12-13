@@ -5,20 +5,10 @@ getNamesapces = function() {
 };
 
 additionalCallback = function() {
-    Common.setAppCellUrl();
-
-    Common.setAccessData();
-    
     $('#dvOverlay').on('click', function() {
         $(".overlay").removeClass('overlay-on');
         $(".slide-menu").removeClass('slide-on');
     });
-
-    if (!Common.checkParam()) {
-        // cannot do anything to recover
-        // display a dialog and close the app.
-        return;
-    };
 
     Common.setIdleTime();
 
