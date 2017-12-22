@@ -2,8 +2,6 @@
   "personal": {
      "web": "https://demo.personium.io/app-personium-calendar/__/html/app.html",
      "android": "***:",
-     "ios": "***:",
-     "appTokenId": "tokenAcc",
-     "appTokenPw": "personiumtoken"
+     "ios": "***:"
   }
 }
