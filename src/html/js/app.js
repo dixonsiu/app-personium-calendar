@@ -22,7 +22,7 @@ additionalCallback = function() {
             header: {
                 left: 'prev,next today',
                 center: 'title',
-                right: 'listDay,listWeek,month'
+                right: 'listDay,listWeek,agendaDay,month'
             },
 
             // customize the button names,
@@ -33,7 +33,7 @@ additionalCallback = function() {
             },
 
             defaultView: 'month',
-            defaultDate: '2017-11-12',
+            defaultDate: moment().format(),
             navLinks: true, // can click day/week names to navigate views
             editable: true,
             eventLimit: true, // allow "more" link when too many events
@@ -95,6 +95,7 @@ additionalCallback = function() {
             ]
         });
 
+    getListOfVEvents();
     $('body > div.mySpinner').hide();
     $('body > div.myHiddenDiv').show();
 };
@@ -137,4 +138,40 @@ createTitleHeader = function(settingFlg, menuFlg) {
 
 syncData = function() {
     Common.startAnimation();
+};
+
+getListOfVEvents = function() {
+    let urlOData = Common.getBoxUrl() + 'OData/vevent';
+    let access_token = Common.getToken();
+    Common.getListOfOData(urlOData, access_token)
+        .done(function(data) {
+            _.each(data.d.results, function(item) { 
+                // do something
+                let startMoment = Common.getMomentString(item.dtstart);
+                let endMoment = Common.getMomentString(item.dtend);
+                let events = [ { title: item.summary, start: startMoment, end: endMoment }];
+                $('#calendar').fullCalendar('addEventSource', events);
+            });
+        });
+};
+
+Common.getMomentString = function(dateString) {
+    let eventObj = moment(dateString);
+    if ("00:00:00" == eventObj.format("HH:mm:ss")) {
+        // all day event
+        return eventObj.format("YYYY-MM-DD");
+    } else {
+        return eventObj.format();
+    }
+};
+
+Common.getListOfOData = function(url, token) {
+    return $.ajax({
+        type: "GET",
+        url:  url,
+        headers: {
+            'Authorization': 'Bearer ' + token,
+            'Accept':'application/json'
+        }
+    });
 };
