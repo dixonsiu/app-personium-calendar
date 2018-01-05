@@ -10,6 +10,7 @@
         <Property Name='__updated' Type='Edm.DateTime' Nullable='false' DefaultValue='SYSUTCDATETIME()' />
         <Property Name='srcUrl' Type='Edm.String' Nullable='true' />
         <Property Name='srcType' Type='Edm.String' Nullable='false' />
+        <Property Name='srcId' Type='Edm.String' Nullable='true' />
         <Property Name='srcUpdated' Type='Edm.DateTime' Nullable='true' />
         <Property Name='dtstart' Type='Edm.DateTime' Nullable='true' />
         <Property Name='dtend' Type='Edm.DateTime' Nullable='true' />
