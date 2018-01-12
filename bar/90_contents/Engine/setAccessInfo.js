@@ -22,21 +22,26 @@ function(request) {
     *           DELETE: Delete
     */
 
-  var bodyAsString = request.input.readAll();
-  if (bodyAsString === "") {
-    return {
-      status : 400,
-      headers : {"Content-Type":"application/json"},
-      body : ['{"error":"required parameter not exist."}']
-    };
-  }
-
   // POST, PUT, DELETE 以外は405
   if(request.method !== "POST" && request.method !== "PUT" && request.method !== "DELETE") {
     return {
       status : 405,
       headers : {"Content-Type":"application/json"},
       body : ['{"error":"method not allowed"}']
+    };
+  }
+
+  var bodyAsString = null;
+  if(request.method === "POST" || request.method === "PUT") {
+    bodyAsString = request.input.readAll();
+  } else {
+    bodyAsString = request.queryString;
+  }
+  if (bodyAsString === "") {
+    return {
+      status : 400,
+      headers : {"Content-Type":"application/json"},
+      body : ['{"error":"required parameter not exist."}']
     };
   }
 
@@ -76,7 +81,7 @@ function(request) {
           return {
               status : 500,
               headers : {"Content-Type":"application/json"},
-              body: [JSON.stringify({"code": "500", "message": "Box access error."})]
+              body: [JSON.stringify({"error": "Box access error."})]
           };
         }
       }
@@ -91,7 +96,7 @@ function(request) {
                 return {
                   status : 400,
                   headers : {"Content-Type":"application/json"},
-                  body: ['{"code": "400", "message": "Required paramter set is already."}']
+                  body: ['{"error": "Required paramter set is already."}']
                 };
               }
             } else {
@@ -99,7 +104,7 @@ function(request) {
                 return {
                   status : 400,
                   headers : {"Content-Type":"application/json"},
-                  body: ['{"code": "400", "message": "Required paramter set is already."}']
+                  body: ['{"error": "Required paramter set is already."}']
                 };
               }
             }
@@ -109,7 +114,7 @@ function(request) {
             return {
               status : 500,
               headers : {"Content-Type":"application/json"},
-              body: [JSON.stringify({"code": "500", "message": "Box access error."})]
+              body: [JSON.stringify({"error": "Box access error."})]
             };
           }
         }
@@ -123,7 +128,7 @@ function(request) {
             return {
               status : 400,
               headers : {"Content-Type":"application/json"},
-              body: ['{"code": "400", "message": "Required paramter is not access ews server."}']
+              body: ['{"error": "Required paramter is not access ews server."}']
             };
           }
 
@@ -200,7 +205,7 @@ function(request) {
           return {
             status : 400,
             headers : {"Content-Type":"application/json"},
-            body: ['{"code": "400", "message": "Required srcType is not supported."}']
+            body: ['{"error": "Required srcType is not supported."}']
           };
         }
 
@@ -209,7 +214,7 @@ function(request) {
           return {
             status : 400,
             headers : {"Content-Type":"application/json"},
-            body: ['{"code": "400", "message": "First sync calendar data is finished."}']
+            body: ['{"error": "First sync calendar data is finished."}']
           };
         }
         if (setInfo.srcType == "EWS") {
@@ -217,7 +222,7 @@ function(request) {
             return {
               status : 400,
               headers : {"Content-Type":"application/json"},
-              body: ['{"code": "400", "message": "Required paramter set is wrong."}']
+              body: ['{"error": "Required paramter set is wrong."}']
             };
           }
         } else {
@@ -225,7 +230,7 @@ function(request) {
             return {
               status : 400,
               headers : {"Content-Type":"application/json"},
-              body: ['{"code": "400", "message": "Required paramter set is wrong."}']
+              body: ['{"error": "Required paramter set is wrong."}']
             };
           }
         }
@@ -239,7 +244,7 @@ function(request) {
             return {
               status : 400,
               headers : {"Content-Type":"application/json"},
-              body: ['{"code": "400", "message": "Required paramter is not access ews server."}']
+              body: ['{"error": "Required paramter is not access ews server."}']
             };
           }
 
@@ -317,19 +322,113 @@ function(request) {
           return {
             status : 400,
             headers : {"Content-Type":"application/json"},
-            body: ['{"code": "400", "message": "Required srcType is not supported."}']
+            body: ['{"error": "Required srcType is not supported."}']
           };
         }
       }
 
-
     } else if (request.method === "PUT") {
-
+      try {
+        var info = personalBoxAccessor.getString(pathDavName);
+        accessInfo = JSON.parse(info);
+        for(var i = 0; i < accessInfo.length; i++) {
+          if (setInfo.srcType == "EWS") {
+            if (setInfo.srcType == accessInfo[i].srcType && setInfo.id == accessInfo[i].id && setInfo.pw != accessInfo[i].pw) {
+              try {
+                ews = new _p.extension.Ews();
+                ews.createService(setInfo.id, setInfo.pw);
+                accessUrl = ews.autodiscoverUrl(setInfo.id);
+              } catch (e) {
+                return {
+                  status : 400,
+                  headers : {"Content-Type":"application/json"},
+                  body: ['{"error": "Required paramter is not access ews server."}']
+                };
+              }
+              accessInfo[i].srcUrl = accessUrl;
+              accessInfo[i].pw = setInfo.pw;
+              personalBoxAccessor.put(pathDavName, "application/json", JSON.stringify(accessInfo));
+            } else if (setInfo.srcType == accessInfo[i].srcType && setInfo.id == accessInfo[i].id && setInfo.pw == accessInfo[i].pw) {
+              return {
+                status : 400,
+                headers : {"Content-Type":"application/json"},
+                body: ['{"error": "Required paramter set is not change."}']
+              };
+            } else {
+              return {
+                status : 400,
+                headers : {"Content-Type":"application/json"},
+                body: ['{"error": "Required paramter set is incorrect."}']
+              };
+            }
+          } else {
+            if (setInfo.srcType == accessInfo[i].srcType && setInfo.id == accessInfo[i].id && setInfo.pw == accessInfo[i].pw && setInfo.srcUrl == accessInfo[i].srcUrl) {
+              return {
+                status : 400,
+                headers : {"Content-Type":"application/json"},
+                body: ['{"error": "Required paramter set is not change."}']
+              };
+            //} else if () {
+            } else {
+              // srcType is not EWS.
+              // not supported now!
+              return {
+                status : 400,
+                headers : {"Content-Type":"application/json"},
+                body: ['{"error": "Required srcType is not supported."}']
+              };
+            }
+          }
+        }
+      } catch (e) {
+        return {
+          status : e.code,
+          headers : {"Content-Type":"application/json"},
+          body: [JSON.stringify({"code": e.code, "message": e.message})]
+        };
+      }
 
     } else { // DELETE
+      try {
+        var pathDavTokenName = pathDavToken + setInfo.id + ".json";
+        var tokenSet = personalBoxAccessor.del(pathDavTokenName);
+      } catch (e) {
+        // No pathData is OK.
+      }
 
+      var delNum = null;
+      try {
+        var info = personalBoxAccessor.getString(pathDavName);
+        accessInfo = JSON.parse(info);
+        for(var i = 0; i < accessInfo.length; i++) {
+          if (setInfo.srcUrl) {
+            if (setInfo.id == accessInfo[i].id && setInfo.srcUrl == accessInfo[i].srcUrl) {
+              delNum = i;
+            }
+          } else {
+            if (setInfo.id == accessInfo[i].id) {
+              delNum = i;
+            }
+          }
+        }
+      } catch (e) {
+        return {
+          status : e.code,
+          headers : {"Content-Type":"application/json"},
+          body: [JSON.stringify({"code": e.code, "message": e.message})]
+        };
+      }
+      if (delNum != null) {
+        accessInfo.splice(delNum, 1);
+        personalBoxAccessor.put(pathDavName, "application/json", JSON.stringify(accessInfo));
+      } else {
+        return {
+          status : 400,
+          headers : {"Content-Type":"application/json"},
+          body: [JSON.stringify({"error": "Required id(" + setInfo.id + ") not exist."})]
+        };
+      }
     }
-
   } catch (e) {
       return {
         status: 500,
