@@ -5,6 +5,12 @@
         "Google": "Google$t(glossary:Calendars.label)",
         "Office365": "Office365"
     },
+    "Account": {
+        "label": "アカウント"
+    },
+    "CreateAccountPlus": {
+        "label": "+ 新規アカウント"
+    },
     "sessionExpiredDialog": {
         "title": "セッション期限切れ",
         "action": "$t(glossary:title)を終了します。",

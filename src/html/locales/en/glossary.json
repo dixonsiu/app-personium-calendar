@@ -5,6 +5,12 @@
         "Google": "Google $t(glossary:Calendars.label)",
         "Office365": "Office365"
     },
+    "Account": {
+        "label": "Account"
+    },
+    "CreateAccountPlus": {
+        "label": "+ Create Account"
+    },
     "sessionExpiredDialog": {
         "title": "Session Expired",
         "action": "This app will be terminated.",
