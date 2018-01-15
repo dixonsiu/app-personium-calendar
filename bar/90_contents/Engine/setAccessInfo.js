@@ -20,10 +20,11 @@ function(request) {
     *           POST:   Add
     *           PUT:    Update
     *           DELETE: Delete
+    *           GET:    Get AccessInfo.json
     */
 
-  // POST, PUT, DELETE 以外は405
-  if(request.method !== "POST" && request.method !== "PUT" && request.method !== "DELETE") {
+  // POST, PUT, DELETE, GET 以外は405
+  if(request.method !== "POST" && request.method !== "PUT" && request.method !== "DELETE" && request.method !== "GET") {
     return {
       status : 405,
       headers : {"Content-Type":"application/json"},
@@ -31,11 +32,13 @@ function(request) {
     };
   }
 
-  var bodyAsString = null;
+  var bodyAsString = "";
   if(request.method === "POST" || request.method === "PUT") {
     bodyAsString = request.input.readAll();
-  } else {
+  } else if (request.method === "DELETE") {
     bodyAsString = request.queryString;
+  } else {
+    bodyAsString = " ";
   }
   if (bodyAsString === "") {
     return {
@@ -161,7 +164,7 @@ function(request) {
               } catch (e) {
                 return {
                   status: 500,
-                  headers: { "Content-Type": "text/html" },
+                  headers: { "Content-Type": "application/json" },
                   body: ["Server Error : " + collectionName +" creating : " + e]
                 };
               }
@@ -272,7 +275,7 @@ function(request) {
               } catch (e) {
                 return {
                   status: 500,
-                  headers: { "Content-Type": "text/html" },
+                  headers: { "Content-Type": "application/json" },
                   body: ["Server Error : " + collectionName +" creating : " + e]
                 };
               }
@@ -388,7 +391,7 @@ function(request) {
         };
       }
 
-    } else { // DELETE
+    } else if (request.method === "DELETE") {
       try {
         var pathDavTokenName = pathDavToken + setInfo.id + ".json";
         var tokenSet = personalBoxAccessor.del(pathDavTokenName);
@@ -428,11 +431,60 @@ function(request) {
           body: [JSON.stringify({"error": "Required id(" + setInfo.id + ") not exist."})]
         };
       }
+    } else { //GET
+
+
+      try {
+        var info = personalBoxAccessor.getString(pathDavName);
+        accessInfo = JSON.parse(info);
+        var resultsInfo = [];
+        for(var i = 0; i < accessInfo.length; i++) {
+          var resultInfo = {};
+          if (accessInfo[i].srcType == "EWS") {
+            resultInfo.srcType = accessInfo[i].srcType;
+            resultInfo.id = accessInfo[i].id;
+          } else {
+            resultInfo.srcType = accessInfo[i].srcType;
+            resultInfo.id = accessInfo[i].id;
+            resultInfo.srcUrl = accessInfo[i].srcUrl;
+          }
+          resultsInfo.push(resultInfo);
+        }
+      } catch (e) {
+        if (e.code == 404) {
+          return {
+            status : 200,
+            headers : {"Content-Type":"application/json"},
+            body: []
+          };
+        } else {
+          return {
+            status : 500,
+            headers : {"Content-Type":"application/json"},
+            body: [JSON.stringify({"error": "Box access error."})]
+          };
+        }
+      }
+
+      if (resultsInfo.length == 0) {
+        return {
+          status : 200,
+          headers : {"Content-Type":"application/json"},
+          body: []
+        };
+      } else {
+        return {
+          status : 200,
+          headers : {"Content-Type":"application/json"},
+          body: JSON.stringify(resultsInfo)
+        };
+      }
+
     }
   } catch (e) {
       return {
         status: 500,
-        headers: { "Content-Type": "text/html" },
+        headers: { "Content-Type": "application/json" },
         body: ["Server Error occurred. 01 : " + e]
       };
   }
