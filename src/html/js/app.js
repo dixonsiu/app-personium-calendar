@@ -1,4 +1,4 @@
-const APP_URL = "https://demo.personium.io/app-personium-calendar/";
+const APP_URL = "https://nks18.zetta.flab.fujitsu.co.jp/app-personium-calendar/";
 
 getEngineEndPoint = function() {
     return Common.getAppCellUrl() + "__/html/Engine/getAppAuthToken";
@@ -284,8 +284,9 @@ dispAccountList = function(results) {
 
 getListOfVEvents = function() {
     let urlOData = Common.getBoxUrl() + 'OData/vevent';
+    let tempFilter = '?$orderby=dtstart%20desc';
     let access_token = Common.getToken();
-    Common.getListOfOData(urlOData, access_token)
+    Common.getListOfOData(urlOData + tempFilter, access_token)
         .done(function(data) {
             _.each(data.d.results, function(item) { 
                 // do something
@@ -339,13 +340,17 @@ syncData = function() {
                  displayAccountPanel();
                  displayAccountRegistrationDialog();
             } else {
+                
+                Common.stopAnimation();
+                
+                // Currently not implemented
                 // Check response
-                if (data.syncCompleted) {
-                    Common.stopAnimation();
-                } else {
-                    // continue
-                    console.log("false");
-                }
+                // if (data.syncCompleted) {
+                    // Common.stopAnimation();
+                // } else {
+                    // // continue
+                    // console.log("false");
+                // }
             }
         })
         .fail(function(error){
@@ -378,7 +383,7 @@ displayAccountRegistrationDialog = function() {
                 '<div class="col-sm-11 col-md-11">',
                     '<div class="row">',
                         '<div class="col-sm-6 col-md-6">',
-                            '<input type="radio" id="srcTypeEWS" name="srcType" value="EWS">',
+                            '<input type="radio" id="srcTypeEWS" name="srcType" value="EWS" checked>',
                             '<label for="srcTypeEWS">EWS</label>',
                         '</div>',
                         '<div class="col-sm-6 col-md-6">',
@@ -433,8 +438,12 @@ registerAccount = function() {
     // show spinner
 
     setAccessInfoAPI()
-        .done(function(){
-            moveBackahead(true);
+        .done(function(data, status, response){
+            if (data.syncCompleted) {
+                moveBackahead(true);
+            } else {
+                registerAccount();
+            }
         })
         .fail(function(){
         })
@@ -457,7 +466,7 @@ setAccessInfoAPI = function() {
             'srcType': srcType,
             //'srcUrl': srcUrl,
             'id': id,
-            'pass': pw
+            'pw': pw
         },
         headers: {
             'Accept':'application/json',
