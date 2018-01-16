@@ -174,6 +174,26 @@ a.list-group-item:hover {
     z-index: 1;
 }
 
+.panel-default {
+  /*position: absolute;*/
+  z-index: 0;
+  width: 100%;
+  float:left;
+
+  -webkit-transition: all .5s ease;
+  transition: all .5s ease;
+}
+
+.toggle-panel {
+  position: absolute;
+  border-color: #ddd;
+  width: 100%;
+  left: 100%;
+
+  -webkit-transition: all .5s ease;
+  transition: all .5s ease;
+}
+
 .slide-menu {
     /*position: absolute;*/
     position: fixed;
@@ -182,7 +202,7 @@ a.list-group-item:hover {
     height: 100%;
     left: 100%;
     top: 0px;
-    z-index: 2;
+    z-index: 10;
 
     -webkit-transition: all .5s ease;
     transition: all .5s ease;
@@ -191,6 +211,11 @@ a.list-group-item:hover {
 .slide-on {
     -webkit-transform: translate3d(-100%, 0, 0);
     transform: translate3d(-100%, 0, 0);
+}
+
+.slide-on-holder {
+  -webkit-transform: translate3d(-200%, 0, 0);
+  transform: translate3d(-200%, 0, 0);
 }
 
 .menu-title {
@@ -213,6 +238,18 @@ a.list-group-item:hover {
     display:block;
     width:100%;
     height:100%;
+}
+
+.setting-menu {
+    position: fixed;
+    top: 0px;
+    left: 100%;
+    height: 100%;
+    background: rgba(255,255,255,1);
+    z-index: 10;
+
+    -webkit-transition: all .5s ease;
+    transition: all .5s ease;
 }
 
 div.mySpinner {
@@ -246,4 +283,8 @@ div.myHiddenDiv {
     /*
      * Put screen size related CSS here
      */
+}
+
+input[name=srcType] {
+    margin-right: 5px !important;
 }

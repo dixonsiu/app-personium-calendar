@@ -29,6 +29,9 @@ Common.IDLE_CHECK = 3300000;
 // Records last activity time.
 Common.lastActivity = new Date().getTime();
 
+Common.settingNowPage = 0;
+Common.settingNowTitle = {};
+
 Common.accessData = {
     targetUrl: null,
     unitUrl: null,

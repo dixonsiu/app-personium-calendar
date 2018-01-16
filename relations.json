@@ -1,0 +1,14 @@
+{
+    "Owner": {
+        "DisplayName": "Owner",
+        "Description": ""
+    },
+    "Operator": {
+        "DisplayName": "Operator",
+        "Description": ""
+    },
+    "Friend": {
+        "DisplayName": "Friend",
+        "Description": ""
+    }
+}
