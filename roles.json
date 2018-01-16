@@ -1,0 +1,14 @@
+{
+    "CalendarOwner": {
+        "DisplayName": "Calendar Owner",
+        "Description": ""
+    },
+    "CalendarViewer" :{
+        "DisplayName": "Calendar Viewer",
+        "Description": ""
+    },
+    "CalendarWriter": {
+        "DisplayName": "Calendar Writer",
+        "Description": ""
+    }
+}
