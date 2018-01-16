@@ -35,6 +35,7 @@ function(request){
         return {
           status : 204,
           headers : {"Content-Type":"application/json"},
+          body: []
         };
       }
 
@@ -45,8 +46,9 @@ function(request){
     } catch (e) {
       if (e.code == 404) {
         return {
-          status : 204
+          status : 204,
           headers : {"Content-Type":"application/json"},
+          body: []
         };
       } else {
         return {
@@ -61,7 +63,7 @@ function(request){
     return {
       status: 500,
       headers: { "Content-Type": "application/json" },
-      body: ["Server Error occurred. 01 : " + e]
+      body: [JSON.stringify({"error": e})]
     };
   }
 
