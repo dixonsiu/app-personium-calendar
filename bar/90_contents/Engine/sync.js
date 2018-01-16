@@ -6,28 +6,72 @@
  *
  */
 
- function(request){
+function(request){
 
-   var collectionName = "OData";
-   var entityType = "vevent";
+  // GET 以外は405
+  if(request.method !== "GET") {
+    return {
+      status : 405,
+      headers : {"Content-Type":"application/json"},
+      body : ['{"error":"method not allowed"}']
+    };
+  }
 
-   try {
-       var personalBoxAccessor = _p.as("client").cell(pjvm.getCellName()).box(pjvm.getBoxName());
-       var personalCollectionAccessor = personalBoxAccessor.odata(collectionName);
-       var personalEntityAccessor = personalCollectionAccessor.entitySet(entityType);
+  var collectionName = "OData";
+  var davName = "AccessInfo";
+  var entityType = "vevent";
+  var pathDavName = "AccessInfo/AccessInfo.json";
 
-   } catch (e) {
-       return {
-         status: 500,
-         headers: { "Content-Type": "text/html" },
-         body: ["Server Error occurred. 01 : " + e]
-       };
-   }
+  try {
+    var personalBoxAccessor = _p.as("client").cell(pjvm.getCellName()).box(pjvm.getBoxName());
+    var personalCollectionAccessor = personalBoxAccessor.odata(collectionName);
+    var personalEntityAccessor = personalCollectionAccessor.entitySet(entityType);
 
-   // resを定義
-   return {
-       status: 200,
-       headers: {"Content-Type":"application/json"},
-       body : ['{"status":"OK"}']
-   };
- }
+    try {
+      var info = personalBoxAccessor.getString(pathDavName);
+      accessInfo = JSON.parse(info);
+
+      if (accessInfo.length == 0) {
+        return {
+          status : 204,
+          headers : {"Content-Type":"application/json"},
+          body: []
+        };
+      }
+
+      //
+      // ここに差分同期の処理を書く
+      //
+
+    } catch (e) {
+      if (e.code == 404) {
+        return {
+          status : 204,
+          headers : {"Content-Type":"application/json"},
+          body: []
+        };
+      } else {
+        return {
+          status : 500,
+          headers : {"Content-Type":"application/json"},
+          body: [JSON.stringify({"error": "Box access error."})]
+        };
+      }
+    }
+
+  } catch (e) {
+    return {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+      body: [JSON.stringify({"error": e})]
+    };
+  }
+
+  // resを定義
+  return {
+    status: 200,
+    headers: {"Content-Type":"application/json"},
+    body : ['{"status":"OK"}']
+  };
+
+}
