@@ -81,7 +81,7 @@ $(document).ready(function() {
                 let token = Common.getToken();
                 Common.getBoxUrlAPI(cellUrl, token)
                     .done(function(data, textStatus, request) {
-                        let boxUrl = request.getResponseHeader("Location");
+                        let boxUrl = request.getResponseHeader("Location") || (Common.getCellUrl() + "lab-personium-calendar/");
                         console.log(boxUrl);
                         Common.setInfo(boxUrl);
                         // define your own additionalCallback for each App/screen
@@ -498,9 +498,9 @@ Common.displayMessageByKey = function(msg_key) {
 };
 
 Common.openSlide = function() {
-    $(".overlay").toggleClass('overlay-on');
+    $("#dvOverlay").toggleClass('overlay-on');
     $(".slide-menu").toggleClass('slide-on');
-}
+};
 
 Common.startAnimation = function() {
     Common.displayMessageByKey("glossary:msg.info.syncingData");
@@ -509,11 +509,7 @@ Common.startAnimation = function() {
 };
 Common.stopAnimation = function() {
     Common.displayMessageByKey("glossary:msg.info.syncedData");
-    setTimeout(function() {
-        $('#dispMsg')
-            .empty()
-            .hide();
-    }, 5000);
+    $('#dispMsg').fadeOut(2000);
     $('#updateIcon').prop('disabled', false);
     $('#updateIcon > i').removeClass("fa-spin");
 };

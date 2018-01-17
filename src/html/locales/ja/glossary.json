@@ -1,15 +1,30 @@
 {
     "title": "Personiumカレンダー",
     "Calendars": {
-        "label": "カレンダー",
-        "Google": "Google$t(glossary:Calendars.label)",
-        "Office365": "Office365"
+        "label": "カレンダー"
     },
     "Account": {
-        "label": "アカウント"
-    },
-    "CreateAccountPlus": {
-        "label": "+ 新規アカウント"
+        "label": "アカウント",
+        "type": "種別",
+        "types":{
+            "Google": "Google$t(glossary:Calendars.label)",
+            "EWS": "EWS"
+        },
+        "ID": "ID",
+        "Password": "パスワード",
+        "Register": {
+            "title": "新規アカウント",
+            "label": "+ 新規アカウント",
+            "btnOK": "登録"
+        },
+        "Edit": {
+            "title": "アカウントの編集",
+            "label": "編集"
+        },
+        "Delete": {
+            "title": "アカウントの削除",
+            "label": "削除"
+        }
     },
     "sessionExpiredDialog": {
         "title": "セッション期限切れ",
