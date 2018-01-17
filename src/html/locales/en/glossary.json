@@ -1,15 +1,30 @@
 {
     "title": "Personium Calendar",
     "Calendars": {
-        "label": "Calendar",
-        "Google": "Google $t(glossary:Calendars.label)",
-        "Office365": "Office365"
+        "label": "Calendar"
     },
     "Account": {
-        "label": "Account"
-    },
-    "CreateAccountPlus": {
-        "label": "+ Create Account"
+        "label": "Account",
+        "type": "Type",
+        "types": {
+            "Google": "Google $t(glossary:Calendars.label)",
+            "EWS": "EWS"
+        },
+        "ID": "ID",
+        "Password": "Password",
+        "Register": {
+            "title": "Register Account",
+            "label": "+ Register Account",
+            "btnOK": "Register"
+        },
+        "Edit": {
+            "title": "Modify Account",
+            "label": "Edit"
+        },
+        "Delete": {
+            "title": "Delete Account",
+            "label": "Del"
+        }
     },
     "sessionExpiredDialog": {
         "title": "Session Expired",

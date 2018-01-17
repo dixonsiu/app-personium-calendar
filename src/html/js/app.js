@@ -10,7 +10,7 @@ getNamesapces = function() {
 
 additionalCallback = function() {
     $('#dvOverlay').on('click', function() {
-        $(".overlay").removeClass('overlay-on');
+        $(this).removeClass('overlay-on');
         $(".slide-menu").removeClass('slide-on');
     });
 
@@ -19,82 +19,7 @@ additionalCallback = function() {
     Common.getProfileName(Common.getCellUrl(), displayMyDisplayName);
     createTitleHeader(true, false);
 
-    $('#calendar').fullCalendar({
-        header: {
-            left: 'prev,next today',
-            center: 'title',
-            right: 'listDay,listWeek,agendaDay,month'
-        },
-
-        // customize the button names,
-        // otherwise they'd all just say "list"
-        views: {
-            listDay: { buttonText: 'list day' },
-            listWeek: { buttonText: 'list week' }
-        },
-
-        defaultView: 'month',
-        defaultDate: moment().format(),
-        navLinks: true, // can click day/week names to navigate views
-        editable: true,
-        eventLimit: true, // allow "more" link when too many events
-        events: [
-            {
-                title: 'All Day Event',
-                start: '2017-11-01'
-            },
-            {
-                title: 'Long Event',
-                start: '2017-11-07',
-                end: '2017-11-10'
-            },
-            {
-                id: 999,
-                title: 'Repeating Event',
-                start: '2017-11-09T16:00:00'
-            },
-            {
-                id: 999,
-                title: 'Repeating Event',
-                start: '2017-11-16T16:00:00'
-            },
-            {
-                title: 'Conference',
-                start: '2017-11-11',
-                end: '2017-11-13'
-            },
-            {
-                title: 'Meeting',
-                start: '2017-11-12T10:30:00',
-                end: '2017-11-12T12:30:00'
-            },
-            {
-                title: 'Lunch',
-                start: '2017-11-12T12:00:00'
-            },
-            {
-                title: 'Meeting',
-                start: '2017-11-12T14:30:00'
-            },
-            {
-                title: 'Happy Hour',
-                start: '2017-11-12T17:30:00'
-            },
-            {
-                title: 'Dinner',
-                start: '2017-11-12T20:00:00'
-            },
-            {
-                title: 'Birthday Party',
-                start: '2017-11-13T07:00:00'
-            },
-            {
-                title: 'Click for Google',
-                url: 'http://google.com/',
-                start: '2017-11-28'
-            }
-        ]
-    });
+    renderFullCalendar();
 
     getListOfVEvents();
 
@@ -143,7 +68,7 @@ toggleSlide = function() {
 //    $(".slide-menu").toggleClass('slide-on');
 
     var menu = $('.slide-nav');
-    var overlay = $('.overlay');
+    var overlay = $('#dvOverlay');
     var menuWidth = menu.outerWidth();
 
     menu.toggleClass('open');
@@ -227,59 +152,65 @@ setTitleMenu = function(title, flg) {
 displayAccountPanel = function() {
     $("#setting-panel1").remove();
     setBackahead(true);
-    //Common.getAccountList().done(function(data) {
-        // sample
-        var data = [
-            {
-                "srcType": "EWS",
-                "id":"siu.dixon@jp.fujitsu.com"
-            },
-            {
-                "srcType": "Google",
-                "srcUrl":"***",
-                "id":"dixon.siu@gmail.com"
-            }
-        ]
-
+    getAccountList().done(function(data) {
         dispAccountList(data);
         $(".setting-menu").toggleClass('slide-on');
         setTitleMenu("glossary:Account.label", true);
-    //});
-}
+    }).fail(function(error) {
+        console.log(error);
+    });
+};
 
 getAccountList = function() {
-  //return $.ajax({
-  //        type: "GET",
-  //        url:cm.user.cellUrl + '__ctl/Account',
-  //        headers: {
-  //          'Authorization':'Bearer ' + cm.user.access_token,
-  //          'Accept':'application/json'
-  //        }
-  //})
-}
+    return getAccessInfoAPI();
+};
 
 dispAccountList = function(results) {
-  $("#setting-panel1").empty();
-  var html = '<div class="panel-body">';
-  for (var i = 0; i < results.length; i++) {
-    var acc = results[i];
-    var type = acc.srcType;
-    var typeImg = "https://demo.personium.io/HomeApplication/__/icons/ico_user_00.png";
-    if (type !== "EWS") {
-        typeImg = "https://demo.personium.io/HomeApplication/__/icons/ico_user_01.png";
-    }
+    $("#setting-panel1").empty();
+    var html = '<div class="panel-body">';
+    for (var i = 0; i < results.length; i++) {
+        var acc = results[i];
+        var type = acc.srcType;
+        var typeImg = "https://demo.personium.io/HomeApplication/__/icons/ico_user_00.png";
+        if (type !== "EWS") {
+            typeImg = "https://demo.personium.io/HomeApplication/__/icons/ico_user_01.png";
+        }
 
+        html += '<div class="list-group-item">';
+        html += '<table style="width: 100%;"><tr>';
+        html += '<td style="width: 80%;"><a href="#" class="ellipsisText" id="accountLinkToRoleToggle' + i + '" onClick="st.createAccountRole(\'' + acc.id + '\',\'' + i + '\')">' + acc.id + '&nbsp;<img class="image-circle-small" src="' + typeImg + '"></a></td>';
+        html += '<td style="margin-right:10px;width: 10%;"><a class="edit-button list-group-item" href="#" onClick="st.createEditAccount(\'' + acc.id + '\');return(false)" data-i18n="glossary:Account.Edit.label"></a></td>'
+         + '<td style="width: 10%;"><a class="del-button list-group-item" href="#" onClick="st.dispDelModal(\'' + acc.id + '\');return(false)" data-i18n="glossary:Account.Delete.label"></a></td>';
+        html += '</tr></table></div>';
+    }
     html += '<div class="list-group-item">';
-    html += '<table style="width: 100%;"><tr>';
-    html += '<td style="width: 80%;"><a href="#" class="ellipsisText" id="accountLinkToRoleToggle' + i + '" onClick="st.createAccountRole(\'' + acc.id + '\',\'' + i + '\')">' + acc.id + '&nbsp;<img class="image-circle-small" src="' + typeImg + '"></a></td>';
-    html += '<td style="margin-right:10px;width: 10%;"><a class="edit-button list-group-item" href="#" onClick="st.createEditAccount(\'' + acc.id + '\');return(false)">' + i18next.t("Edit") + '</a></td>'
-         + '<td style="width: 10%;"><a class="del-button list-group-item" href="#" onClick="st.dispDelModal(\'' + acc.id + '\');return(false)">' + i18next.t("Del") + '</a></td>';
-    html += '</tr></table></div>';
-  }
-  html += '<div class="list-group-item">';
-  html += '<a href="#" class="allToggle" onClick="displayAccountRegistrationDialog()" data-i18n="glossary:CreateAccountPlus.label"></a></div>';
-  html += '</div>';
-  $("#setting-panel1").append(html).localize();
+    html += '<a href="#" class="allToggle" onClick="displayAccountRegistrationDialog()" data-i18n="glossary:Account.Register.label"></a></div>';
+    html += '</div>';
+    $("#setting-panel1").append(html).localize();
+};
+
+renderFullCalendar = function() {
+    $('#calendar').fullCalendar({
+        header: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'listDay,listWeek,agendaDay,month'
+        },
+
+        // customize the button names,
+        // otherwise they'd all just say "list"
+        views: {
+            listDay: { buttonText: 'list day' },
+            listWeek: { buttonText: 'list week' }
+        },
+
+        defaultView: 'month',
+        defaultDate: moment().format(),
+        navLinks: true, // can click day/week names to navigate views
+        editable: true,
+        eventLimit: true, // allow "more" link when too many events
+        events: []
+    });
 };
 
 getListOfVEvents = function() {
@@ -297,8 +228,7 @@ getListOfVEvents = function() {
             });
         })
         .always(function(){
-            $('body > div.mySpinner').hide();
-            $('body > div.myHiddenDiv').show();
+            hideSpinner('body');
         });
 };
 
@@ -378,17 +308,17 @@ displayAccountRegistrationDialog = function() {
         '<div class="modal-body">',
             '<div class="row">',
                 '<div class="col-sm-1 col-md-1">',
-                    '<span>Type</span>',
+                    '<span data-i18n="glossary:Account.type"></span>',
                 '</div>',
                 '<div class="col-sm-11 col-md-11">',
                     '<div class="row">',
                         '<div class="col-sm-6 col-md-6">',
                             '<input type="radio" id="srcTypeEWS" name="srcType" value="EWS" checked>',
-                            '<label for="srcTypeEWS">EWS</label>',
+                            '<label for="srcTypeEWS" data-i18n="glossary:Account.types.EWS"></label>',
                         '</div>',
                         '<div class="col-sm-6 col-md-6">',
                             '<input type="radio" id="srcTypeGOOGLE" name="srcType" value="GOOGLE">',
-                            '<label for="srcTypeGOOGLE">GOOGLE</label>',
+                            '<label for="srcTypeGOOGLE" data-i18n="glossary:Account.types.Google"></label>',
                         '</div>',
                     '</div>',
                 '</div>',
@@ -405,7 +335,7 @@ displayAccountRegistrationDialog = function() {
             */
             '<div class="row">',
                 '<div class="col-sm-1 col-md-1">',
-                    '<span>ID</span>',
+                    '<span data-i18n="glossary:Account.ID"></span>',
                 '</div>',
                 '<div class="col-sm-11 col-md-11">',
                     '<input type="text" id="id">',
@@ -413,7 +343,7 @@ displayAccountRegistrationDialog = function() {
             '</div>',
             '<div class="row">',
                 '<div class="col-sm-1 col-md-1">',
-                    '<span>Password</span>',
+                    '<span data-i18n="glossary:Account.Password"></span>',
                 '</div>',
                 '<div class="col-sm-11 col-md-11">',
                     '<input type="password" id="pw">',
@@ -422,7 +352,7 @@ displayAccountRegistrationDialog = function() {
         '</div>',
         '<div class="modal-footer">',
             '<button type="button" class="btn btn-default" onClick="moveBackahead(true);" data-i18n="btn.cancel"></button>',
-            '<button type="button" class="btn btn-primary" id="b-add-account-ok" onClick="return registerAccount();" data-i18n="btn.save"></button>',
+            '<button type="button" class="btn btn-primary" id="b-add-account-ok" onClick="return registerAccount();" data-i18n="glossary:Account.Register.btnOK"></button>',
         '</div>'
     ].join("");
     $("#setting-panel2")
@@ -431,24 +361,24 @@ displayAccountRegistrationDialog = function() {
 
     $("#setting-panel2").toggleClass('slide-on');
     $("#setting-panel1").toggleClass('slide-on-holder');
-    setTitleMenu("CreateAccount", true);
+    setTitleMenu("glossary:Account.Register.title", true);
 };
 
 registerAccount = function() {
     // show spinner
+    $('#dialogOverlay').show();
 
     setAccessInfoAPI()
         .done(function(data, status, response){
             if (data.syncCompleted) {
+                $('#dialogOverlay').hide();
                 moveBackahead(true);
             } else {
                 registerAccount();
             }
         })
         .fail(function(){
-        })
-        .always(function(){
-            // hide spinner
+            $('#dialogOverlay').hide();
         });
 
     return false;
@@ -473,4 +403,25 @@ setAccessInfoAPI = function() {
             'Authorization':'Bearer ' + Common.getToken()
         }
     });
+};
+
+getAccessInfoAPI = function() {
+    return $.ajax({
+        type: "GET",
+        url: Common.getBoxUrl() + 'Engine/setAccessInfo',
+        headers: {
+            'Accept':'application/json',
+            'Authorization':'Bearer ' + Common.getToken()
+        }
+    });
+};
+
+showSpinner = function(cssSelector) {
+    $(cssSelector + ' > div.mySpinner').show();
+    $(cssSelector + ' > div.myHiddenDiv').hide();
+};
+
+hideSpinner = function(cssSelector) {
+    $(cssSelector + ' > div.mySpinner').hide();
+    $(cssSelector + ' > div.myHiddenDiv').show();
 };

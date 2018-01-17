@@ -27,7 +27,7 @@
   <link href='./css/common.css' rel='stylesheet' type='text/css'>
 </head>
 <body>
-  <div class="mySpinner">
+  <div class="mySpinner modal-backdrop">
       <i class="fa fa-spinner fa-pulse fa-3x fa-fw"></i>
       <span class="sr-only">Loading...</span>
   </div>
@@ -44,27 +44,33 @@
     </header>
     <div id="dispMsg" style="display:none;"></div>
     <div id='calendar'></div>
-  </div>
-  <div class="slide-menu">
-    <h1 data-i18n="menu.title"></h1>
-    <table class="menu-title">
-      <tr>
-        <td class="sidemenu-item"><h3>
-          <a onClick="displayAccountPanel();" href="javascript:void(0)" class="allToggle" data-i18n="glossary:Account.label"></a>
-        </h3></td>
-      </tr>
-      <tr>
-        <td class="sidemenu-item"><h3>
-          <a onClick="cs.openSendAllowedMessage();" href="javascript:void(0)" class="allToggle" data-i18n="glossary:menu.sendReadPermissionRequest.title"></a>
-        </h3></td>
-      </tr>
-    </table>
-  </div>
-  <div class="overlay" id="dvOverlay">
-  </div>
-  <div class="col-xs-12 display-table-cell v-align setting-menu">
-    <h1 class="row header-menu setting-header"></h1>
-    <div class="row" id="settingboard"></div>    
+    <div class="slide-menu">
+      <h1 data-i18n="menu.title"></h1>
+      <table class="menu-title">
+        <tr>
+          <td class="sidemenu-item"><h3>
+            <a onClick="displayAccountPanel();" href="javascript:void(0)" class="allToggle" data-i18n="glossary:Account.label"></a>
+          </h3></td>
+        </tr>
+        <tr>
+          <td class="sidemenu-item"><h3>
+            <a onClick="cs.openSendAllowedMessage();" href="javascript:void(0)" class="allToggle" data-i18n="glossary:menu.sendReadPermissionRequest.title"></a>
+          </h3></td>
+        </tr>
+      </table>
+    </div>
+    <div class="overlay" id="dvOverlay">
+    </div>
+    <div class="modal" id="dialogOverlay">
+      <div class="mySpinner">
+        <i class="fa fa-spinner fa-pulse fa-3x fa-fw"></i>
+        <span class="sr-only">Sync...</span>
+      </div>
+    </div>
+    <div class="col-xs-12 display-table-cell v-align setting-menu">
+      <h1 class="row header-menu setting-header"></h1>
+      <div class="row" id="settingboard"></div>    
+    </div>
   </div>
 </body>
 </html>
