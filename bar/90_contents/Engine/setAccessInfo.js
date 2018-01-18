@@ -165,7 +165,7 @@ function(request) {
                 return {
                   status: 500,
                   headers: { "Content-Type": "application/json" },
-                  body: ["Server Error : " + collectionName +" creating : " + e]
+                  body: [JSON.stringify({"error": collectionName +" creating : " + e.message})]
                 };
               }
             }
@@ -276,7 +276,7 @@ function(request) {
                 return {
                   status: 500,
                   headers: { "Content-Type": "application/json" },
-                  body: ["Server Error : " + collectionName +" creating : " + e]
+                  body: [JSON.stringify({"error": collectionName +" creating : " + e.message})]
                 };
               }
             }
@@ -387,7 +387,7 @@ function(request) {
         return {
           status : e.code,
           headers : {"Content-Type":"application/json"},
-          body: [JSON.stringify({"code": e.code, "message": e.message})]
+          body: [JSON.stringify({"error": e.message})]
         };
       }
 
@@ -418,7 +418,7 @@ function(request) {
         return {
           status : e.code,
           headers : {"Content-Type":"application/json"},
-          body: [JSON.stringify({"code": e.code, "message": e.message})]
+          body: [JSON.stringify({"error": e.message})]
         };
       }
       if (delNum != null) {
@@ -428,12 +428,10 @@ function(request) {
         return {
           status : 400,
           headers : {"Content-Type":"application/json"},
-          body: [JSON.stringify({"error": "Required id(" + setInfo.id + ") not exist."})]
+          body: [JSON.stringify({"error": "Required id( " + setInfo.id + " ) not exist."})]
         };
       }
     } else { //GET
-
-
       try {
         var info = personalBoxAccessor.getString(pathDavName);
         accessInfo = JSON.parse(info);
@@ -455,7 +453,7 @@ function(request) {
           return {
             status : 200,
             headers : {"Content-Type":"application/json"},
-            body: []
+            body: [JSON.stringify([])]
           };
         } else {
           return {
@@ -465,27 +463,17 @@ function(request) {
           };
         }
       }
-
-      if (resultsInfo.length == 0) {
-        return {
-          status : 200,
-          headers : {"Content-Type":"application/json"},
-          body: []
-        };
-      } else {
-        return {
-          status : 200,
-          headers : {"Content-Type":"application/json"},
-          body: JSON.stringify(resultsInfo)
-        };
-      }
-
+      return {
+        status : 200,
+        headers : {"Content-Type":"application/json"},
+        body: [JSON.stringify(resultsInfo)]
+      };
     }
   } catch (e) {
       return {
-        status: 500,
+        status: e.code,
         headers: { "Content-Type": "application/json" },
-        body: ["Server Error occurred. 01 : " + e]
+        body: [JSON.stringify({"error": e.message})]
       };
   }
 
