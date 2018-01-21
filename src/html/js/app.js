@@ -152,12 +152,20 @@ setTitleMenu = function(title, flg) {
 displayAccountPanel = function() {
     $("#setting-panel1").remove();
     setBackahead(true);
+    setTitleMenu("glossary:Account.label", true);
+    $("#setting-panel1").empty();
+    $("#setting-panel1").append('<div class="panel-body"></div>');
+    let html = [
+        '<div class="list-group-item">',
+            '<a href="#" class="allToggle" onClick="displayAccountRegistrationDialog()" data-i18n="glossary:Account.Register.label"></a>',
+        '</div>'].join('');
+    $("#setting-panel1 > .panel-body").append(html).localize();
     getAccountList().done(function(data) {
         dispAccountList(data);
-        $(".setting-menu").toggleClass('slide-on');
-        setTitleMenu("glossary:Account.label", true);
     }).fail(function(error) {
         console.log(error);
+    }).always(function(){
+        $(".setting-menu").toggleClass('slide-on');
     });
 };
 
@@ -166,8 +174,8 @@ getAccountList = function() {
 };
 
 dispAccountList = function(results) {
-    $("#setting-panel1").empty();
-    var html = '<div class="panel-body">';
+    let html = '';
+    $("#setting-panel1 > .panel-body > .account-item").remove();
     for (var i = 0; i < results.length; i++) {
         var acc = results[i];
         var type = acc.srcType;
@@ -176,17 +184,14 @@ dispAccountList = function(results) {
             typeImg = "https://demo.personium.io/HomeApplication/__/icons/ico_user_01.png";
         }
 
-        html += '<div class="list-group-item">';
+        html += '<div class="list-group-item account-item">';
         html += '<table style="width: 100%;"><tr>';
         html += '<td style="width: 80%;"><a href="#" class="ellipsisText" id="accountLinkToRoleToggle' + i + '" onClick="st.createAccountRole(\'' + acc.id + '\',\'' + i + '\')">' + acc.id + '&nbsp;<img class="image-circle-small" src="' + typeImg + '"></a></td>';
         html += '<td style="margin-right:10px;width: 10%;"><a class="edit-button list-group-item" href="#" onClick="st.createEditAccount(\'' + acc.id + '\');return(false)" data-i18n="glossary:Account.Edit.label"></a></td>'
          + '<td style="width: 10%;"><a class="del-button list-group-item" href="#" onClick="st.dispDelModal(\'' + acc.id + '\');return(false)" data-i18n="glossary:Account.Delete.label"></a></td>';
         html += '</tr></table></div>';
     }
-    html += '<div class="list-group-item">';
-    html += '<a href="#" class="allToggle" onClick="displayAccountRegistrationDialog()" data-i18n="glossary:Account.Register.label"></a></div>';
-    html += '</div>';
-    $("#setting-panel1").append(html).localize();
+    $("#setting-panel1 > .panel-body").prepend(html).localize();
 };
 
 renderFullCalendar = function() {
@@ -270,6 +275,7 @@ syncData = function() {
                  displayAccountPanel();
                  displayAccountRegistrationDialog();
             } else {
+                reRenderCalendar();
                 
                 Common.stopAnimation();
                 
@@ -373,6 +379,15 @@ registerAccount = function() {
             if (data.syncCompleted) {
                 $('#dialogOverlay').hide();
                 moveBackahead(true);
+                // Rerender the account list
+                getAccountList().done(function(data) {
+                    dispAccountList(data);
+                }).fail(function(error) {
+                    console.log(error);
+                }).always(function(){
+                    moveBackahead(true);
+                    reRenderCalendar();
+                });
             } else {
                 registerAccount();
             }
@@ -424,4 +439,10 @@ showSpinner = function(cssSelector) {
 hideSpinner = function(cssSelector) {
     $(cssSelector + ' > div.mySpinner').hide();
     $(cssSelector + ' > div.myHiddenDiv').show();
+};
+
+reRenderCalendar = function() {
+    showSpinner('body');
+    $('#calendar').fullCalendar('removeEvents');
+    getListOfVEvents();
 };
