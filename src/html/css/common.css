@@ -300,3 +300,12 @@ div.myHiddenDiv {
 input[name=srcType] {
     margin-right: 5px !important;
 }
+
+.ellipsisText {
+  width: 90%;
+  white-space: nowrap;
+  overflow: hidden;
+  margin: 0;
+  text-overflow: ellipsis;
+  -o-text-overflow: ellipsis;
+}
