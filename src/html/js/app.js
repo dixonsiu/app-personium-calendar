@@ -220,7 +220,9 @@ renderFullCalendar = function() {
 
 getListOfVEvents = function() {
     let urlOData = Common.getBoxUrl() + 'OData/vevent';
-    let tempFilter = '?$orderby=dtstart%20desc';
+    let orderByStr = '?$orderby=dtstart%20desc';
+    let filterStr = "?$top=300&$filter=dtstart%20ge%20datetime'2017-12-01T00:00:00'";
+    let tempFilter = filterStr;
     let access_token = Common.getToken();
     Common.getListOfOData(urlOData + tempFilter, access_token)
         .done(function(data) {
@@ -385,7 +387,6 @@ registerAccount = function() {
                 }).fail(function(error) {
                     console.log(error);
                 }).always(function(){
-                    moveBackahead(true);
                     reRenderCalendar();
                 });
             } else {
