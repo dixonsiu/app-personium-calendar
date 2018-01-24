@@ -173,6 +173,17 @@ getAccountList = function() {
     return getAccessInfoAPI();
 };
 
+getAccessInfoAPI = function() {
+    return $.ajax({
+        type: "GET",
+        url: Common.getBoxUrl() + 'Engine/setAccessInfo',
+        headers: {
+            'Accept':'application/json',
+            'Authorization':'Bearer ' + Common.getToken()
+        }
+    });
+};
+
 dispAccountList = function(results) {
     let html = '';
     $("#setting-panel1 > .panel-body > .account-item").remove();
@@ -227,7 +238,7 @@ createEditBtn = function() {
     let aEditBtn = $('<a>', {
         class: 'edit-button list-group-item',
         href: '#',
-        onClick: 'return editAccessInfo(this);',
+        onClick: 'return displayAccountModificationDialog(this);',
         'data-i18n': 'glossary:Account.Edit.label'
     });
 
@@ -437,7 +448,7 @@ registerAccount = function() {
     // show spinner
     $('#dialogOverlay').show();
 
-    setAccessInfoAPI()
+    setAccessInfoAPI('POST')
         .done(function(data, status, response){
             if (data.syncCompleted) {
                 $('#dialogOverlay').hide();
@@ -461,13 +472,13 @@ registerAccount = function() {
     return false;
 };
 
-setAccessInfoAPI = function() {
+setAccessInfoAPI = function(method) {
     let srcType = $('[name=srcType]:checked').val();
     let srcUrl = $('#srcUrl').val();
     let id = $('#id').val();
     let pw = $('#pw').val();
     return $.ajax({
-        type: "POST",
+        type: method,
         url: Common.getBoxUrl() + 'Engine/setAccessInfo',
         data: {
             'srcType': srcType,
@@ -482,24 +493,110 @@ setAccessInfoAPI = function() {
     });
 };
 
-getAccessInfoAPI = function() {
-    return $.ajax({
-        type: "GET",
-        url: Common.getBoxUrl() + 'Engine/setAccessInfo',
-        headers: {
-            'Accept':'application/json',
-            'Authorization':'Bearer ' + Common.getToken()
-        }
-    });
-};
-
-displyAccessInfo = function(aDom) {
+displayAccountModificationDialog = function(aDom) {
     let accountInfo = $(aDom).closest("tr").data('account-info');
     console.log(accountInfo.id);
+    
+    setBackahead(true);
+
+    $("#setting-panel2").empty();
+
+    var html = [
+        '<div class="modal-body">',
+            '<div class="row">',
+                '<div class="col-sm-1 col-md-1">',
+                    '<span data-i18n="glossary:Account.type"></span>',
+                '</div>',
+                '<div class="col-sm-11 col-md-11">',
+                    '<div class="row">',
+                        '<div class="col-sm-6 col-md-6">',
+                            '<input type="radio" id="srcTypeEWS" name="srcType" value="EWS" checked>',
+                            '<label for="srcTypeEWS" data-i18n="glossary:Account.types.EWS"></label>',
+                        '</div>',
+                        '<div class="col-sm-6 col-md-6">',
+                            '<input type="radio" id="srcTypeGOOGLE" name="srcType" value="GOOGLE">',
+                            '<label for="srcTypeGOOGLE" data-i18n="glossary:Account.types.Google"></label>',
+                        '</div>',
+                    '</div>',
+                '</div>',
+            '</div>',
+            /*
+            '<div class="row">',
+                '<div class="col-sm-1 col-md-1">',
+                    '<span>URL</span>',
+                '</div>',
+                '<div class="col-sm-11 col-md-11">',
+                    '<input type="text" id="srcUrl">',
+                '</div>',
+            '</div>',
+            */
+            '<div class="row">',
+                '<div class="col-sm-1 col-md-1">',
+                    '<span data-i18n="glossary:Account.ID"></span>',
+                '</div>',
+                '<div class="col-sm-11 col-md-11">',
+                    '<input type="text" id="id">',
+                '</div>',
+            '</div>',
+            '<div class="row">',
+                '<div class="col-sm-1 col-md-1">',
+                    '<span data-i18n="glossary:Account.Password"></span>',
+                '</div>',
+                '<div class="col-sm-11 col-md-11">',
+                    '<input type="password" id="pw">',
+                '</div>',
+            '</div>',
+        '</div>',
+        '<div class="modal-footer">',
+            '<button type="button" class="btn btn-default" onClick="moveBackahead(true);" data-i18n="btn.cancel"></button>',
+            '<button type="button" class="btn btn-primary" id="b-add-account-ok" onClick="return modifyAccount();" data-i18n="glossary:Account.Edit.btnOK"></button>',
+        '</div>'
+    ].join("");
+    $("#setting-panel2")
+        .append(html)
+        .localize();
+        
+    $('input:radio[name=srcType]')
+        .val([accountInfo.srcType])
+        .prop('disabled', true);
+    $('#id')
+        .val(accountInfo.id)
+        .prop("readonly", true);
+
+    $("#setting-panel2").toggleClass('slide-on');
+    $("#setting-panel1").toggleClass('slide-on-holder');
+    setTitleMenu("glossary:Account.Edit.title", true);
+};
+
+modifyAccount = function() {
+    // show spinner
+    $('#dialogOverlay').show();
+
+    setAccessInfoAPI('PUT')
+        .done(function(data, status, response){
+            if (data.syncCompleted) {
+                $('#dialogOverlay').hide();
+                moveBackahead(true);
+                // Rerender the account list
+                getAccountList().done(function(data) {
+                    dispAccountList(data);
+                }).fail(function(error) {
+                    console.log(error);
+                }).always(function(){
+                    reRenderCalendar();
+                });
+            } else {
+                console.log('not completed');
+            }
+        })
+        .fail(function(){
+            $('#dialogOverlay').hide();
+        });
+
     return false;
 };
 
-editAccessInfo = function(aDom) {
+displyAccessInfo = function(aDom) {
     let accountInfo = $(aDom).closest("tr").data('account-info');
     console.log(accountInfo.id);
     return false;
