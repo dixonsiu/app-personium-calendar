@@ -19,11 +19,13 @@
         },
         "Edit": {
             "title": "Modify Account",
-            "label": "Edit"
+            "label": "Edit",
+            "btnOK": "OK"
         },
         "Delete": {
             "title": "Delete Account",
-            "label": "Del"
+            "label": "Delete",
+            "btnOK": "OK"
         }
     },
     "sessionExpiredDialog": {

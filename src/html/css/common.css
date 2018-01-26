@@ -309,3 +309,24 @@ input[name=srcType] {
   text-overflow: ellipsis;
   -o-text-overflow: ellipsis;
 }
+
+i.fa-minus-circle {
+  color: red !important;
+}
+
+.list-group-button {
+  text-align: center;
+  width: 100%;
+  white-space: nowrap;
+}
+
+a.list-group-button {
+  /*background-color: rgba(255,255,255,0.0);*/
+  color: #030;
+  white-space: nowrap;
+}
+
+a.list-group-button:hover {
+  color: #fff;
+  background-color: #DCDCDC;
+}

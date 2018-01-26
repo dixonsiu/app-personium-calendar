@@ -17,7 +17,7 @@ additionalCallback = function() {
     Common.setIdleTime();
 
     Common.getProfileName(Common.getCellUrl(), displayMyDisplayName);
-    createTitleHeader(true, false);
+    createTitleHeader(true, true);
 
     renderFullCalendar();
 
@@ -51,7 +51,7 @@ createTitleHeader = function(settingFlg, menuFlg) {
 
     var menuHtml = '';
     if (menuFlg) {
-        menuHtml = '<a href="#" onClick="toggleSlide();"><img src="https://demo.personium.io/HomeApplication/__/icons/ico_menu.png"></a>';
+        menuHtml = '<a href="#" onClick="toggleEditMenu(this);" data-i18n="btn.edit"></a>';
     }
 
     var html = '<div class="col-xs-1" id="' + backMenuId + '"></div>';
@@ -59,8 +59,13 @@ createTitleHeader = function(settingFlg, menuFlg) {
         html += '<div class="col-xs-6 text-center title" id="' + titleMenuId + '"></div>';
         html += '<div class="col-xs-3 text-right">' + menuHtml + '</div>';
 
-    $(setHtmlId).html(html);
+    $(setHtmlId).html(html).localize();
     createBackMenu();
+};
+
+toggleEditMenu = function(aDom) {
+    $(aDom).attr('data-i18n', 'btn.finish').localize();
+    $('.account-item .list-group-button').closest('td').show();
 };
 
 toggleSlide = function() {
@@ -192,7 +197,7 @@ dispAccountList = function(results) {
 
         let aRow = $('<tr>')
             .data('account-info', acc)
-            .append($(createInfoTd(i, acc)), $(createEditBtn()), $(createDeleteBtn()));
+            .append($(createDeleteBtn()), $(createInfoTd(i, acc)), $(createEditBtn()));
 
         let aTable = $('<table>', {
             style: 'width: 100%;'
@@ -235,15 +240,21 @@ createInfoTd = function(i, accountInfo) {
 };
 
 createEditBtn = function() {
-    let aEditBtn = $('<a>', {
-        class: 'edit-button list-group-item',
-        href: '#',
-        onClick: 'return displayAccountModificationDialog(this);',
-        'data-i18n': 'glossary:Account.Edit.label'
+    let barIcon = $('<i>', {
+        class: 'fa fa-bars fa-2x fa-fw',
+        'aria-hidden': 'true'
     });
 
+    let aEditBtn = $('<a>', {
+        class: 'edit-button list-group-button',
+        href: '#',
+        onClick: 'return displayAccountModificationDialog(this);',
+        'data-i18n': '[title]glossary:Account.Edit.label'
+    });
+    aEditBtn.append($(barIcon));
+
     let aEditTd = $('<td>', {
-        style: 'margin-right:10px; width: 10%;'
+        style: 'margin-right:10px; width: 10%; display: none;'
     });
     aEditTd.append($(aEditBtn));
 
@@ -251,15 +262,21 @@ createEditBtn = function() {
 };
 
 createDeleteBtn = function() {
-    let aDeleteBtn = $('<a>', {
-        class: 'del-button list-group-item',
-        href: '#',
-        onClick: 'return deleteAccessInfo(this);',
-        'data-i18n': 'glossary:Account.Delete.label'
+    let minusCircleIcon = $('<i>', {
+        class: 'fa fa-minus-circle fa-2x',
+        'aria-hidden': 'true'
     });
 
+    let aDeleteBtn = $('<a>', {
+        class: 'list-group-button',
+        href: '#',
+        onClick: 'return deleteAccessInfo(this);',
+        'data-i18n': '[title]glossary:Account.Delete.label'
+    });
+    aDeleteBtn.append($(minusCircleIcon));
+
     let aDeleteTd = $('<td>', {
-        style: 'width: 10%;'
+        style: 'width: 10%; display: none;'
     });
     aDeleteTd.append($(aDeleteBtn));
 
