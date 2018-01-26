@@ -173,7 +173,7 @@
            }
 
            if (exist != null) {
-             var i = 1;
+             var addNum = "1";
              var loopStatus = true;
              do {
                if (exist.srcId == exData.srcId) {
@@ -183,14 +183,14 @@
                  }
                  loopStatus = false;
                } else {
-                 var exist2 = null;
-                 exData.__id = exist.__id + "_recur_" + i;
+                 exData.__id = exist.__id + "_recur_" + addNum;
                  try {
-                   exist2 = personalEntityAccessor.retrieve(exData.__id);
+                   var exist2 = personalEntityAccessor.retrieve(exData.__id);
                  } catch (e) {
                    if (e.code == 404) {
                      personalEntityAccessor.create(exData);
                      syncCount++;
+                     loopStatus = false;
                    } else {
                      return {
                        status : 500,
@@ -199,10 +199,9 @@
                      };
                    }
                  }
-                 if (exist2 == null) {
-                     loopStatus = false;
-                 } else {
-                   i++;
+                 if (loopStatus) {
+                   var addNumNext = Number(addNum) + Number(1);
+                   addNum = String(addNumNext);
                  }
                }
              } while (loopStatus);
