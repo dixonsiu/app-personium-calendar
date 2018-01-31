@@ -58,7 +58,7 @@ createTitleHeader = function(settingFlg, menuFlg) {
     var html = '<div class="col-xs-1" id="' + backMenuId + '"></div>';
         html += '<div class="col-xs-2"><table class="table-fixed back-title"><tr style="vertical-align: middle;"><td class="ellipsisText" id="' + backTitleId + '" align="left"></td></tr></table></div>';
         html += '<div class="col-xs-6 text-center title" id="' + titleMenuId + '"></div>';
-        html += '<div class="col-xs-3 text-right">' + menuHtml + '</div>';
+        html += '<div class="col-xs-3 text-right edit-menu">' + menuHtml + '</div>';
 
     $(setHtmlId).html(html).localize();
     createBackMenu();
@@ -106,6 +106,7 @@ moveBackahead = function() {
             closeSetting();
             break;
         default:
+            $('.edit-menu').show();
             $("#setting-panel" + no).toggleClass("slide-on");
             $("#setting-panel" + (no - 1)).toggleClass("slide-on-holder");
             break;
@@ -132,6 +133,9 @@ setBackahead = function(flg) {
     if (Common.settingNowPage == 1) {
         // first page
         toggleClass = "panel-default";
+    }
+    if (Common.settingNowPage == 2) {
+        $('.edit-menu').hide();
     }
     if (document.getElementById('setting-panel' + Common.settingNowPage) == null) {
         $("#" + boardId).append('<div class="panel list-group ' + toggleClass + '" id="setting-panel' + Common.settingNowPage + '"></div>');

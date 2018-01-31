@@ -63,12 +63,16 @@ header > a {
   flex-direction: row;
   align-items: center;
 }
+.setting-header a,
+.setting-header a:focus,
+.setting-header a:hover,
 header > a,
 header > a:focus,
 header > a:hover {
     outline:none;
     text-decoration: none;
 }
+.setting-header a,
 header > a > i {
   color: #FFF !important;
 }
