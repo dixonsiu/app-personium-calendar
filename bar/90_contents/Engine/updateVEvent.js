@@ -13,28 +13,181 @@
  *              ....
  */
 
- function(request){
+function(request){
 
-   var collectionName = "OData";
-   var entityType = "vevent";
+  // POST, PUT, DELETE 以外は405
+  if(request.method !== "POST" && request.method !== "PUT" && request.method !== "DELETE") {
+    return {
+      status : 405,
+      headers : {"Content-Type":"application/json"},
+      body : ['{"error":"method not allowed"}']
+    };
+  }
 
-   try {
-       var personalBoxAccessor = _p.as("client").cell(pjvm.getCellName()).box(pjvm.getBoxName());
-       var personalCollectionAccessor = personalBoxAccessor.odata(collectionName);
-       var personalEntityAccessor = personalCollectionAccessor.entitySet(entityType);
+  if(request.method === "POST" || request.method === "PUT") {
+    bodyAsString = request.input.readAll();
+  } else {
+    bodyAsString = request.queryString;
+  }
+  if (bodyAsString === "") {
+    return {
+      status : 400,
+      headers : {"Content-Type":"application/json"},
+      body : ['{"error":"required parameter not exist."}']
+    };
+  }
 
-   } catch (e) {
-       return {
-         status: 500,
-         headers: { "Content-Type": "text/html" },
-         body: ["Server Error occurred. 01 : " + e]
-       };
-   }
+  var collectionName = "OData";
+  var davName = "AccessInfo";
+  var entityType = "vevent";
+  var pathDavName = "AccessInfo/AccessInfo.json";
 
-   // resを定義
-   return {
-       status: 200,
-       headers: {"Content-Type":"application/json"},
-       body : ['{"status":"OK"}']
-   };
- }
+  var params = _p.util.queryParse(bodyAsString);
+
+  try {
+    var personalBoxAccessor = _p.as("client").cell(pjvm.getCellName()).box(pjvm.getBoxName());
+    var personalCollectionAccessor = personalBoxAccessor.odata(collectionName);
+    var personalEntityAccessor = personalCollectionAccessor.entitySet(entityType);
+
+    var vEvent = null;
+    var accessInfo = {};
+
+    if (request.method === "PUT" || request.method === "DELETE") {
+
+      try {
+        vEvent = personalEntityAccessor.retrieve(params.__id);
+      } catch (e) {
+        return {
+          status: e.code,
+          headers: { "Content-Type": "application/json" },
+          body: [JSON.stringify({"error": e.message})]
+        };
+      }
+
+      var info = personalBoxAccessor.getString(pathDavName);
+      var accInfo = JSON.parse(info);
+
+      for (var i = 0; i < accInfo.length; i++) {
+        if (accInfo[i].srcType == vEvent.srcType) {
+          accessInfo = accInfo[i];
+        }
+      }
+
+    } else { // POST
+      // POST method
+      // not supported now!
+      return {
+        status : 400,
+        headers : {"Content-Type":"application/json"},
+        body: ['{"error": "POST method is not supported now."}']
+      };
+    }
+
+
+    if (request.method === "PUT") {
+
+      if (vEvent.srcType == "EWS") {
+        var ews = new _p.extension.Ews();
+        ews.createService(accessInfo.id, accessInfo.pw);
+        ews.setUrl(accessInfo.srcUrl);
+        //var accessUrl = ews.autodiscoverUrl(accessInfo.id);
+
+        var result = ews.updateVEvent(params);
+
+        var exData = exchangeData(result);
+        exData.__id = vEvent.__id;
+        exData.srcType = "EWS";
+        exData.srcUrl = accessInfo.srcUrl;
+        //exData.srcUrl = accessUrl;
+
+        personalEntityAccessor.update(exData.__id, exData, "*");
+
+      } else { // e.g. Google
+        // srcType is not EWS.
+        // not supported now!
+        return {
+          status : 400,
+          headers : {"Content-Type":"application/json"},
+          body: ['{"error": "Required srcType is not supported."}']
+        };
+      }
+
+    } else if (request.method === "DELETE") {
+
+      if (vEvent.srcType == "EWS") {
+        var ews = new _p.extension.Ews();
+        ews.createService(accessInfo.id, accessInfo.pw);
+        ews.setUrl(accessInfo.srcUrl);
+        //var accessUrl = ews.autodiscoverUrl(accessInfo.id);
+
+        var result = ews.deleteVEvent(vEvent);
+
+        if (result == "OK") {
+          personalEntityAccessor.del(vEvent.__id);
+        } else {
+          return {
+            status: 500,
+            headers: {"Content-Type":"application/json"},
+            body: [JSON.stringify({"error": "Not delete vEvent of EWS server."})]
+          };
+        }
+
+      } else { // e.g. Google
+        // srcType is not EWS.
+        // not supported now!
+        return {
+          status : 400,
+          headers : {"Content-Type":"application/json"},
+          body: ['{"error": "Required srcType is not supported."}']
+        };
+      }
+
+
+    } else { // POST
+
+    }
+
+  } catch (e) {
+      return {
+        status: 500,
+        headers: {"Content-Type":"application/json"},
+        body: [JSON.stringify({"error": e.message})]
+      };
+  }
+
+  // resを定義
+  return {
+      status: 200,
+      headers: {"Content-Type":"application/json"},
+      body : ['{"status":"OK"}']
+  };
+}
+
+
+exchangeData = function(inData) {
+
+  var uxtDtstart = Date.parse(new Date(inData.Start));
+  dtstart = "/Date(" + uxtDtstart + ")/";
+  var uxtDtend = Date.parse(new Date(inData.End));
+  dtend = "/Date(" + uxtDtend + ")/";
+  var uxtUpdated = Date.parse(new Date(inData.Updated));
+  updated = "/Date(" + uxtUpdated + ")/";
+
+  var attendees = [];
+  attendees = inData.Attendees.split(",");
+
+  return {
+    __id: inData.ICalUid,
+    srcUrl: null,
+    srcType: null,
+    srcUpdated: updated,
+    srcId: inData.Uid,
+    dtstart: dtstart,
+    dtend: dtend,
+    summary: inData.Subject,
+    description: inData.Body,
+    location: inData.Location,
+    organizer: inData.Organizer,
+    attendees: attendees
+  };
+}
