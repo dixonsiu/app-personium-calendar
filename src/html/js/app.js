@@ -52,6 +52,7 @@ createTitleHeader = function(settingFlg, menuFlg) {
     var menuHtml = '';
     if (menuFlg) {
         menuHtml = '<a href="#" onClick="toggleEditMenu(this);" data-i18n="btn.edit"></a>';
+        menuHtml += '<a href="#" style="display:none;" onClick="toggleEditMenu(this);" data-i18n="btn.finish"></a>';
     }
 
     var html = '<div class="col-xs-1" id="' + backMenuId + '"></div>';
@@ -64,8 +65,10 @@ createTitleHeader = function(settingFlg, menuFlg) {
 };
 
 toggleEditMenu = function(aDom) {
-    $(aDom).attr('data-i18n', 'btn.finish').localize();
-    $('.account-item .list-group-button').closest('td').show();
+    $(aDom)
+    	.toggle()
+    	.siblings().toggle();
+    $('.account-item .list-group-button').closest('td').toggle();
 };
 
 toggleSlide = function() {
