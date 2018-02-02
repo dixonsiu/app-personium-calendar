@@ -17,7 +17,7 @@ additionalCallback = function() {
     Common.setIdleTime();
 
     Common.getProfileName(Common.getCellUrl(), displayMyDisplayName);
-    createTitleHeader(true, false);
+    createTitleHeader(true, true);
 
     renderFullCalendar();
 
@@ -51,16 +51,24 @@ createTitleHeader = function(settingFlg, menuFlg) {
 
     var menuHtml = '';
     if (menuFlg) {
-        menuHtml = '<a href="#" onClick="toggleSlide();"><img src="https://demo.personium.io/HomeApplication/__/icons/ico_menu.png"></a>';
+        menuHtml = '<a href="#" onClick="toggleEditMenu(this);" data-i18n="btn.edit"></a>';
+        menuHtml += '<a href="#" style="display:none;" onClick="toggleEditMenu(this);" data-i18n="btn.finish"></a>';
     }
 
     var html = '<div class="col-xs-1" id="' + backMenuId + '"></div>';
         html += '<div class="col-xs-2"><table class="table-fixed back-title"><tr style="vertical-align: middle;"><td class="ellipsisText" id="' + backTitleId + '" align="left"></td></tr></table></div>';
         html += '<div class="col-xs-6 text-center title" id="' + titleMenuId + '"></div>';
-        html += '<div class="col-xs-3 text-right">' + menuHtml + '</div>';
+        html += '<div class="col-xs-3 text-right edit-menu">' + menuHtml + '</div>';
 
-    $(setHtmlId).html(html);
+    $(setHtmlId).html(html).localize();
     createBackMenu();
+};
+
+toggleEditMenu = function(aDom) {
+    $(aDom)
+    	.toggle()
+    	.siblings().toggle();
+    $('.account-item .list-group-button').closest('td').toggle();
 };
 
 toggleSlide = function() {
@@ -98,6 +106,7 @@ moveBackahead = function() {
             closeSetting();
             break;
         default:
+            $('.edit-menu').show();
             $("#setting-panel" + no).toggleClass("slide-on");
             $("#setting-panel" + (no - 1)).toggleClass("slide-on-holder");
             break;
@@ -124,6 +133,9 @@ setBackahead = function(flg) {
     if (Common.settingNowPage == 1) {
         // first page
         toggleClass = "panel-default";
+    }
+    if (Common.settingNowPage == 2) {
+        $('.edit-menu').hide();
     }
     if (document.getElementById('setting-panel' + Common.settingNowPage) == null) {
         $("#" + boardId).append('<div class="panel list-group ' + toggleClass + '" id="setting-panel' + Common.settingNowPage + '"></div>');
@@ -156,7 +168,7 @@ displayAccountPanel = function() {
     $("#setting-panel1").empty();
     $("#setting-panel1").append('<div class="panel-body"></div>');
     let html = [
-        '<div class="list-group-item">',
+        '<div class="list-group-item button-row">',
             '<a href="#" class="allToggle" onClick="displayAccountRegistrationDialog()" data-i18n="glossary:Account.Register.label"></a>',
         '</div>'].join('');
     $("#setting-panel1 > .panel-body").append(html).localize();
@@ -173,25 +185,109 @@ getAccountList = function() {
     return getAccessInfoAPI();
 };
 
+getAccessInfoAPI = function() {
+    return $.ajax({
+        type: "GET",
+        url: Common.getBoxUrl() + 'Engine/setAccessInfo',
+        headers: {
+            'Accept':'application/json',
+            'Authorization':'Bearer ' + Common.getToken()
+        }
+    });
+};
+
 dispAccountList = function(results) {
     let html = '';
     $("#setting-panel1 > .panel-body > .account-item").remove();
     for (var i = 0; i < results.length; i++) {
-        var acc = results[i];
-        var type = acc.srcType;
-        var typeImg = "https://demo.personium.io/HomeApplication/__/icons/ico_user_00.png";
-        if (type !== "EWS") {
-            typeImg = "https://demo.personium.io/HomeApplication/__/icons/ico_user_01.png";
-        }
+        var acc = results[i];      
 
-        html += '<div class="list-group-item account-item">';
-        html += '<table style="width: 100%;"><tr>';
-        html += '<td style="width: 80%;"><a href="#" class="ellipsisText" id="accountLinkToRoleToggle' + i + '" onClick="st.createAccountRole(\'' + acc.id + '\',\'' + i + '\')">' + acc.id + '&nbsp;<img class="image-circle-small" src="' + typeImg + '"></a></td>';
-        html += '<td style="margin-right:10px;width: 10%;"><a class="edit-button list-group-item" href="#" onClick="st.createEditAccount(\'' + acc.id + '\');return(false)" data-i18n="glossary:Account.Edit.label"></a></td>'
-         + '<td style="width: 10%;"><a class="del-button list-group-item" href="#" onClick="st.dispDelModal(\'' + acc.id + '\');return(false)" data-i18n="glossary:Account.Delete.label"></a></td>';
-        html += '</tr></table></div>';
+        let aRow = $('<tr>')
+            .data('account-info', acc)
+            .append($(createDeleteBtn()), $(createInfoTd(i, acc)), $(createEditBtn()));
+
+        let aTable = $('<table>', {
+            style: 'width: 100%;'
+        });
+        aTable.append($(aRow));
+
+        let aDiv = $('<div>', {
+            class: 'list-group-item account-item'
+        });
+
+        aDiv
+            .append($(aTable))
+            .insertBefore('#setting-panel1 > .panel-body > .button-row');
     }
-    $("#setting-panel1 > .panel-body").prepend(html).localize();
+    $('#setting-panel1 > .panel-body > .account-item').localize();
+};
+
+createInfoTd = function(i, accountInfo) {
+    let typeImg = "https://demo.personium.io/HomeApplication/__/icons/ico_user_00.png";
+    if (accountInfo.srcType !== "EWS") {
+        typeImg = "https://demo.personium.io/HomeApplication/__/icons/ico_user_01.png";
+    }
+    let aImg = $('<img>', {
+        class: 'image-circle-small',
+        src: typeImg
+    });
+
+    let aAnchor = $('<a>', {
+        class: 'ellipsisText',
+        onClick: 'return displyAccessInfo(this);'
+    }).html(accountInfo.id);
+    aAnchor.append($(aImg));
+
+    let aInfoTd = $('<td>', {
+        style: 'width: 80%;'
+    });
+    aInfoTd.append($(aAnchor));
+
+    return aInfoTd;
+};
+
+createEditBtn = function() {
+    let barIcon = $('<i>', {
+        class: 'fa fa-bars fa-2x fa-fw',
+        'aria-hidden': 'true'
+    });
+
+    let aEditBtn = $('<a>', {
+        class: 'edit-button list-group-button',
+        href: '#',
+        onClick: 'return displayAccountModificationDialog(this);',
+        'data-i18n': '[title]glossary:Account.Edit.label'
+    });
+    aEditBtn.append($(barIcon));
+
+    let aEditTd = $('<td>', {
+        style: 'margin-right:10px; width: 10%; display: none;'
+    });
+    aEditTd.append($(aEditBtn));
+
+    return aEditTd;
+};
+
+createDeleteBtn = function() {
+    let minusCircleIcon = $('<i>', {
+        class: 'fa fa-minus-circle fa-2x',
+        'aria-hidden': 'true'
+    });
+
+    let aDeleteBtn = $('<a>', {
+        class: 'list-group-button',
+        href: '#',
+        onClick: 'return deleteAccessInfo(this);',
+        'data-i18n': '[title]glossary:Account.Delete.label'
+    });
+    aDeleteBtn.append($(minusCircleIcon));
+
+    let aDeleteTd = $('<td>', {
+        style: 'width: 10%; display: none;'
+    });
+    aDeleteTd.append($(aDeleteBtn));
+
+    return aDeleteTd;
 };
 
 renderFullCalendar = function() {
@@ -221,7 +317,7 @@ renderFullCalendar = function() {
 getListOfVEvents = function() {
     let urlOData = Common.getBoxUrl() + 'OData/vevent';
     let orderByStr = '?$orderby=dtstart%20desc';
-    let filterStr = "?$top=300&$filter=dtstart%20ge%20datetime'2017-12-01T00:00:00'";
+    let filterStr = "?$top=300&$filter=dtstart ge datetime'2017-12-01T00:00:00'";
     let tempFilter = filterStr;
     let access_token = Common.getToken();
     Common.getListOfOData(urlOData + tempFilter, access_token)
@@ -376,7 +472,7 @@ registerAccount = function() {
     // show spinner
     $('#dialogOverlay').show();
 
-    setAccessInfoAPI()
+    setAccessInfoAPI('POST')
         .done(function(data, status, response){
             if (data.syncCompleted) {
                 $('#dialogOverlay').hide();
@@ -400,13 +496,13 @@ registerAccount = function() {
     return false;
 };
 
-setAccessInfoAPI = function() {
+setAccessInfoAPI = function(method) {
     let srcType = $('[name=srcType]:checked').val();
     let srcUrl = $('#srcUrl').val();
     let id = $('#id').val();
     let pw = $('#pw').val();
     return $.ajax({
-        type: "POST",
+        type: method,
         url: Common.getBoxUrl() + 'Engine/setAccessInfo',
         data: {
             'srcType': srcType,
@@ -421,10 +517,135 @@ setAccessInfoAPI = function() {
     });
 };
 
-getAccessInfoAPI = function() {
+displayAccountModificationDialog = function(aDom) {
+    let accountInfo = $(aDom).closest("tr").data('account-info');
+    console.log(accountInfo.id);
+    
+    setBackahead(true);
+
+    $("#setting-panel2").empty();
+
+    var html = [
+        '<div class="modal-body">',
+            '<div class="row">',
+                '<div class="col-sm-1 col-md-1">',
+                    '<span data-i18n="glossary:Account.type"></span>',
+                '</div>',
+                '<div class="col-sm-11 col-md-11">',
+                    '<div class="row">',
+                        '<div class="col-sm-6 col-md-6">',
+                            '<input type="radio" id="srcTypeEWS" name="srcType" value="EWS" checked>',
+                            '<label for="srcTypeEWS" data-i18n="glossary:Account.types.EWS"></label>',
+                        '</div>',
+                        '<div class="col-sm-6 col-md-6">',
+                            '<input type="radio" id="srcTypeGOOGLE" name="srcType" value="GOOGLE">',
+                            '<label for="srcTypeGOOGLE" data-i18n="glossary:Account.types.Google"></label>',
+                        '</div>',
+                    '</div>',
+                '</div>',
+            '</div>',
+            /*
+            '<div class="row">',
+                '<div class="col-sm-1 col-md-1">',
+                    '<span>URL</span>',
+                '</div>',
+                '<div class="col-sm-11 col-md-11">',
+                    '<input type="text" id="srcUrl">',
+                '</div>',
+            '</div>',
+            */
+            '<div class="row">',
+                '<div class="col-sm-1 col-md-1">',
+                    '<span data-i18n="glossary:Account.ID"></span>',
+                '</div>',
+                '<div class="col-sm-11 col-md-11">',
+                    '<input type="text" id="id">',
+                '</div>',
+            '</div>',
+            '<div class="row">',
+                '<div class="col-sm-1 col-md-1">',
+                    '<span data-i18n="glossary:Account.Password"></span>',
+                '</div>',
+                '<div class="col-sm-11 col-md-11">',
+                    '<input type="password" id="pw">',
+                '</div>',
+            '</div>',
+        '</div>',
+        '<div class="modal-footer">',
+            '<button type="button" class="btn btn-default" onClick="moveBackahead(true);" data-i18n="btn.cancel"></button>',
+            '<button type="button" class="btn btn-primary" id="b-add-account-ok" onClick="return modifyAccount();" data-i18n="glossary:Account.Edit.btnOK"></button>',
+        '</div>'
+    ].join("");
+    $("#setting-panel2")
+        .append(html)
+        .localize();
+        
+    $('input:radio[name=srcType]')
+        .val([accountInfo.srcType])
+        .prop('disabled', true);
+    $('#id')
+        .val(accountInfo.id)
+        .prop("readonly", true);
+
+    $("#setting-panel2").toggleClass('slide-on');
+    $("#setting-panel1").toggleClass('slide-on-holder');
+    setTitleMenu("glossary:Account.Edit.title", true);
+};
+
+modifyAccount = function() {
+    // show spinner
+    $('#dialogOverlay').show();
+
+    setAccessInfoAPI('PUT')
+        .done(function(data, status, response){
+            if (data.syncCompleted) {
+                $('#dialogOverlay').hide();
+                moveBackahead(true);
+                // Rerender the account list
+                getAccountList().done(function(data) {
+                    dispAccountList(data);
+                }).fail(function(error) {
+                    console.log(error);
+                }).always(function(){
+                    reRenderCalendar();
+                });
+            } else {
+                console.log('not completed');
+            }
+        })
+        .fail(function(){
+            $('#dialogOverlay').hide();
+        });
+
+    return false;
+};
+
+displyAccessInfo = function(aDom) {
+    let accountInfo = $(aDom).closest("tr").data('account-info');
+    console.log(accountInfo.id);
+    return false;
+};
+
+deleteAccessInfo = function(aDom) {
+    let accountInfo = $(aDom).closest("tr").data('account-info');
+    deleteAccessInfoAPI(accountInfo)
+        .done(function(){
+            console.log('Finish deleting ' + accountInfo.id);
+            // Rerender the account list
+            getAccountList().done(function(data) {
+                dispAccountList(data);
+            }).fail(function(error) {
+                console.log(error);
+            });
+        })
+        .fail();
+    return false;
+};
+
+deleteAccessInfoAPI = function(accountInfo) {
     return $.ajax({
-        type: "GET",
-        url: Common.getBoxUrl() + 'Engine/setAccessInfo',
+        type: "DELETE",
+        url: Common.getBoxUrl() + 'Engine/setAccessInfo' + '?' + $.param(accountInfo),
         headers: {
             'Accept':'application/json',
             'Authorization':'Bearer ' + Common.getToken()

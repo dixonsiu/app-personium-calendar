@@ -63,12 +63,16 @@ header > a {
   flex-direction: row;
   align-items: center;
 }
+.setting-header a,
+.setting-header a:focus,
+.setting-header a:hover,
 header > a,
 header > a:focus,
 header > a:hover {
     outline:none;
     text-decoration: none;
 }
+.setting-header a,
 header > a > i {
   color: #FFF !important;
 }
@@ -299,4 +303,34 @@ div.myHiddenDiv {
 
 input[name=srcType] {
     margin-right: 5px !important;
+}
+
+.ellipsisText {
+  width: 90%;
+  white-space: nowrap;
+  overflow: hidden;
+  margin: 0;
+  text-overflow: ellipsis;
+  -o-text-overflow: ellipsis;
+}
+
+i.fa-minus-circle {
+  color: red !important;
+}
+
+.list-group-button {
+  text-align: center;
+  width: 100%;
+  white-space: nowrap;
+}
+
+a.list-group-button {
+  /*background-color: rgba(255,255,255,0.0);*/
+  color: #030;
+  white-space: nowrap;
+}
+
+a.list-group-button:hover {
+  color: #fff;
+  background-color: #DCDCDC;
 }

@@ -58,6 +58,7 @@
         "save": "保存",
         "release": "解除",
         "approve": "承諾",
-        "decline": "拒否"
+        "decline": "拒否",
+        "finish": "完了"
     }
 }

@@ -19,11 +19,13 @@
         },
         "Edit": {
             "title": "アカウントの編集",
-            "label": "編集"
+            "label": "編集",
+            "btnOK": "OK"
         },
         "Delete": {
             "title": "アカウントの削除",
-            "label": "削除"
+            "label": "削除",
+            "btnOK": "削除"
         }
     },
     "sessionExpiredDialog": {

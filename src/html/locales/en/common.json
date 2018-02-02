@@ -58,6 +58,7 @@
         "save": "Save",
         "release": "Ungrant",
         "approve": "Approve",
-        "decline": "Decline"
+        "decline": "Decline",
+        "finish": "OK"
     }
 }
