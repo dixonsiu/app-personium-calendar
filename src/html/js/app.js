@@ -491,18 +491,19 @@ syncData = function() {
                  displayAccountPanel();
                  displayAccountRegistrationDialog();
             } else {
-                reRenderCalendar();
-                
-                Common.stopAnimation();
-                
-                // Currently not implemented
-                // Check response
-                // if (data.syncCompleted) {
-                    // Common.stopAnimation();
-                // } else {
-                    // // continue
-                    // console.log("false");
-                // }
+                if (data.status == 'OK') {
+                    Common.stopAnimation();
+                    console.log('hotfix: sync.js bug');
+                    return false;
+                }
+
+                if (data.syncCompleted) {
+                    reRenderCalendar();
+                    Common.stopAnimation();
+                } else {
+                    // continue
+                    console.log("sync in progress");
+                }
             }
         })
         .fail(function(error){
@@ -592,22 +593,10 @@ registerAccount = function() {
 
     setAccessInfoAPI('POST')
         .done(function(data, status, response){
-            if (data.syncCompleted) {
-                $('#dialogOverlay').hide();
-                moveBackahead(true);
-                // Rerender the account list
-                getAccountList().done(function(data) {
-                    dispAccountList(data);
-                }).fail(function(error) {
-                    console.log(error);
-                }).always(function(){
-                    reRenderCalendar();
-                });
-            } else {
-                registerAccount();
-            }
+            syncFullData();
         })
-        .fail(function(){
+        .fail(function(error){
+            console.log(error.responseJSON.error);
             $('#dialogOverlay').hide();
         });
 
@@ -633,6 +622,30 @@ setAccessInfoAPI = function(method) {
             'Authorization':'Bearer ' + Common.getToken()
         }
     });
+};
+
+syncFullData = function() {
+    sync()
+        .done(function(data, status, response){
+            if (data.syncCompleted) {
+                $('#dialogOverlay').hide();
+                moveBackahead(true);
+                // Rerender the account list
+                getAccountList().done(function(data) {
+                    dispAccountList(data);
+                }).fail(function(error) {
+                    console.log(error);
+                }).always(function(){
+                    reRenderCalendar();
+                });
+            } else {
+                syncFullData();
+            }
+        })
+        .fail(function(error){
+            console.log(error.responseJSON.error);
+            $('#dialogOverlay').hide();
+        });
 };
 
 displayAccountModificationDialog = function(aDom) {
@@ -716,20 +729,14 @@ modifyAccount = function() {
 
     setAccessInfoAPI('PUT')
         .done(function(data, status, response){
-            if (data.syncCompleted) {
-                $('#dialogOverlay').hide();
-                moveBackahead(true);
-                // Rerender the account list
-                getAccountList().done(function(data) {
-                    dispAccountList(data);
-                }).fail(function(error) {
-                    console.log(error);
-                }).always(function(){
-                    reRenderCalendar();
-                });
-            } else {
-                console.log('not completed');
-            }
+            $('#dialogOverlay').hide();
+            moveBackahead(true);
+            // Rerender the account list
+            getAccountList().done(function(data) {
+                dispAccountList(data);
+            }).fail(function(error) {
+                console.log(error);
+            });
         })
         .fail(function(){
             $('#dialogOverlay').hide();
