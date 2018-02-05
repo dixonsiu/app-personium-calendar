@@ -314,6 +314,28 @@ input[name=srcType] {
   -o-text-overflow: ellipsis;
 }
 
+.del-icon {
+  width: 10%;
+  display: none;
+}
+
+.edit-icon {
+  width: 10%;
+  display: none;
+}
+
+.del-button {
+  text-align: center;
+  text-align: -webkit-center;
+  background-color: red !important;
+  width: 10%;
+  display: none;
+}
+
+.del-button > .list-group-button {
+  color: #FFF !important;
+}
+
 i.fa-minus-circle {
   color: red !important;
 }

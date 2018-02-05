@@ -1,4 +1,5 @@
 const APP_URL = "https://nks18.zetta.flab.fujitsu.co.jp/app-personium-calendar/";
+const APP_BOX_NAME = 'app-personium-calendar';
 
 getEngineEndPoint = function() {
     return Common.getAppCellUrl() + "__/html/Engine/getAppAuthToken";
@@ -41,34 +42,112 @@ createTitleHeader = function(settingFlg, menuFlg) {
     var setHtmlId = ".header-menu";
     var backMenuId = "backMenu";
     var backTitleId = "backTitle";
-    var titleMenuId = "titleMenu";
+    var titleId = "titleMenu";
     if (settingFlg) {
         setHtmlId = ".setting-header";
         backMenuId = "settingBackMenu";
         backTitleId = "settingBackTitle";
-        titleMenuId = "settingTitleMenu";
+        titleId = "settingTitleMenu";
     }
+    
+    let backBtn = createBackBtn(backMenuId);
+    let backBtnTitle = createBackBtnTitle(backTitleId);
+    let title = $('<div>', {
+        id: titleId,
+        class: 'col-xs-6 text-center title'
+    });
+    let editMenu = createEditMenu(menuFlg);
 
-    var menuHtml = '';
+    $(setHtmlId)
+        .append($(backBtn), $(backBtnTitle), $(title), $(editMenu))
+        .localize();
+};
+
+createBackBtn = function(backMenuId) {
+    let backIcon = $('<i>', {
+        class: 'fa fa-chevron-left',
+        'aria-hidden': 'true'
+    });
+
+    let aTag = $('<a>', {
+        class: 'allToggle prev-icon',
+        style: 'float:left;',
+        href: '#',
+        onClick: 'moveBackahead();return false;'
+    });
+    aTag.append($(backIcon));
+
+    let backDom = $('<div>', {
+        id: backMenuId,
+        class: 'col-xs-1'
+    });
+    backDom.append($(aTag));
+
+    return backDom;
+};
+
+createBackBtnTitle = function(backTitleId) {
+    let aTd = $('<td>', {
+        id: backTitleId,
+        class: 'ellipsisText',
+        align: 'left'
+    });
+
+    let aRow = $('<tr>', {
+        style: 'vertical-align: middle;'
+    });
+    aRow.append($(aTd));
+
+    let aTable = $('<table>', {
+        class: 'table-fixed back-title'
+    });
+    aTable.append($(aRow));
+
+    let aDiv = $('<div>', {
+        class: 'col-xs-2'
+    });
+    aDiv.append($(aTable));
+
+    return aDiv;
+};
+
+createEditMenu = function(menuFlg) {
+    let editMenu = $('<div>', {
+        class: 'col-xs-3 text-right edit-menu'
+    });
+
     if (menuFlg) {
-        menuHtml = '<a href="#" onClick="toggleEditMenu(this);" data-i18n="btn.edit"></a>';
-        menuHtml += '<a href="#" style="display:none;" onClick="toggleEditMenu(this);" data-i18n="btn.finish"></a>';
+        let editButton = $('<a>', {
+            href: '#',
+            onClick: 'toggleEditMenu(this);',
+            'data-item-btn-viewable': 'true',
+            'data-i18n': 'btn.edit'
+        });
+        let finishButton = $('<a>', {
+            href: '#',
+            onClick: 'toggleEditMenu(this);',
+            'data-item-btn-viewable': 'false',
+            'data-i18n': 'btn.finish',
+            style: 'display:none;'
+        });
+        
+        editMenu.append($(editButton), $(finishButton));
     }
 
-    var html = '<div class="col-xs-1" id="' + backMenuId + '"></div>';
-        html += '<div class="col-xs-2"><table class="table-fixed back-title"><tr style="vertical-align: middle;"><td class="ellipsisText" id="' + backTitleId + '" align="left"></td></tr></table></div>';
-        html += '<div class="col-xs-6 text-center title" id="' + titleMenuId + '"></div>';
-        html += '<div class="col-xs-3 text-right edit-menu">' + menuHtml + '</div>';
-
-    $(setHtmlId).html(html).localize();
-    createBackMenu();
+    return editMenu;
 };
 
 toggleEditMenu = function(aDom) {
     $(aDom)
-    	.toggle()
-    	.siblings().toggle();
-    $('.account-item .list-group-button').closest('td').toggle();
+        .toggle()
+        .siblings().toggle();
+    let showBtn = $(aDom).data('item-btn-viewable');
+    $('.account-item .del-icon, .account-item .edit-icon').toggle(showBtn);
+
+    if (!showBtn) {
+        // hide delete button explicitly
+        $('.account-item .del-button').hide();
+    }
 };
 
 toggleSlide = function() {
@@ -89,11 +168,6 @@ toggleSlide = function() {
         menu.animate({'right' : -menuWidth }, 300);
         overlay.fadeOut();
     }
-}
-
-createBackMenu = function() {
-    var html = '<a href="#" class="allToggle prev-icon" style="float:left;" onClick="moveBackahead();return false;"><img id="imSettingBack" src="https://demo.personium.io/HomeApplication/__/icons/ico_back.png" alt="user"></a>';
-    $("#settingBackMenu").html(html);
 }
 
 moveBackahead = function() {
@@ -165,6 +239,7 @@ displayAccountPanel = function() {
     $("#setting-panel1").remove();
     setBackahead(true);
     setTitleMenu("glossary:Account.label", true);
+    setEditMenu(true);
     $("#setting-panel1").empty();
     $("#setting-panel1").append('<div class="panel-body"></div>');
     let html = [
@@ -179,6 +254,13 @@ displayAccountPanel = function() {
     }).always(function(){
         $(".setting-menu").toggleClass('slide-on');
     });
+};
+
+setEditMenu = function(menuFlg) {
+    $(".header-menu .edit-menu").remove();
+    $('.setting-header')
+        .append($(createEditMenu(menuFlg)))
+        .localize();
 };
 
 getAccountList = function() {
@@ -204,7 +286,7 @@ dispAccountList = function(results) {
 
         let aRow = $('<tr>')
             .data('account-info', acc)
-            .append($(createDeleteBtn()), $(createInfoTd(i, acc)), $(createEditBtn()));
+            .append($(createDeleteIcon()), $(createInfoTd(i, acc)), $(createEditBtn()), $(createDeleteBtn()));
 
         let aTable = $('<table>', {
             style: 'width: 100%;'
@@ -233,13 +315,13 @@ createInfoTd = function(i, accountInfo) {
     });
 
     let aAnchor = $('<a>', {
-        class: 'ellipsisText',
-        onClick: 'return displyAccessInfo(this);'
+        class: 'ellipsisText'
     }).html(accountInfo.id);
     aAnchor.append($(aImg));
 
     let aInfoTd = $('<td>', {
-        style: 'width: 80%;'
+        style: 'width: 80%;',
+        onClick: 'return hideDeleteButton(this);'
     });
     aInfoTd.append($(aAnchor));
 
@@ -253,7 +335,7 @@ createEditBtn = function() {
     });
 
     let aEditBtn = $('<a>', {
-        class: 'edit-button list-group-button',
+        class: 'list-group-button',
         href: '#',
         onClick: 'return displayAccountModificationDialog(this);',
         'data-i18n': '[title]glossary:Account.Edit.label'
@@ -261,29 +343,65 @@ createEditBtn = function() {
     aEditBtn.append($(barIcon));
 
     let aEditTd = $('<td>', {
-        style: 'margin-right:10px; width: 10%; display: none;'
+        class: 'edit-icon'
     });
     aEditTd.append($(aEditBtn));
 
     return aEditTd;
 };
 
-createDeleteBtn = function() {
+/*
+ * Render the delete icon.
+ * It acts like a confirm dialog.
+ * When this icon is clicked, a delete button will be displayed.
+ * Clicking the delete button will delete the entry without prompting for another confirmation
+ */
+createDeleteIcon = function() {
     let minusCircleIcon = $('<i>', {
         class: 'fa fa-minus-circle fa-2x',
         'aria-hidden': 'true'
     });
 
+    let aDeleteIcon = $('<a>', {
+        class: 'list-group-button',
+        href: '#',
+        onClick: 'return displayDeleteButton(this);'
+    });
+    aDeleteIcon.append($(minusCircleIcon));
+
+    let aDeleteTd = $('<td>', {
+        class: 'del-icon'
+    });
+    aDeleteTd.append($(aDeleteIcon));
+
+    return aDeleteTd;
+};
+
+displayDeleteButton = function(aDom) {
+    $(aDom).closest('td').hide();
+    $(aDom).closest('tr').find('.del-button').closest('td').show();
+};
+
+hideDeleteButton = function(aDom) {
+    if ($('.account-item .edit-icon').is(":visible")) {
+        $(aDom).closest('tr').find('.del-button').closest('td').hide();
+        $(aDom).closest('tr').find('.del-icon').closest('td').show();
+    }
+};
+
+/*
+ * <a class="del-button list-group-item" href="#"
+ */
+createDeleteBtn = function() {
     let aDeleteBtn = $('<a>', {
         class: 'list-group-button',
         href: '#',
         onClick: 'return deleteAccessInfo(this);',
-        'data-i18n': '[title]glossary:Account.Delete.label'
+        'data-i18n': 'glossary:Account.Delete.label'
     });
-    aDeleteBtn.append($(minusCircleIcon));
 
     let aDeleteTd = $('<td>', {
-        style: 'width: 10%; display: none;'
+        class: 'del-button'
     });
     aDeleteTd.append($(aDeleteBtn));
 
@@ -373,18 +491,19 @@ syncData = function() {
                  displayAccountPanel();
                  displayAccountRegistrationDialog();
             } else {
-                reRenderCalendar();
-                
-                Common.stopAnimation();
-                
-                // Currently not implemented
-                // Check response
-                // if (data.syncCompleted) {
-                    // Common.stopAnimation();
-                // } else {
-                    // // continue
-                    // console.log("false");
-                // }
+                if (data.status == 'OK') {
+                    Common.stopAnimation();
+                    console.log('hotfix: sync.js bug');
+                    return false;
+                }
+
+                if (data.syncCompleted) {
+                    reRenderCalendar();
+                    Common.stopAnimation();
+                } else {
+                    // continue
+                    console.log("sync in progress");
+                }
             }
         })
         .fail(function(error){
@@ -474,22 +593,10 @@ registerAccount = function() {
 
     setAccessInfoAPI('POST')
         .done(function(data, status, response){
-            if (data.syncCompleted) {
-                $('#dialogOverlay').hide();
-                moveBackahead(true);
-                // Rerender the account list
-                getAccountList().done(function(data) {
-                    dispAccountList(data);
-                }).fail(function(error) {
-                    console.log(error);
-                }).always(function(){
-                    reRenderCalendar();
-                });
-            } else {
-                registerAccount();
-            }
+            syncFullData();
         })
-        .fail(function(){
+        .fail(function(error){
+            console.log(error.responseJSON.error);
             $('#dialogOverlay').hide();
         });
 
@@ -515,6 +622,30 @@ setAccessInfoAPI = function(method) {
             'Authorization':'Bearer ' + Common.getToken()
         }
     });
+};
+
+syncFullData = function() {
+    sync()
+        .done(function(data, status, response){
+            if (data.syncCompleted) {
+                $('#dialogOverlay').hide();
+                moveBackahead(true);
+                // Rerender the account list
+                getAccountList().done(function(data) {
+                    dispAccountList(data);
+                }).fail(function(error) {
+                    console.log(error);
+                }).always(function(){
+                    reRenderCalendar();
+                });
+            } else {
+                syncFullData();
+            }
+        })
+        .fail(function(error){
+            console.log(error.responseJSON.error);
+            $('#dialogOverlay').hide();
+        });
 };
 
 displayAccountModificationDialog = function(aDom) {
@@ -598,20 +729,14 @@ modifyAccount = function() {
 
     setAccessInfoAPI('PUT')
         .done(function(data, status, response){
-            if (data.syncCompleted) {
-                $('#dialogOverlay').hide();
-                moveBackahead(true);
-                // Rerender the account list
-                getAccountList().done(function(data) {
-                    dispAccountList(data);
-                }).fail(function(error) {
-                    console.log(error);
-                }).always(function(){
-                    reRenderCalendar();
-                });
-            } else {
-                console.log('not completed');
-            }
+            $('#dialogOverlay').hide();
+            moveBackahead(true);
+            // Rerender the account list
+            getAccountList().done(function(data) {
+                dispAccountList(data);
+            }).fail(function(error) {
+                console.log(error);
+            });
         })
         .fail(function(){
             $('#dialogOverlay').hide();
