@@ -1,4 +1,5 @@
 const APP_URL = "https://nks18.zetta.flab.fujitsu.co.jp/app-personium-calendar/";
+const APP_BOX_NAME = 'app-personium-calendar';
 
 getEngineEndPoint = function() {
     return Common.getAppCellUrl() + "__/html/Engine/getAppAuthToken";
