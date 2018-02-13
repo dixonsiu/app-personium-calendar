@@ -52,8 +52,15 @@ function(request){
     var vEvent = null;
     var accessInfo = {};
 
-    if (request.method === "PUT" || request.method === "DELETE") {
+    var info = personalBoxAccessor.getString(pathDavName);
+    var accInfo = JSON.parse(info);
+    for (var i = 0; i < accInfo.length; i++) {
+      if (accInfo[i].srcType == params.srcType && accInfo[i].id == params.id) {
+        accessInfo = accInfo[i];
+      }
+    }
 
+    if (request.method === "PUT" || request.method === "DELETE") {
       try {
         vEvent = personalEntityAccessor.retrieve(params.__id);
       } catch (e) {
@@ -63,42 +70,45 @@ function(request){
           body: [JSON.stringify({"error": e.message})]
         };
       }
-
-      var info = personalBoxAccessor.getString(pathDavName);
-      var accInfo = JSON.parse(info);
-
-      for (var i = 0; i < accInfo.length; i++) {
-        if (accInfo[i].srcType == vEvent.srcType) {
-          accessInfo = accInfo[i];
-        }
-      }
-
     } else { // POST
       // POST method
       // not supported now!
+      /*
       return {
         status : 400,
         headers : {"Content-Type":"application/json"},
         body: ['{"error": "POST method is not supported now."}']
       };
+      */
     }
 
 
     if (request.method === "PUT") {
 
       if (vEvent.srcType == "EWS") {
-        var ews = new _p.extension.Ews();
-        ews.createService(accessInfo.id, accessInfo.pw);
-        ews.setUrl(accessInfo.srcUrl);
-        //var accessUrl = ews.autodiscoverUrl(accessInfo.id);
+        try {
+          ews = new _p.extension.Ews();
+          ews.createService(accessInfo.id, accessInfo.pw);
+          ews.setUrl(accessInfo.srcUrl);
+        } catch (e) {
+          return {
+            status : 400,
+            headers : {"Content-Type":"application/json"},
+            body: ['{"srcType": "EWS"}']
+          };
+        }
+
+        if (params.srcId == null || params.srcId == "") {
+          params.srcId = vEvent.srcId;
+        }
 
         var result = ews.updateVEvent(params);
 
-        var exData = exchangeData(result);
+        var exData = exchangeDataEwsToJcal(result);
         exData.__id = vEvent.__id;
         exData.srcType = "EWS";
         exData.srcUrl = accessInfo.srcUrl;
-        //exData.srcUrl = accessUrl;
+        exData.srcAccountName = accessInfo.id;
 
         personalEntityAccessor.update(exData.__id, exData, "*");
 
@@ -115,10 +125,17 @@ function(request){
     } else if (request.method === "DELETE") {
 
       if (vEvent.srcType == "EWS") {
-        var ews = new _p.extension.Ews();
-        ews.createService(accessInfo.id, accessInfo.pw);
-        ews.setUrl(accessInfo.srcUrl);
-        //var accessUrl = ews.autodiscoverUrl(accessInfo.id);
+        try {
+          ews = new _p.extension.Ews();
+          ews.createService(accessInfo.id, accessInfo.pw);
+          ews.setUrl(accessInfo.srcUrl);
+        } catch (e) {
+          return {
+            status : 400,
+            headers : {"Content-Type":"application/json"},
+            body: ['{"srcType": "EWS"}']
+          };
+        }
 
         var result = ews.deleteVEvent(vEvent);
 
@@ -142,8 +159,84 @@ function(request){
         };
       }
 
-
     } else { // POST
+
+      if (params.srcType == "EWS") {
+        try {
+          ews = new _p.extension.Ews();
+          ews.createService(accessInfo.id, accessInfo.pw);
+          ews.setUrl(accessInfo.srcUrl);
+        } catch (e) {
+          return {
+            status : 400,
+            headers : {"Content-Type":"application/json"},
+            body: ['{"srcType": "EWS"}']
+          };
+        }
+
+        var result = ews.createVEvent(params);
+
+        var exData = exchangeDataEwsToJcal(result);
+        exData.srcType = "EWS";
+        exData.srcUrl = accessInfo.srcUrl;
+        exData.srcAccountName = accessInfo.id;
+        var exist = null;
+        try {
+          exist = personalEntityAccessor.retrieve(exData.__id);
+        } catch (e) {
+          if (e.code == 404) {
+            personalEntityAccessor.create(exData);
+          } else {
+            return {
+              status : 500,
+              headers : {"Content-Type":"application/json"},
+              body: [JSON.stringify({"error": e.message})]
+            };
+          }
+        }
+
+        if (exist != null) {
+          var addNum = "1";
+          var loopStatus = true;
+          do {
+            if (exist.srcId == exData.srcId) {
+              return {
+                status : 400,
+                headers : {"Content-Type":"application/json"},
+                body: ['{"error": "A strange condition occurred."}']
+              };
+            } else {
+              exData.__id = exist.__id + "_recur_" + addNum;
+              try {
+                var exist2 = personalEntityAccessor.retrieve(exData.__id);
+              } catch (e) {
+                if (e.code == 404) {
+                  personalEntityAccessor.create(exData);
+                  loopStatus = false;
+                } else {
+                  return {
+                    status : 500,
+                    headers : {"Content-Type":"application/json"},
+                    body: [JSON.stringify({"error": e.message})]
+                  };
+                }
+              }
+              if (loopStatus) {
+                var addNumNext = Number(addNum) + Number(1);
+                addNum = String(addNumNext);
+              }
+            }
+          } while (loopStatus);
+        }
+      } else { // e.g. Google
+        // srcType is not EWS.
+        // not supported now!
+        return {
+          status : 400,
+          headers : {"Content-Type":"application/json"},
+          body: ['{"error": "Required srcType is not supported."}']
+        };
+      }
 
     }
 
@@ -164,7 +257,7 @@ function(request){
 }
 
 
-exchangeData = function(inData) {
+exchangeDataEwsToJcal = function(inData) {
 
   var uxtDtstart = Date.parse(new Date(inData.Start));
   dtstart = "/Date(" + uxtDtstart + ")/";
