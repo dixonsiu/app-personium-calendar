@@ -6,7 +6,7 @@
                 <resourcetype>
                     <collection/>
                 </resourcetype>
-                <acl xml:base="https://demo.personium.io/app-personium-calendar/__role/__/" xmlns:p="urn:x-dcl:xmlns">
+                <acl xml:base="https://nks18.zetta.flab.fujitsu.co.jp/app-personium-calendar/__role/__/" xmlns:p="urn:x-dcl:xmlns">
                 </acl>
             </prop>
         </propstat>
@@ -18,7 +18,7 @@
                 <resourcetype>
                     <collection/>
                 </resourcetype>
-                <acl xml:base="https://demo.personium.io/app-personium-calendar/__role/__/" xmlns:p="urn:x-dcl:xmlns">
+                <acl xml:base="https://nks18.zetta.flab.fujitsu.co.jp/app-personium-calendar/__role/__/" xmlns:p="urn:x-dcl:xmlns">
                     <ace>
                         <principal>
                             <href>CalendarOwner</href>
@@ -72,7 +72,7 @@
                     <collection/>
                     <p:service xmlns:p="urn:x-personium:xmlns"/>
                 </resourcetype>
-                <acl xml:base="https://demo.personium.io/app-personium-calendar/__role/__/" xmlns:p="urn:x-personium:xmlns">
+                <acl xml:base="https://nks18.zetta.flab.fujitsu.co.jp/app-personium-calendar/__role/__/" xmlns:p="urn:x-personium:xmlns">
                     <ace>
                         <principal>
                             <href>CalendarOwner</href>
@@ -116,7 +116,7 @@
                     <collection/>
                     <p:service xmlns:p="urn:x-personium:xmlns"/>
                 </resourcetype>
-                <acl xml:base="https://demo.personium.io/app-personium-calendar/__role/__/" xmlns:p="urn:x-personium:xmlns">
+                <acl xml:base="https://nks18.zetta.flab.fujitsu.co.jp/app-personium-calendar/__role/__/" xmlns:p="urn:x-personium:xmlns">
                     <ace>
                         <principal>
                             <href>CalendarOwner</href>
@@ -180,7 +180,7 @@
                     <collection/>
                     <p:service xmlns:p="urn:x-personium:xmlns"/>
                 </resourcetype>
-                <acl xml:base="https://demo.personium.io/app-personium-calendar/__role/__/" xmlns:p="urn:x-personium:xmlns">
+                <acl xml:base="https://nks18.zetta.flab.fujitsu.co.jp/app-personium-calendar/__role/__/" xmlns:p="urn:x-personium:xmlns">
                     <ace>
                         <principal>
                             <href>CalendarOwner</href>
@@ -234,7 +234,7 @@
                     <collection/>
                     <p:odata xmlns:p="urn:x-personium:xmlns"/>
                 </resourcetype>
-                <acl xml:base="https://demo.personium.io/app-personium-calendar/__role/__/" xmlns:p="urn:x-dcl:xmlns">
+                <acl xml:base="https://nks18.zetta.flab.fujitsu.co.jp/app-personium-calendar/__role/__/" xmlns:p="urn:x-dcl:xmlns">
                     <ace>
                         <principal>
                             <href>CalendarOwner</href>
