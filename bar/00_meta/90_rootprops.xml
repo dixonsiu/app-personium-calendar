@@ -29,6 +29,29 @@
                             </privilege>
                         </grant>
                     </ace>
+                    <ace>
+                        <principal>
+                            <href>CalendarViewer</href>
+                        </principal>
+                        <grant>
+                            <privilege>
+                                <read/>
+                            </privilege>
+                        </grant>
+                    </ace>
+                    <ace>
+                        <principal>
+                            <href>CalendarEditor</href>
+                        </principal>
+                        <grant>
+                            <privilege>
+                                <read/>
+                            </privilege>
+                            <privilege>
+                                <write/>
+                            </privilege>
+                        </grant>
+                    </ace>
                 </acl>
             </prop>
         </propstat>
@@ -63,8 +86,6 @@
                 </acl>
                 <p:service language="JavaScript" xmlns:D="DAV:" xmlns:p="urn:x-personium:xmlns">
                     <p:path name="setAccessInfo" src="setAccessInfo.js"/>
-                    <p:path name="sync" src="sync.js"/>
-                    <p:path name="updateVEvent" src="updateVEvent.js"/>
                 </p:service>
             </prop>
         </propstat>
@@ -88,7 +109,63 @@
         </propstat>
     </response>
     <response>
-        <href>dcbox:/Engine/__src/sync.js</href>
+        <href>dcbox:/SyncEngine</href>
+        <propstat>
+            <prop>
+                <resourcetype>
+                    <collection/>
+                    <p:service xmlns:p="urn:x-personium:xmlns"/>
+                </resourcetype>
+                <acl xml:base="https://demo.personium.io/app-personium-calendar/__role/__/" xmlns:p="urn:x-personium:xmlns">
+                    <ace>
+                        <principal>
+                            <href>CalendarOwner</href>
+                        </principal>
+                        <grant>
+                            <privilege>
+                                <exec/>
+                            </privilege>
+                        </grant>
+                    </ace>
+                    <ace>
+                        <principal>
+                            <href>CalendarViewer</href>
+                        </principal>
+                        <grant>
+                            <privilege>
+                                <exec/>
+                            </privilege>
+                        </grant>
+                    </ace>
+                    <ace>
+                        <principal>
+                            <href>CalendarEditor</href>
+                        </principal>
+                        <grant>
+                            <privilege>
+                                <exec/>
+                            </privilege>
+                        </grant>
+                    </ace>
+                </acl>
+                <p:service language="JavaScript" xmlns:D="DAV:" xmlns:p="urn:x-personium:xmlns">
+                    <p:path name="sync" src="sync.js"/>
+                </p:service>
+            </prop>
+        </propstat>
+    </response>
+    <response>
+        <href>dcbox:/SyncEngine/__src</href>
+        <propstat>
+            <prop>
+                <resourcetype>
+                    <collection/>
+                </resourcetype>
+            </prop>
+        </propstat>
+    </response>
+    <response>
+        <href>dcbox:/SyncEngine/__src/sync.js</href>
         <propstat>
             <prop>
                 <getcontenttype>text/javascript</getcontenttype>
@@ -96,7 +173,53 @@
         </propstat>
     </response>
     <response>
-        <href>dcbox:/Engine/__src/updateVEvent.js</href>
+        <href>dcbox:/UpdateEngine</href>
+        <propstat>
+            <prop>
+                <resourcetype>
+                    <collection/>
+                    <p:service xmlns:p="urn:x-personium:xmlns"/>
+                </resourcetype>
+                <acl xml:base="https://demo.personium.io/app-personium-calendar/__role/__/" xmlns:p="urn:x-personium:xmlns">
+                    <ace>
+                        <principal>
+                            <href>CalendarOwner</href>
+                        </principal>
+                        <grant>
+                            <privilege>
+                                <exec/>
+                            </privilege>
+                        </grant>
+                    </ace>
+                    <ace>
+                        <principal>
+                            <href>CalendarEditor</href>
+                        </principal>
+                        <grant>
+                            <privilege>
+                                <exec/>
+                            </privilege>
+                        </grant>
+                    </ace>
+                </acl>
+                <p:service language="JavaScript" xmlns:D="DAV:" xmlns:p="urn:x-personium:xmlns">
+                    <p:path name="updateVEvent" src="updateVEvent.js"/>
+                </p:service>
+            </prop>
+        </propstat>
+    </response>
+    <response>
+        <href>dcbox:/UpdateEngine/__src</href>
+        <propstat>
+            <prop>
+                <resourcetype>
+                    <collection/>
+                </resourcetype>
+            </prop>
+        </propstat>
+    </response>
+    <response>
+        <href>dcbox:/UpdateEngine/__src/updateVEvent.js</href>
         <propstat>
             <prop>
                 <getcontenttype>text/javascript</getcontenttype>
@@ -134,9 +257,12 @@
                     </ace>
                     <ace>
                         <principal>
-                            <href>CalendarWriter</href>
+                            <href>CalendarEditor</href>
                         </principal>
                         <grant>
+                            <privilege>
+                                <read/>
+                            </privilege>
                             <privilege>
                                 <write/>
                             </privilege>

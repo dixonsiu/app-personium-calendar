@@ -503,6 +503,7 @@ syncData = function() {
                 } else {
                     // continue
                     console.log("sync in progress");
+                    syncData();
                 }
             }
         })
