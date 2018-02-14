@@ -207,7 +207,7 @@ function(request){
             do {
               if (exist.srcId == exData.srcId) {
                 if (Number(exist.srcUpdated.match(/\d+/)) < Number(exData.srcUpdated.match(/\d+/))) {
-                  personalEntityAccessor.update(exData.__id, exData, "*");
+                  personalEntityAccessor.update(exist.__id, exData, "*");
                   syncCount++;
                 }
                 loopStatus = false;
