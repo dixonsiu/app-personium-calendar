@@ -185,34 +185,32 @@ function(request){
           exData.srcType = "EWS";
           exData.srcUrl = accessTokenSet.srcUrl;
           exData.srcAccountName = accessTokenSet.id;
-          var exist = null;
-          try {
-            exist = personalEntityAccessor.retrieve(exData.__id);
-          } catch (e) {
-            if (e.code == 404) {
-              personalEntityAccessor.create(exData);
-              syncCount++;
-            } else {
-              return {
-                status : 500,
-                headers : {"Content-Type":"application/json"},
-                body: [JSON.stringify({"error": e.message})]
-              };
-            }
-          }
 
-          if (exist != null) {
-            var addNum = "1";
-            var loopStatus = true;
-            do {
-              if (exist.srcId == exData.srcId) {
-                if (Number(exist.srcUpdated.match(/\d+/)) < Number(exData.srcUpdated.match(/\d+/))) {
-                  personalEntityAccessor.update(exist.__id, exData, "*");
-                  syncCount++;
-                }
-                loopStatus = false;
+          var existFilter = "srcId eq '" + exData.srcId + "'";
+          var exist = personalEntityAccessor.query().filter(existFilter).run();
+
+          if (exist.d.results.length == 0) {
+            //Check whether it is recursive event or not
+            var existRecur = null;
+            try {
+              existRecur = personalEntityAccessor.retrieve(exData.__id);
+            } catch (e) {
+              if (e.code == 404) {
+                personalEntityAccessor.create(exData);
+                syncCount++;
               } else {
-                exData.__id = exist.__id + "_recur_" + addNum;
+                return {
+                  status : 500,
+                  headers : {"Content-Type":"application/json"},
+                  body: [JSON.stringify({"error": e.message})]
+                };
+              }
+            }
+            if (existRecur != null) {
+              var addNum = "1";
+              var loopStatus = true;
+              do {
+                exData.__id = existRecur.__id + "_recur_" + addNum;
                 try {
                   var exist2 = personalEntityAccessor.retrieve(exData.__id);
                 } catch (e) {
@@ -232,8 +230,19 @@ function(request){
                   var addNumNext = Number(addNum) + Number(1);
                   addNum = String(addNumNext);
                 }
-              }
-            } while (loopStatus);
+              } while (loopStatus);
+            }
+          } else if (exist.d.results.length == 1) {
+            if (Number(exist.d.results[0].srcUpdated.match(/\d+/)) < Number(exData.srcUpdated.match(/\d+/))) {
+              personalEntityAccessor.update(exist.d.results[0].__id, exData, "*");
+              syncCount++;
+            }
+          } else {
+            return {
+              status : 400,
+              headers : {"Content-Type":"application/json"},
+              body: [JSON.stringify({"error": "srcId filter is wrong."})]
+            };
           }
           lastDate = results[i].Start;
         }
@@ -334,7 +343,7 @@ function(request){
               var addNum = "1";
               var loopStatus = true;
               do {
-                exData.__id = existRecur__id + "_recur_" + addNum;
+                exData.__id = existRecur.__id + "_recur_" + addNum;
                 try {
                   var exist2 = personalEntityAccessor.retrieve(exData.__id);
                 } catch (e) {
