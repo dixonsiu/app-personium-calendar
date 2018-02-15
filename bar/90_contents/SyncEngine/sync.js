@@ -190,7 +190,7 @@ function(request){
           var exist = personalEntityAccessor.query().filter(existFilter).run();
 
           if (exist.d.results.length == 0) {
-            //recur のチェック
+            //Check whether it is recursive event or not
             var existRecur = null;
             try {
               existRecur = personalEntityAccessor.retrieve(exData.__id);
