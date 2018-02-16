@@ -294,7 +294,8 @@ dispAccountList = function(results) {
         aTable.append($(aRow));
 
         let aDiv = $('<div>', {
-            class: 'list-group-item account-item'
+            class: 'list-group-item account-item',
+            'data-account-info': acc
         });
 
         aDiv
@@ -434,11 +435,14 @@ renderFullCalendar = function() {
 
 getListOfVEvents = function() {
     let urlOData = Common.getBoxUrl() + 'OData/vevent';
-    let orderByStr = '?$orderby=dtstart%20desc';
-    let filterStr = "?$top=300&$filter=dtstart ge datetime'2017-12-01T00:00:00'";
-    let tempFilter = filterStr;
+    let filterStr = $.param({
+        "$top": 300,
+        "$filter": "dtstart ge datetimeoffset'2018-01-01T00:00:00+09:00'",
+        "$orderby": "dtstart asc"
+    });
+    let queryUrl = urlOData + '?' + filterStr;
     let access_token = Common.getToken();
-    Common.getListOfOData(urlOData + tempFilter, access_token)
+    Common.getListOfOData(queryUrl, access_token)
         .done(function(data) {
             _.each(data.d.results, function(item) { 
                 // do something
@@ -507,15 +511,35 @@ syncData = function() {
                 }
             }
         })
-        .fail(function(error){
+        .fail(function(jqXHR, textStatus, errorThrown){
             Common.stopAnimation();
+
+            console.log(jqXHR.responseJSON.error);
+            if ((jqXHR.status == '400') && (jqXHR.responseJSON.srcType)) {
+                let srcType = jqXHR.responseJSON.srcType;
+                let accountInfo;
+                Common.openSlide();
+                displayAccountPanel();
+
+                $('.list-group-item.account-item tr').each(function(index) {
+                    if (accountInfo.srcType == srcType) {
+                        accountInfo = $(this).data('account-info');
+                        return false;
+                    }
+                });
+
+                if (accountInfo) {
+                    // Display edit account panel
+                    displayAccountModificationDialog(null, accountInfo);
+                }
+            }
         });
 };
 
 sync = function() {
     return $.ajax({
         type: "GET",
-        url: Common.getBoxUrl() + 'Engine/sync',
+        url: Common.getBoxUrl() + 'SyncEngine/sync',
         headers: {
             'Accept':'application/json',
             'Authorization':'Bearer ' + Common.getToken()
@@ -635,7 +659,7 @@ syncFullData = function() {
                 getAccountList().done(function(data) {
                     dispAccountList(data);
                 }).fail(function(error) {
-                    console.log(error);
+                    console.log(error.responseJSON.error);
                 }).always(function(){
                     reRenderCalendar();
                 });
@@ -649,8 +673,10 @@ syncFullData = function() {
         });
 };
 
-displayAccountModificationDialog = function(aDom) {
-    let accountInfo = $(aDom).closest("tr").data('account-info');
+displayAccountModificationDialog = function(aDom, accountInfo) {
+    if (aDom) {
+        accountInfo = $(aDom).closest("tr").data('account-info');
+    }
     console.log(accountInfo.id);
     
     setBackahead(true);
@@ -764,7 +790,9 @@ deleteAccessInfo = function(aDom) {
                 console.log(error);
             });
         })
-        .fail();
+        .fail(function(error){
+            console.log(error.responseJSON.error);
+        });
     return false;
 };
 
