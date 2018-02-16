@@ -282,7 +282,7 @@ function(request){
         }
       } else if (accessTokenSet.srcType == "Google"){
 
-        // 初期化
+        // initialization
         var accessToken = null;
         var host = null;
         var port = null;
@@ -292,7 +292,7 @@ function(request){
         var refreshToken = null;
         var pageToken = "";
         var syncToken = "";
-        // ファイルからデータ取得
+        // get setting data
         for(var i = 0; i < accessInfo.length; i++){
           if (accessInfo[i].srcType == "Google") {
             host = accessInfo[i].host;
@@ -370,7 +370,7 @@ function(request){
           var exist = personalEntityAccessor.query().filter(existFilter).run();
 
           if (exist.d.results.length == 0) {
-            //recur のチェック
+            //Check whether it is recursive event or not
             var existRecur = null;
             try {
               existRecur = personalEntityAccessor.retrieve(exData.__id);
@@ -605,7 +605,7 @@ function(request){
           };
         }
       }else if (accessTokenSet.srcType == "Google"){
-        // 初期化
+        // initialization
         var accessToken = null;
         var host = null;
         var port = null;
@@ -614,7 +614,7 @@ function(request){
         var calendarId = null;
         var refreshToken = null;
         var syncToken = "";
-        // ファイルからデータ取得
+        // get setting data
         for(var i = 0; i < accessInfo.length; i++){
           if (accessInfo[i].srcType == "Google") {
             host = accessInfo[i].host;
@@ -685,7 +685,7 @@ function(request){
           var exist = personalEntityAccessor.query().filter(existFilter).run();
 
           if (exist.d.results.length == 0) {
-            //recur のチェック
+            //Check whether it is recursive event or not
             var existRecur = null;
             try {
               existRecur = personalEntityAccessor.retrieve(exData.__id);
