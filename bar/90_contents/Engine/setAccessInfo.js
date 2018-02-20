@@ -143,6 +143,48 @@ function(request) {
 
         personalBoxAccessor.put(pathDavTokenName, "application/json", JSON.stringify(setInfo));
 
+      } else if (setInfo.srcType == "Google"){
+        var accessToken = null;
+        var refreshToken = null;
+        for(var i = 0; i < accessInfo.length; i++){
+          if (accessInfo[i].srcType == "Google" && setInfo.id == accessInfo[i].id) {
+            accessToken = setInfo.accessToken;
+            refreshToken = setInfo.refreshToken;
+          }
+        }
+        if (accessToken == null || refreshToken == null){
+          return {
+            status : 400,
+            headers : {"Content-Type":"application/json"},
+            body: ['{"error": "Required paramter is not access google server."}']
+          };
+        }
+
+        try {
+          var pathDavTokenName = pathDavToken + setInfo.id + ".json";
+          var tokenSet = personalBoxAccessor.getString(pathDavTokenName);
+
+          return {
+              status : 500,
+              headers : {"Content-Type":"application/json"},
+              body: [JSON.stringify({"error": "Required paramter set is already."})]
+          };
+        } catch (e) {
+          if (e.code != 404) {
+            return {
+                status : 500,
+                headers : {"Content-Type":"application/json"},
+                body: [JSON.stringify({"error": "Box access error."})]
+            };
+          }
+        }
+
+        setInfo.syncType = "FIRST";
+        setInfo.nextStart = null;
+        setInfo.maxSyncResults = null;
+
+        personalBoxAccessor.put(pathDavTokenName, "application/json", JSON.stringify(setInfo));
+
       } else { // e.g. Google
         // srcType is not EWS.
         // not supported now!

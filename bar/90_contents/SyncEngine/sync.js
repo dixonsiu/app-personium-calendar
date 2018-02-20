@@ -29,6 +29,8 @@ function(request){
   var entityType = "vevent";
   var pathDavName = "AccessInfo/AccessInfo.json";
 
+  var calendarUrl = "https://www.googleapis.com/calendar/v3/calendars/";
+
   try {
     var personalBoxAccessor = _p.as("client").cell(pjvm.getCellName()).box(pjvm.getBoxName());
     var personalCollectionAccessor = personalBoxAccessor.odata(collectionName);
@@ -280,7 +282,186 @@ function(request){
               body : ['{"syncCompleted" : false}']
           };
         }
+      } else if (accessTokenSet.srcType == "Google"){
 
+        // initialization
+        var accessToken = null;
+        var host = null;
+        var port = null;
+        var user = null;
+        var pass = null;
+        var calendarId = null;
+        var refreshToken = null;
+        var pageToken = "";
+        var syncToken = "";
+        // get setting data
+        for(var i = 0; i < accessInfo.length; i++){
+          if (accessInfo[i].srcType == "Google" && accessInfo[i].id == accessTokenSet.id) {
+            host = accessInfo[i].host;
+            port = accessInfo[i].port;
+            user = accessInfo[i].user;
+            pass = accessInfo[i].pass;
+            accessToken = accessInfo[i].accesstoken;
+            refreshToken = accessInfo[i].refreshtoken;
+            calendarId = accessInfo[i].calendarid;
+          }
+        }
+        if (accessTokenSet.maxSyncResults == null) {
+          maxSyncResults = initMaxSyncResults;
+        } else {
+          maxSyncResults = accessTokenSet.maxSyncResults;
+        }
+
+        try {
+          var url = calendarUrl + calendarId + "/events" + "?maxResults=" + maxSyncResults + "&singleEvents=true";
+          var httpClient = new _p.extension.HttpClient();
+          httpClient.setProxy(host, Number(port), user, pass);
+          var headers = {'Authorization': 'Bearer ' + accessToken};
+          var response = { status: "", headers : {}, body :"" };
+          if(accessTokenSet.pagetoken){
+            // set page token
+            url += "&pageToken=" + accessTokenSet.pagetoken;
+          } 
+
+          response = httpClient.get(url, headers);
+          if(null == response){
+            // access token expire
+            // TODO:get accessToken
+            // retry
+            headers = {'Authorization': 'Bearer ' + accessToken};
+            response = httpClient.get(url, headers);
+          }
+        } catch (e) {
+          return Response(500, "Server Error : " + collectionName + " creating: " + e)
+        }
+
+        // parse calendar -> json
+        var responseJSON = JSON.parse(response.body);
+        var items = [];
+        items = responseJSON["items"];
+        pageToken = responseJSON["nextPageToken"];
+        syncToken = responseJSON["nextSyncToken"];
+        var results = [];
+  
+        //parse 
+        results = parseGoogleEvents(items);
+
+        // save pageToken
+        accessTokenSet.pagetoken = pageToken;
+        personalBoxAccessor.put(pathDavTokenName, "application/json", JSON.stringify(accessTokenSet));
+
+        // save accessToken,syncToken
+        for (var i = 0; i < accessInfo.length; i++) {
+          if(accessInfo[i].srcType == "Google" && accessInfo[i].id == accessTokenSet.id){
+            accessInfo[i].accesstoken = accessToken;
+            accessInfo[i].synctoken = syncToken;
+          }
+        }
+        personalBoxAccessor.put(pathDavName, "application/json", JSON.stringify(accessInfo));
+
+        var syncCount = 0;
+        var lastDate = null;
+        // data regist
+        for(var i = 0; i < results.length; i++) {
+          var exData = results[i];
+          exData.srcType = "Google";
+          exData.srcUrl = "";
+          exData.srcAccountName = calendarId;
+
+          var existFilter = "srcId eq '" + exData.srcId + "'";
+          var exist = personalEntityAccessor.query().filter(existFilter).run();
+
+          if (exist.d.results.length == 0) {
+            //Check whether it is recursive event or not
+            var existRecur = null;
+            try {
+              existRecur = personalEntityAccessor.retrieve(exData.__id);
+            } catch (e) {
+              if (e.code == 404) {
+                personalEntityAccessor.create(exData);
+                syncCount++;
+              } else {
+                return {
+                  status : 500,
+                  headers : {"Content-Type":"application/json"},
+                  body: [JSON.stringify({"error": e.message})]
+                };
+              }
+            }
+            if (existRecur != null) {
+              var addNum = "1";
+              var loopStatus = true;
+              do {
+                exData.__id = existRecur.__id + "_recur_" + addNum;
+                try {
+                  var exist2 = personalEntityAccessor.retrieve(exData.__id);
+                } catch (e) {
+                  if (e.code == 404) {
+                    personalEntityAccessor.create(exData);
+                    syncCount++;
+                    loopStatus = false;
+                  } else {
+                    return {
+                      status : 500,
+                      headers : {"Content-Type":"application/json"},
+                      body: [JSON.stringify({"error": e.message})]
+                    };
+                  }
+                }
+                if (loopStatus) {
+                  var addNumNext = Number(addNum) + Number(1);
+                  addNum = String(addNumNext);
+                }
+              } while (loopStatus);
+            }
+          } else if (exist.d.results.length == 1) {
+            if (Number(exist.d.results[0].srcUpdated.match(/\d+/)) < Number(exData.srcUpdated.match(/\d+/))) {
+              personalEntityAccessor.update(exist.d.results[0].__id, exData, "*");
+              syncCount++;
+            }
+          } else {
+            return {
+              status : 400,
+              headers : {"Content-Type":"application/json"},
+              body: [JSON.stringify({"error": "srcId filter is wrong."})]
+            };
+          }
+          lastDate = results[i].Start;
+        }
+
+        var nextStatus = null;
+        if (results.length == Number(maxSyncResults)) {
+          accessTokenSet.nextStart = lastDate;
+          nextStatus = false;
+          if (syncCount == 0) {
+            var nextMax = Number(maxSyncResults) + Number(initMaxSyncResults);
+            accessTokenSet.maxSyncResults = String(nextMax);
+          } else {
+            accessTokenSet.maxSyncResults = initMaxSyncResults;
+          }
+          personalBoxAccessor.put(pathDavTokenName, "application/json", JSON.stringify(accessTokenSet));
+        } else {
+          personalBoxAccessor.del(pathDavTokenName);
+          if (syncDavCnt == 1) {
+            nextStatus = true;
+          } else {
+            nextStatus = false;
+          }
+        }
+
+        if (nextStatus) {
+          return {
+              status: 200,
+              headers: {"Content-Type":"application/json"},
+              body : ['{"syncCompleted" : true}']
+          };
+        } else {
+          return {
+              status: 200,
+              headers: {"Content-Type":"application/json"},
+              body : ['{"syncCompleted" : false}']
+          };
+        }
       } else {  // e.g. Google
         // srcType is not EWS.
         // not supported now!
@@ -425,7 +606,189 @@ function(request){
               body : ['{"syncCompleted" : false}']
           };
         }
+      }else if (accessTokenSet.srcType == "Google"){
+        // initialization
+        var accessToken = null;
+        var host = null;
+        var port = null;
+        var user = null;
+        var pass = null;
+        var calendarId = null;
+        var refreshToken = null;
+        var syncToken = "";
+        // get setting data
+        for(var i = 0; i < accessInfo.length; i++){
+          if (accessInfo[i].srcType == "Google" && accessInfo[i].id == accessTokenSet.id) {
+            host = accessInfo[i].host;
+            port = accessInfo[i].port;
+            user = accessInfo[i].user;
+            pass = accessInfo[i].pass;
+            accessToken = accessInfo[i].accesstoken;
+            refreshToken = accessInfo[i].refreshtoken;
+            calendarId = accessInfo[i].calendarid;
+            syncToken = accessInfo[i].synctoken;
+          }
+        }
+        if (accessTokenSet.maxSyncResults == null) {
+          maxSyncResults = initMaxSyncResults;
+        } else {
+          maxSyncResults = accessTokenSet.maxSyncResults;
+        }
 
+        try {
+          var url = calendarUrl + calendarId + "/events" + "?maxResults=" + maxSyncResults + "&singleEvents=true";
+          var httpClient = new _p.extension.HttpClient();
+          httpClient.setProxy(host, Number(port), user, pass);
+          var headers = {'Authorization': 'Bearer ' + accessToken};
+          var response = { status: "", headers : {}, body :"" };
+          
+          if(null == syncToken){
+            return Response(500, "Server Error : Google syncToken is null")
+          }
+
+          url += "&syncToken=" + syncToken;
+          response = httpClient.get(url, headers);
+          if(null == response){
+            // access token expire
+            // TODO:get accessToken
+            // retry
+            headers = {'Authorization': 'Bearer ' + accessToken};
+            response = httpClient.get(url, headers);
+          }
+        } catch (e) {
+          return Response(500, "Server Error : " + collectionName + " creating: " + e)
+        }
+
+        // parse calendar -> json
+        var responseJSON = JSON.parse(response.body);
+        var items = [];
+        items = responseJSON["items"];
+        syncToken = responseJSON["nextSyncToken"];
+        var results = [];
+  
+        //parse 
+        results = parseGoogleEvents(items);
+        // save accessToken,syncToken
+        for (var i = 0; i < accessInfo.length; i++) {
+          if(accessInfo[i].srcType == "Google" && accessInfo[i].id == accessTokenSet.id){
+            accessInfo[i].accesstoken = accessToken;
+            accessInfo[i].synctoken = syncToken;
+          }
+        }
+        personalBoxAccessor.put(pathDavName, "application/json", JSON.stringify(accessInfo));
+
+        for(var i = 0; i < results.length; i++) {
+          var exData = results[i];
+          exData.srcType = "Google";
+          exData.srcUrl = "";
+          exData.srcAccountName = calendarId;
+
+          var existFilter = "srcId eq '" + exData.srcId + "'";
+          var exist = personalEntityAccessor.query().filter(existFilter).run();
+
+          if (exist.d.results.length == 0) {
+            //Check whether it is recursive event or not
+            var existRecur = null;
+            try {
+              existRecur = personalEntityAccessor.retrieve(exData.__id);
+            } catch (e) {
+              if (e.code == 404) {
+                personalEntityAccessor.create(exData);
+                syncCount++;
+              } else {
+                return {
+                  status : 500,
+                  headers : {"Content-Type":"application/json"},
+                  body: [JSON.stringify({"error": e.message})]
+                };
+              }
+            }
+            if (existRecur != null) {
+              var addNum = "1";
+              var loopStatus = true;
+              do {
+                exData.__id = existRecur.__id + "_recur_" + addNum;
+                try {
+                  var exist2 = personalEntityAccessor.retrieve(exData.__id);
+                } catch (e) {
+                  if (e.code == 404) {
+                    personalEntityAccessor.create(exData);
+                    syncCount++;
+                    loopStatus = false;
+                  } else {
+                    return {
+                      status : 500,
+                      headers : {"Content-Type":"application/json"},
+                      body: [JSON.stringify({"error": e.message})]
+                    };
+                  }
+                }
+                if (loopStatus) {
+                  var addNumNext = Number(addNum) + Number(1);
+                  addNum = String(addNumNext);
+                }
+              } while (loopStatus);
+            }
+          } else if (exist.d.results.length == 1) {
+            if (Number(exist.d.results[0].srcUpdated.match(/\d+/)) < Number(exData.srcUpdated.match(/\d+/))) {
+              personalEntityAccessor.update(exist.d.results[0].__id, exData, "*");
+              syncCount++;
+            }
+            var index = null;
+            index = accessTokenSet.checkList.indexOf(exData.srcId);
+            if (index != null) {
+              accessTokenSet.checkList.splice(index, 1);
+            }
+          } else {
+            return {
+              status : 400,
+              headers : {"Content-Type":"application/json"},
+              body: [JSON.stringify({"error": "srcId filter is wrong."})]
+            };
+          }
+          lastDate = results[i].Start;
+        }
+
+        var nextStatus = null;
+        if (results.length == Number(maxSyncResults)) {
+          accessTokenSet.nextStart = lastDate;
+          nextStatus = false;
+          if (syncCount == 0) {
+            var nextMax = Number(maxSyncResults) + Number(initMaxSyncResults);
+            accessTokenSet.maxSyncResults = String(nextMax);
+          } else {
+            accessTokenSet.maxSyncResults = initMaxSyncResults;
+          }
+          personalBoxAccessor.put(pathDavTokenName, "application/json", JSON.stringify(accessTokenSet));
+        } else {
+          //checkList に残っているsrcIdのエントリーを削除
+          for(var i = 0; i < accessTokenSet.checkList.length; i++) {
+            var checkFilter = "srcId eq '" + accessTokenSet.checkList[i] + "'";
+            var deleteIndex = personalEntityAccessor.query().filter(checkFilter).run();
+            personalEntityAccessor.del(deleteIndex.d.results[0].__id);
+          }
+
+          personalBoxAccessor.del(pathDavTokenName);
+          if (syncDavCnt == 1) {
+            nextStatus = true;
+          } else {
+            nextStatus = false;
+          }
+        }
+
+        if (nextStatus) {
+          return {
+              status: 200,
+              headers: {"Content-Type":"application/json"},
+              body : ['{"syncCompleted" : true}']
+          };
+        } else {
+          return {
+              status: 200,
+              headers: {"Content-Type":"application/json"},
+              body : ['{"syncCompleted" : false}']
+          };
+        }
       } else {  // e.g. Google
         // srcType is not EWS.
         // not supported now!
@@ -481,4 +844,59 @@ exchangeDataEwsToJcal = function(inData) {
     organizer: inData.Organizer,
     attendees: attendees
   };
+}
+
+function Response(code, strBody){
+  return {
+    status : code,
+    headers : {"Content-Type":"application/json"},
+    body: [strBody]
+  };
+}
+
+//yyyy-MM-ddTHH:mm:ss+09:00 -> yyyy/MM/dd HH:mm:ss
+function toUTC(str){
+  var split = str.split("+");
+  var repl = split[0].replace("T"," ");
+  repl = repl.replace(/-/g, "/");
+  var newdate = Date.parse(new Date(repl));
+  return newdate;
+}
+
+function parseGoogleEvents(items){
+  var results = [];
+  for(var i = 0; i < items.length; i++){
+
+    var result = {};
+    result.__id = items[i].id;
+    result.srcId = items[i].id;
+
+    var newdate = toUTC(items[i].start.dateTime);
+    result.uxtDtstart = newdate;
+    result.dtstart = "/Date(" + newdate + ")/";
+
+    newdate = toUTC(items[i].end.dateTime);
+    result.uxtDtend = newdate;
+    result.dtend = "/Date(" + newdate + ")/";
+
+    newdate = Date.parse(new Date(items[i].updated));
+    result.uxtUpdated = newdate;
+    result.srcUpdated = "/Date(" + newdate + ")/";
+
+    result.summary = items[i].summary;
+    result.description = items[i].description;
+    result.location = items[i].location;
+    result.organizer = items[i].organizer.email;
+
+    if(items[i].attendees != null){
+      var list = [];
+      for(var j = 0; j < items[i].attendees.length; j++){
+        list.push(items[i].attendees[j].email);
+      }
+      result.attendees = list;
+    }
+    results.push(result);
+  }
+
+  return results;
 }
