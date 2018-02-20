@@ -147,12 +147,12 @@ function(request) {
         var accessToken = null;
         var refreshToken = null;
         for(var i = 0; i < accessInfo.length; i++){
-          if (accessInfo[i].srcType == "Google") {
+          if (accessInfo[i].srcType == "Google" && setInfo.id == accessInfo[i].id) {
             accessToken = setInfo.accessToken;
             refreshToken = setInfo.refreshToken;
           }
         }
-        if (accesstoken == null || refreshToken == null){
+        if (accessToken == null || refreshToken == null){
           return {
             status : 400,
             headers : {"Content-Type":"application/json"},

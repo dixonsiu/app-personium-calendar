@@ -29,6 +29,8 @@ function(request){
   var entityType = "vevent";
   var pathDavName = "AccessInfo/AccessInfo.json";
 
+  var calendarUrl = "https://www.googleapis.com/calendar/v3/calendars/";
+
   try {
     var personalBoxAccessor = _p.as("client").cell(pjvm.getCellName()).box(pjvm.getBoxName());
     var personalCollectionAccessor = personalBoxAccessor.odata(collectionName);
@@ -294,7 +296,7 @@ function(request){
         var syncToken = "";
         // get setting data
         for(var i = 0; i < accessInfo.length; i++){
-          if (accessInfo[i].srcType == "Google") {
+          if (accessInfo[i].srcType == "Google" && accessInfo[i].id == accessTokenSet.id) {
             host = accessInfo[i].host;
             port = accessInfo[i].port;
             user = accessInfo[i].user;
@@ -311,15 +313,15 @@ function(request){
         }
 
         try {
-          var url = "https://www.googleapis.com/calendar/v3/calendars/" + calendarId + "/events" + "?maxResults=" + maxSyncResults + "&singleEvents=true";
+          var url = calendarUrl + calendarId + "/events" + "?maxResults=" + maxSyncResults + "&singleEvents=true";
           var httpClient = new _p.extension.HttpClient();
           httpClient.setProxy(host, Number(port), user, pass);
           var headers = {'Authorization': 'Bearer ' + accessToken};
           var response = { status: "", headers : {}, body :"" };
-          if(null != accessTokenSet.pagetoken){
+          if(accessTokenSet.pagetoken){
             // set page token
             url += "&pageToken=" + accessTokenSet.pagetoken;
-          } 
+          }
 
           response = httpClient.get(url, headers);
           if(null == response){
@@ -340,8 +342,8 @@ function(request){
         pageToken = responseJSON["nextPageToken"];
         syncToken = responseJSON["nextSyncToken"];
         var results = [];
-  
-        //parse 
+
+        //parse
         results = parseGoogleEvents(items);
 
         // save pageToken
@@ -350,7 +352,7 @@ function(request){
 
         // save accessToken,syncToken
         for (var i = 0; i < accessInfo.length; i++) {
-          if(accessInfo[i].srcType == "Google"){
+          if(accessInfo[i].srcType == "Google" && accessInfo[i].id == accessTokenSet.id){
             accessInfo[i].accesstoken = accessToken;
             accessInfo[i].synctoken = syncToken;
           }
@@ -616,7 +618,7 @@ function(request){
         var syncToken = "";
         // get setting data
         for(var i = 0; i < accessInfo.length; i++){
-          if (accessInfo[i].srcType == "Google") {
+          if (accessInfo[i].srcType == "Google" && accessInfo[i].id == accessTokenSet.id) {
             host = accessInfo[i].host;
             port = accessInfo[i].port;
             user = accessInfo[i].user;
@@ -634,12 +636,12 @@ function(request){
         }
 
         try {
-          var url = "https://www.googleapis.com/calendar/v3/calendars/" + calendarId + "/events" + "?maxResults=" + maxSyncResults + "&singleEvents=true";
+          var url = calendarUrl + calendarId + "/events" + "?maxResults=" + maxSyncResults + "&singleEvents=true";
           var httpClient = new _p.extension.HttpClient();
           httpClient.setProxy(host, Number(port), user, pass);
           var headers = {'Authorization': 'Bearer ' + accessToken};
           var response = { status: "", headers : {}, body :"" };
-          
+
           if(null == syncToken){
             return Response(500, "Server Error : Google syncToken is null")
           }
@@ -663,12 +665,12 @@ function(request){
         items = responseJSON["items"];
         syncToken = responseJSON["nextSyncToken"];
         var results = [];
-  
-        //parse 
+
+        //parse
         results = parseGoogleEvents(items);
         // save accessToken,syncToken
         for (var i = 0; i < accessInfo.length; i++) {
-          if(accessInfo[i].srcType == "Google"){
+          if(accessInfo[i].srcType == "Google" && accessInfo[i].id == accessTokenSet.id){
             accessInfo[i].accesstoken = accessToken;
             accessInfo[i].synctoken = syncToken;
           }
