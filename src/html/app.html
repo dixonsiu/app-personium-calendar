@@ -32,18 +32,20 @@
       <span class="sr-only">Loading...</span>
   </div>
   <div class="myHiddenDiv">
-    <header>
+    <header class="navbar navbar-fixed-top">
+      <a id="menuIcon" href="#" onclick="Common.openSlide();">
+        <i class="fa fa-bars fa-2x fa-fw"></i>
+      </a>
       <h1 data-i18n="glossary:title"></h1>
       <a id="updateIcon" href="#" onclick="syncData();return false;">
         <i class="fa fa-refresh fa-2x fa-fw"></i>
         <span class="sr-only">Updating...</span>
       </a>
-      <a id="menuIcon" href="#" onclick="Common.openSlide();">
-        <i class="fa fa-bars fa-2x fa-fw"></i>
-      </a>
     </header>
-    <div id="dispMsg" style="display:none;"></div>
-    <div id='calendar'></div>
+    <div id="dispMsg" class="container" style="display:none;"></div>
+    <div class="container">
+      <div id='calendar'></div>
+    </div>
     <div class="slide-menu">
       <h1 data-i18n="menu.title"></h1>
       <table class="menu-title">
