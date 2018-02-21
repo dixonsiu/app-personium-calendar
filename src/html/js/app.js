@@ -565,7 +565,7 @@ displayAccountRegistrationDialog = function() {
                     '<span data-i18n="glossary:Account.ID"></span>',
                 '</div>',
                 '<div class="col-sm-11 col-md-11">',
-                    '<input type="text" id="id">',
+                    '<input type="text" id="idCalendarAccount" name="idCalendarAccount">',
                 '</div>',
             '</div>',
             '<div class="row">',
@@ -573,7 +573,7 @@ displayAccountRegistrationDialog = function() {
                     '<span data-i18n="glossary:Account.Password"></span>',
                 '</div>',
                 '<div class="col-sm-11 col-md-11">',
-                    '<input type="password" id="pw">',
+                    '<input type="password" id="pwCalendarAccount" name="pwCalendarAccount">',
                 '</div>',
             '</div>',
         '</div>',
@@ -610,8 +610,8 @@ registerAccount = function() {
 setAccessInfoAPI = function(method) {
     let srcType = $('[name=srcType]:checked').val();
     let srcUrl = $('#srcUrl').val();
-    let id = $('#id').val();
-    let pw = $('#pw').val();
+    let id = $('#idCalendarAccount').val();
+    let pw = $('#pwCalendarAccount').val();
     return $.ajax({
         type: method,
         url: Common.getBoxUrl() + 'Engine/setAccessInfo',
@@ -696,7 +696,7 @@ displayAccountModificationDialog = function(aDom, accountInfo) {
                     '<span data-i18n="glossary:Account.ID"></span>',
                 '</div>',
                 '<div class="col-sm-11 col-md-11">',
-                    '<input type="text" id="id">',
+                    '<input type="text" id="idCalendarAccount" name="idCalendarAccount">',
                 '</div>',
             '</div>',
             '<div class="row">',
@@ -704,7 +704,7 @@ displayAccountModificationDialog = function(aDom, accountInfo) {
                     '<span data-i18n="glossary:Account.Password"></span>',
                 '</div>',
                 '<div class="col-sm-11 col-md-11">',
-                    '<input type="password" id="pw">',
+                    '<input type="password" id="pwCalendarAccount" name="pwCalendarAccount">',
                 '</div>',
             '</div>',
         '</div>',
