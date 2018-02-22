@@ -11,8 +11,7 @@ getNamesapces = function() {
 
 additionalCallback = function() {
     $('#dvOverlay').on('click', function() {
-        $(this).removeClass('overlay-on');
-        $(".slide-menu").removeClass('slide-on');
+        Common.closeSlide();
     });
 
     Common.setIdleTime();
@@ -59,7 +58,7 @@ createTitleHeader = function(settingFlg, menuFlg) {
     let editMenu = createEditMenu(menuFlg);
 
     $(setHtmlId)
-        .append($(backBtn), $(backBtnTitle), $(title), $(editMenu))
+        .append($(editMenu), $(backBtn), $(backBtnTitle), $(title))
         .localize();
 };
 
@@ -71,7 +70,6 @@ createBackBtn = function(backMenuId) {
 
     let aTag = $('<a>', {
         class: 'allToggle prev-icon',
-        style: 'float:left;',
         href: '#',
         onClick: 'moveBackahead();return false;'
     });
@@ -150,26 +148,6 @@ toggleEditMenu = function(aDom) {
     }
 };
 
-toggleSlide = function() {
-//    $(".overlay").toggleClass('overlay-on');
-//    $(".slide-menu").toggleClass('slide-on');
-
-    var menu = $('.slide-nav');
-    var overlay = $('#dvOverlay');
-    var menuWidth = menu.outerWidth();
-
-    menu.toggleClass('open');
-    if(menu.hasClass('open')){
-        // show menu
-        menu.animate({'right' : 0 }, 300);
-        overlay.fadeIn();
-    } else {
-        // hide menu
-        menu.animate({'right' : -menuWidth }, 300);
-        overlay.fadeOut();
-    }
-}
-
 moveBackahead = function() {
     var no = Common.settingNowPage;
     switch (no) {
@@ -190,7 +168,7 @@ moveBackahead = function() {
     if (Common.settingNowPage >= 1) {
         setTitleMenu(Common.settingNowTitle[Common.settingNowPage], true);
     }
-}
+};
 
 closeSetting = function() {
     $(".setting-menu").toggleClass("slide-on");
@@ -236,6 +214,7 @@ setTitleMenu = function(title, flg) {
  * 2. Register account button
  */
 displayAccountPanel = function() {
+    Common.closeSlide();
     $("#setting-panel1").remove();
     setBackahead(true);
     setTitleMenu("glossary:Account.label", true);
@@ -586,7 +565,7 @@ displayAccountRegistrationDialog = function() {
                     '<span data-i18n="glossary:Account.ID"></span>',
                 '</div>',
                 '<div class="col-sm-11 col-md-11">',
-                    '<input type="text" id="id">',
+                    '<input type="text" id="idCalendarAccount" name="idCalendarAccount">',
                 '</div>',
             '</div>',
             '<div class="row">',
@@ -594,7 +573,7 @@ displayAccountRegistrationDialog = function() {
                     '<span data-i18n="glossary:Account.Password"></span>',
                 '</div>',
                 '<div class="col-sm-11 col-md-11">',
-                    '<input type="password" id="pw">',
+                    '<input type="password" id="pwCalendarAccount" name="pwCalendarAccount">',
                 '</div>',
             '</div>',
         '</div>',
@@ -631,8 +610,8 @@ registerAccount = function() {
 setAccessInfoAPI = function(method) {
     let srcType = $('[name=srcType]:checked').val();
     let srcUrl = $('#srcUrl').val();
-    let id = $('#id').val();
-    let pw = $('#pw').val();
+    let id = $('#idCalendarAccount').val();
+    let pw = $('#pwCalendarAccount').val();
     return $.ajax({
         type: method,
         url: Common.getBoxUrl() + 'Engine/setAccessInfo',
@@ -717,7 +696,7 @@ displayAccountModificationDialog = function(aDom, accountInfo) {
                     '<span data-i18n="glossary:Account.ID"></span>',
                 '</div>',
                 '<div class="col-sm-11 col-md-11">',
-                    '<input type="text" id="id">',
+                    '<input type="text" id="idCalendarAccount" name="idCalendarAccount">',
                 '</div>',
             '</div>',
             '<div class="row">',
@@ -725,7 +704,7 @@ displayAccountModificationDialog = function(aDom, accountInfo) {
                     '<span data-i18n="glossary:Account.Password"></span>',
                 '</div>',
                 '<div class="col-sm-11 col-md-11">',
-                    '<input type="password" id="pw">',
+                    '<input type="password" id="pwCalendarAccount" name="pwCalendarAccount">',
                 '</div>',
             '</div>',
         '</div>',
