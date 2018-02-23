@@ -332,7 +332,7 @@ function(request){
             response = httpClient.get(url, headers);
           }
         } catch (e) {
-          return Response(500, "Server Error : " + collectionName + " creating: " + e)
+          return Response(400, '{"srcType" : "Google"}')
         }
 
         // parse calendar -> json
@@ -366,7 +366,7 @@ function(request){
           var exData = results[i];
           exData.srcType = "Google";
           exData.srcUrl = "";
-          exData.srcAccountName = calendarId;
+          exData.srcAccountName = accessTokenSet.id;
 
           var existFilter = "srcId eq '" + exData.srcId + "'";
           var exist = personalEntityAccessor.query().filter(existFilter).run();
@@ -643,7 +643,7 @@ function(request){
           var response = { status: "", headers : {}, body :"" };
           
           if(null == syncToken){
-            return Response(500, "Server Error : Google syncToken is null")
+            return Response(500, '{"Server Error" : "Google syncToken is null"}')
           }
 
           url += "&syncToken=" + syncToken;
@@ -656,7 +656,7 @@ function(request){
             response = httpClient.get(url, headers);
           }
         } catch (e) {
-          return Response(500, "Server Error : " + collectionName + " creating: " + e)
+          return Response(400, '{"srcType": "Google"}')
         }
 
         // parse calendar -> json
@@ -681,7 +681,7 @@ function(request){
           var exData = results[i];
           exData.srcType = "Google";
           exData.srcUrl = "";
-          exData.srcAccountName = calendarId;
+          exData.srcAccountName = accessTokenSet.id;
 
           var existFilter = "srcId eq '" + exData.srcId + "'";
           var exist = personalEntityAccessor.query().filter(existFilter).run();
