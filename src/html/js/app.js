@@ -190,10 +190,10 @@ setBackahead = function(flg) {
         $('.edit-menu').hide();
     }
     if (document.getElementById('setting-panel' + Common.settingNowPage) == null) {
-        $("#" + boardId).append('<div class="panel list-group ' + toggleClass + '" id="setting-panel' + Common.settingNowPage + '"></div>');
+        $("#" + boardId).append('<div style="height:100%;overflow:auto;padding-bottom:85px;" class="panel list-group ' + toggleClass + '" id="setting-panel' + Common.settingNowPage + '"></div>');
     }
     if (document.getElementById('setting-panel' + (Common.settingNowPage + 1)) == null) {
-        $("#" + boardId).append('<div class="panel list-group toggle-panel" id="setting-panel' + (Common.settingNowPage + 1) + '"></div>');
+        $("#" + boardId).append('<div style="height:100%;overflow:auto;padding-bottom:85px;" class="panel list-group toggle-panel" id="setting-panel' + (Common.settingNowPage + 1) + '"></div>');
     }
 }
 
