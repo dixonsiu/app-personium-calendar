@@ -1,7 +1,7 @@
 /*
  * Create VCalendar's events from the specified server.
  *  Input:
- *     srcUrl, Id
+ *     srcUrl, srcAccountName 
  *     syncPeriod
  *
  */
@@ -76,15 +76,15 @@ function(request){
 
     for (var i = 0; i < accessInfo.length; i++) {
       try {
-        var pathDavTokenName = pathDavToken + accessInfo[i].id + ".json";
+        var pathDavTokenName = pathDavToken + accessInfo[i].srcAccountName + ".json";
         var tokenSet = personalBoxAccessor.getString(pathDavTokenName);
         var accessTokenSet = JSON.parse(tokenSet);
 
         if (accessTokenSet.syncType == "FIRST") {
-          firstSync = accessTokenSet.id;
+          firstSync = accessTokenSet.srcAccountName;
           syncDavCnt++;
         } else {
-          diffSync = accessTokenSet.id;
+          diffSync = accessTokenSet.srcAccountName;
           syncDavCnt++;
         }
       } catch (e) {
@@ -107,7 +107,7 @@ function(request){
 
       for (var i = 0; i < accessInfo.length; i++) {
         var accessTokenSet = accessInfo[i];
-        var pathDavTokenName = pathDavToken + accessTokenSet.id + ".json";
+        var pathDavTokenName = pathDavToken + accessTokenSet.srcAccountName + ".json";
 
         accessTokenSet.syncType = "DIFF";
         accessTokenSet.maxSyncResults = initMaxSyncResults;
@@ -150,7 +150,7 @@ function(request){
       if (accessTokenSet.srcType == "EWS") {
         try {
           ews = new _p.extension.Ews();
-          ews.createService(accessTokenSet.id, accessTokenSet.pw);
+          ews.createService(accessTokenSet.srcAccountName, accessTokenSet.pw);
           ews.setUrl(accessTokenSet.srcUrl);
         } catch (e) {
           return {
@@ -186,7 +186,7 @@ function(request){
           var exData = exchangeDataEwsToJcal(results[i]);
           exData.srcType = "EWS";
           exData.srcUrl = accessTokenSet.srcUrl;
-          exData.srcAccountName = accessTokenSet.id;
+          exData.srcAccountName = accessTokenSet.srcAccountName;
 
           var existFilter = "srcId eq '" + exData.srcId + "'";
           var exist = personalEntityAccessor.query().filter(existFilter).run();
@@ -296,7 +296,7 @@ function(request){
         var syncToken = "";
         // get setting data
         for(var i = 0; i < accessInfo.length; i++){
-          if (accessInfo[i].srcType == "Google" && accessInfo[i].id == accessTokenSet.id) {
+          if (accessInfo[i].srcType == accessTokenSet.srcType && accessInfo[i].srcAccountName == accessTokenSet.srcAccountName) {
             host = accessInfo[i].host;
             port = accessInfo[i].port;
             user = accessInfo[i].user;
@@ -352,7 +352,7 @@ function(request){
 
         // save accessToken,syncToken
         for (var i = 0; i < accessInfo.length; i++) {
-          if(accessInfo[i].srcType == "Google" && accessInfo[i].id == accessTokenSet.id){
+          if(accessInfo[i].srcType == accessTokenSet.srcType && accessInfo[i].srcAccountName == accessTokenSet.srcAccountName){
             accessInfo[i].accesstoken = accessToken;
             accessInfo[i].synctoken = syncToken;
           }
@@ -366,7 +366,7 @@ function(request){
           var exData = results[i];
           exData.srcType = "Google";
           exData.srcUrl = "";
-          exData.srcAccountName = accessTokenSet.id;
+          exData.srcAccountName = accessTokenSet.srcAccountName;
 
           var existFilter = "srcId eq '" + exData.srcId + "'";
           var exist = personalEntityAccessor.query().filter(existFilter).run();
@@ -480,7 +480,7 @@ function(request){
       if (accessTokenSet.srcType == "EWS") {
         try {
           ews = new _p.extension.Ews();
-          ews.createService(accessTokenSet.id, accessTokenSet.pw);
+          ews.createService(accessTokenSet.srcAccountName, accessTokenSet.pw);
           ews.setUrl(accessTokenSet.srcUrl);
         } catch (e) {
           return {
@@ -498,7 +498,7 @@ function(request){
           var exData = exchangeDataEwsToJcal(results[i]);
           exData.srcType = "EWS";
           exData.srcUrl = accessTokenSet.srcUrl;
-          exData.srcAccountName = accessTokenSet.id;
+          exData.srcAccountName = accessTokenSet.srcAccountName;
 
           var existFilter = "srcId eq '" + exData.srcId + "'";
           var exist = personalEntityAccessor.query().filter(existFilter).run();
@@ -618,7 +618,7 @@ function(request){
         var syncToken = "";
         // get setting data
         for(var i = 0; i < accessInfo.length; i++){
-          if (accessInfo[i].srcType == "Google" && accessInfo[i].id == accessTokenSet.id) {
+          if (accessInfo[i].srcType == accessTokenSet.srcType && accessInfo[i].srcAccountName == accessTokenSet.srcAccountName) {
             host = accessInfo[i].host;
             port = accessInfo[i].port;
             user = accessInfo[i].user;
@@ -670,7 +670,7 @@ function(request){
         results = parseGoogleEvents(items);
         // save accessToken,syncToken
         for (var i = 0; i < accessInfo.length; i++) {
-          if(accessInfo[i].srcType == "Google" && accessInfo[i].id == accessTokenSet.id){
+          if(accessInfo[i].srcType == accessTokenSet.srcType && accessInfo[i].srcAccountName == accessTokenSet.srcAccountName){
             accessInfo[i].accesstoken = accessToken;
             accessInfo[i].synctoken = syncToken;
           }
@@ -681,7 +681,7 @@ function(request){
           var exData = results[i];
           exData.srcType = "Google";
           exData.srcUrl = "";
-          exData.srcAccountName = accessTokenSet.id;
+          exData.srcAccountName = accessTokenSet.srcAccountName;
 
           var existFilter = "srcId eq '" + exData.srcId + "'";
           var exist = personalEntityAccessor.query().filter(existFilter).run();

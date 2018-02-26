@@ -67,17 +67,9 @@ function(request){
           body: [JSON.stringify({"error": e.message})]
         };
       }
-      for (var i = 0; i < accInfo.length; i++) {
-        if (accInfo[i].srcType == vEvent.srcType && accInfo[i].id == vEvent.srcAccountName) {
-          accessInfo = accInfo[i];
-        }
-      }
+      accessInfo = getAccessInfo(accInfo, vEvent);
     } else { // POST
-      for (var i = 0; i < accInfo.length; i++) {
-        if (accInfo[i].srcType == params.srcType && accInfo[i].id == params.id) {
-          accessInfo = accInfo[i];
-        }
-      }
+      accessInfo = getAccessInfo(accInfo, params);
     }
 
 
@@ -86,7 +78,7 @@ function(request){
       if (vEvent.srcType == "EWS") {
         try {
           ews = new _p.extension.Ews();
-          ews.createService(accessInfo.id, accessInfo.pw);
+          ews.createService(accessInfo.srcAccountName, accessInfo.pw);
           ews.setUrl(accessInfo.srcUrl);
         } catch (e) {
           return {
@@ -106,7 +98,7 @@ function(request){
         exData.__id = vEvent.__id;
         exData.srcType = "EWS";
         exData.srcUrl = accessInfo.srcUrl;
-        exData.srcAccountName = accessInfo.id;
+        exData.srcAccountName = accessInfo.srcAccountName;
 
         personalEntityAccessor.update(exData.__id, exData, "*");
       } else if(vEvent.srcType == "Google"){
@@ -163,7 +155,7 @@ function(request){
         exData.__id = vEvent.__id;
         exData.srcType = "Google";
         exData.srcUrl = "";
-        exData.srcAccountName = accessInfo.id;
+        exData.srcAccountName = accessInfo.srcAccountName;
 
         personalEntityAccessor.update(exData.__id, exData, "*");
 
@@ -182,7 +174,7 @@ function(request){
       if (vEvent.srcType == "EWS") {
         try {
           ews = new _p.extension.Ews();
-          ews.createService(accessInfo.id, accessInfo.pw);
+          ews.createService(accessInfo.srcAccountName, accessInfo.pw);
           ews.setUrl(accessInfo.srcUrl);
         } catch (e) {
           return {
@@ -243,7 +235,7 @@ function(request){
           };
         }
 
-        if(null != response){
+        if(response){
           var status = JSON.parse(response.status);
           if(NO_CONTENT == status){
             personalEntityAccessor.del(vEvent.__id);
@@ -270,7 +262,7 @@ function(request){
       if (params.srcType == "EWS") {
         try {
           ews = new _p.extension.Ews();
-          ews.createService(accessInfo.id, accessInfo.pw);
+          ews.createService(accessInfo.srcAccountName, accessInfo.pw);
           ews.setUrl(accessInfo.srcUrl);
         } catch (e) {
           return {
@@ -285,7 +277,7 @@ function(request){
         var exData = exchangeDataEwsToJcal(result);
         exData.srcType = "EWS";
         exData.srcUrl = accessInfo.srcUrl;
-        exData.srcAccountName = accessInfo.id;
+        exData.srcAccountName = accessInfo.srcAccountName;
         var exist = null;
         try {
           exist = personalEntityAccessor.retrieve(exData.__id);
@@ -393,7 +385,7 @@ function(request){
 
         exData.srcType = "Google";
         exData.srcUrl = "";
-        exData.srcAccountName = accessInfo.id;
+        exData.srcAccountName = accessInfo.srcAccountName;
         var exist = null;
 
         try {
@@ -410,7 +402,7 @@ function(request){
           }
         }
 
-        if (exist != null) {
+        if (exist) {
           var addNum = "1";
           var loopStatus = true;
           do {
@@ -532,7 +524,7 @@ function parseGoogleEvent(item){
   result.location = item.location;
   result.organizer = item.organizer.email;
 
-  if(item.attendees != null){
+  if(item.attendees){
     var list = [];
     for(var j = 0; j < item.attendees.length; j++){
       list.push(item.attendees[j].email);
@@ -566,7 +558,7 @@ function toGoogleEvent(params){
   var org = {"email":params.organizer}
   result.organizer = org;
   
-  if(params.attendees != null){
+  if(params.attendees){
     var list = [];
     for(var j = 0; j < params.attendees.length; j++){
       list.push(params.attendees[j].email);
@@ -575,4 +567,14 @@ function toGoogleEvent(params){
   }
 
   return JSON.stringify(result);
+}
+
+function getAccessInfo(accInfo, temp){
+  var accessInfo = {};
+  for (var i = 0; i < accInfo.length; i++) {
+    if (accInfo[i].srcType == temp.srcType && accInfo[i].srcAccountName == temp.srcAccountName) {
+      accessInfo = accInfo[i];
+    }
+  }
+  return accessInfo;
 }
