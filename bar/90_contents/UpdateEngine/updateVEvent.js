@@ -574,6 +574,7 @@ function getAccessInfo(accInfo, temp){
   for (var i = 0; i < accInfo.length; i++) {
     if (accInfo[i].srcType == temp.srcType && accInfo[i].srcAccountName == temp.srcAccountName) {
       accessInfo = accInfo[i];
+      break;
     }
   }
   return accessInfo;
