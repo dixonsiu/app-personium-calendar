@@ -1,15 +1,15 @@
 /*
  * Add/Update/Delete an AccessInfo entry (array item in the AccessInfo.json file)
  * ADD
- *  1. Receive access info (srcType, srcUrl, id, pw) from request parameters
+ *  1. Receive access info (srcType, srcUrl, srcAccountName, pw) from request parameters
  *  2. Validate the access info by user authentication
  *  3. Read the file, add validated access info into the array and save file
  * UPDATE
- *  1. Receive access info (srcType, srcUrl, id, pw) from request parameters
+ *  1. Receive access info (srcType, srcUrl, srcAccountName, pw) from request parameters
  *  2. Validate the access info by user authentication
  *  3. Read the file, replace the corresponding array item with validated access info and save file
  * DELETE
- *  1. Receive srcUrl and id from request parameters
+ *  1. Receive srcUrl and srcAccountName from request parameters
  *  2. Read the file, remove the corresponding array item and save file
  */
 
@@ -74,7 +74,7 @@ function(request) {
         accessInfo = JSON.parse(info);
         for(var i = 0; i < accessInfo.length; i++) {
           if (setInfo.srcType == "EWS") {
-            if (setInfo.srcType == accessInfo[i].srcType && setInfo.id == accessInfo[i].id && setInfo.pw == accessInfo[i].pw) {
+            if (setInfo.srcType == accessInfo[i].srcType && setInfo.srcAccountName == accessInfo[i].srcAccountName && setInfo.pw == accessInfo[i].pw) {
               return {
                 status : 400,
                 headers : {"Content-Type":"application/json"},
@@ -82,7 +82,7 @@ function(request) {
               };
             }
           } else {
-            if (setInfo.srcType == accessInfo[i].srcType && setInfo.id == accessInfo[i].id && setInfo.pw == accessInfo[i].pw && setInfo.srcUrl == accessInfo[i].srcUrl) {
+            if (setInfo.srcType == accessInfo[i].srcType && setInfo.srcAccountName == accessInfo[i].srcAccountName && setInfo.pw == accessInfo[i].pw && setInfo.srcUrl == accessInfo[i].srcUrl) {
               return {
                 status : 400,
                 headers : {"Content-Type":"application/json"},
@@ -104,8 +104,8 @@ function(request) {
       if (setInfo.srcType == "EWS") {
         try {
           ews = new _p.extension.Ews();
-          ews.createService(setInfo.id, setInfo.pw);
-          setInfo.srcUrl = ews.autodiscoverUrl(setInfo.id);
+          ews.createService(setInfo.srcAccountName, setInfo.pw);
+          setInfo.srcUrl = ews.autodiscoverUrl(setInfo.srcAccountName);
         } catch (e) {
           return {
             status : 400,
@@ -118,7 +118,7 @@ function(request) {
         personalBoxAccessor.put(pathDavName, "application/json", JSON.stringify(accessInfo));
 
         try {
-          var pathDavTokenName = pathDavToken + setInfo.id + ".json";
+          var pathDavTokenName = pathDavToken + setInfo.srcAccountName + ".json";
           var tokenSet = personalBoxAccessor.getString(pathDavTokenName);
 
           return {
@@ -147,7 +147,7 @@ function(request) {
         var accessToken = null;
         var refreshToken = null;
         for(var i = 0; i < accessInfo.length; i++){
-          if (accessInfo[i].srcType == "Google" && setInfo.id == accessInfo[i].id) {
+          if (setInfo.srcType == accessInfo[i].srcType && setInfo.srcAccountName == accessInfo[i].srcAccountName) {
             accessToken = setInfo.accessToken;
             refreshToken = setInfo.refreshToken;
           }
@@ -161,7 +161,7 @@ function(request) {
         }
 
         try {
-          var pathDavTokenName = pathDavToken + setInfo.id + ".json";
+          var pathDavTokenName = pathDavToken + setInfo.srcAccountName + ".json";
           var tokenSet = personalBoxAccessor.getString(pathDavTokenName);
 
           return {
@@ -201,11 +201,11 @@ function(request) {
         accessInfo = JSON.parse(info);
         for(var i = 0; i < accessInfo.length; i++) {
           if (setInfo.srcType == "EWS") {
-            if (setInfo.srcType == accessInfo[i].srcType && setInfo.id == accessInfo[i].id && setInfo.pw != accessInfo[i].pw) {
+            if (setInfo.srcType == accessInfo[i].srcType && setInfo.srcAccountName == accessInfo[i].srcAccountName && setInfo.pw != accessInfo[i].pw) {
               try {
                 ews = new _p.extension.Ews();
-                ews.createService(setInfo.id, setInfo.pw);
-                accessUrl = ews.autodiscoverUrl(setInfo.id);
+                ews.createService(setInfo.srcAccountName, setInfo.pw);
+                accessUrl = ews.autodiscoverUrl(setInfo.srcAccountName);
               } catch (e) {
                 return {
                   status : 400,
@@ -216,7 +216,7 @@ function(request) {
               accessInfo[i].srcUrl = accessUrl;
               accessInfo[i].pw = setInfo.pw;
               personalBoxAccessor.put(pathDavName, "application/json", JSON.stringify(accessInfo));
-            } else if (setInfo.srcType == accessInfo[i].srcType && setInfo.id == accessInfo[i].id && setInfo.pw == accessInfo[i].pw) {
+            } else if (setInfo.srcType == accessInfo[i].srcType && setInfo.srcAccountName == accessInfo[i].srcAccountName && setInfo.pw == accessInfo[i].pw) {
               return {
                 status : 400,
                 headers : {"Content-Type":"application/json"},
@@ -230,7 +230,7 @@ function(request) {
               };
             }
           } else {
-            if (setInfo.srcType == accessInfo[i].srcType && setInfo.id == accessInfo[i].id && setInfo.pw == accessInfo[i].pw && setInfo.srcUrl == accessInfo[i].srcUrl) {
+            if (setInfo.srcType == accessInfo[i].srcType && setInfo.srcAccountName == accessInfo[i].srcAccountName && setInfo.pw == accessInfo[i].pw && setInfo.srcUrl == accessInfo[i].srcUrl) {
               return {
                 status : 400,
                 headers : {"Content-Type":"application/json"},
@@ -258,7 +258,7 @@ function(request) {
 
     } else if (request.method === "DELETE") {
       try {
-        var pathDavTokenName = pathDavToken + setInfo.id + ".json";
+        var pathDavTokenName = pathDavToken + setInfo.srcAccountName + ".json";
         var tokenSet = personalBoxAccessor.del(pathDavTokenName);
       } catch (e) {
         // No pathData is OK.
@@ -270,11 +270,11 @@ function(request) {
         accessInfo = JSON.parse(info);
         for(var i = 0; i < accessInfo.length; i++) {
           if (setInfo.srcUrl) {
-            if (setInfo.id == accessInfo[i].id && setInfo.srcUrl == accessInfo[i].srcUrl) {
+            if (setInfo.srcAccountName == accessInfo[i].srcAccountName && setInfo.srcUrl == accessInfo[i].srcUrl) {
               delNum = i;
             }
           } else {
-            if (setInfo.id == accessInfo[i].id) {
+            if (setInfo.srcAccountName == accessInfo[i].srcAccountName) {
               delNum = i;
             }
           }
@@ -293,7 +293,7 @@ function(request) {
         return {
           status : 400,
           headers : {"Content-Type":"application/json"},
-          body: [JSON.stringify({"error": "Required id(" + setInfo.id + ") not exist."})]
+          body: [JSON.stringify({"error": "Required srcAccountName(" + setInfo.srcAccountName + ") not exist."})]
         };
       }
     } else { //GET
@@ -306,10 +306,10 @@ function(request) {
           var resultInfo = {};
           if (accessInfo[i].srcType == "EWS") {
             resultInfo.srcType = accessInfo[i].srcType;
-            resultInfo.id = accessInfo[i].id;
+            resultInfo.srcAccountName = accessInfo[i].srcAccountName;
           } else {
             resultInfo.srcType = accessInfo[i].srcType;
-            resultInfo.id = accessInfo[i].id;
+            resultInfo.srcAccountName = accessInfo[i].srcAccountName;
             resultInfo.srcUrl = accessInfo[i].srcUrl;
           }
           resultsInfo.push(resultInfo);
