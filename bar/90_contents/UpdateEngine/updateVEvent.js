@@ -42,6 +42,8 @@ function(request){
   var entityType = "vevent";
   var pathDavName = "AccessInfo/AccessInfo.json";
 
+  var calendarUrl = "https://www.googleapis.com/calendar/v3/calendars/";
+
   var params = _p.util.queryParse(bodyAsString);
 
   try {
@@ -54,11 +56,6 @@ function(request){
 
     var info = personalBoxAccessor.getString(pathDavName);
     var accInfo = JSON.parse(info);
-    for (var i = 0; i < accInfo.length; i++) {
-      if (accInfo[i].srcType == params.srcType && accInfo[i].id == params.id) {
-        accessInfo = accInfo[i];
-      }
-    }
 
     if (request.method === "PUT" || request.method === "DELETE") {
       try {
@@ -70,16 +67,9 @@ function(request){
           body: [JSON.stringify({"error": e.message})]
         };
       }
+      accessInfo = getAccessInfo(accInfo, vEvent);
     } else { // POST
-      // POST method
-      // not supported now!
-      /*
-      return {
-        status : 400,
-        headers : {"Content-Type":"application/json"},
-        body: ['{"error": "POST method is not supported now."}']
-      };
-      */
+      accessInfo = getAccessInfo(accInfo, params);
     }
 
 
@@ -88,7 +78,7 @@ function(request){
       if (vEvent.srcType == "EWS") {
         try {
           ews = new _p.extension.Ews();
-          ews.createService(accessInfo.id, accessInfo.pw);
+          ews.createService(accessInfo.srcAccountName, accessInfo.pw);
           ews.setUrl(accessInfo.srcUrl);
         } catch (e) {
           return {
@@ -108,7 +98,64 @@ function(request){
         exData.__id = vEvent.__id;
         exData.srcType = "EWS";
         exData.srcUrl = accessInfo.srcUrl;
-        exData.srcAccountName = accessInfo.id;
+        exData.srcAccountName = accessInfo.srcAccountName;
+
+        personalEntityAccessor.update(exData.__id, exData, "*");
+      } else if(vEvent.srcType == "Google"){
+        var accessToken = null;
+        var host = null;
+        var port = null;
+        var user = null;
+        var pass = null;
+        var calendarId = null;
+        var NO_CONTENT = 204;
+        // get setting data
+        host = accessInfo.host;
+        port = accessInfo.port;
+        user = accessInfo.user;
+        pass = accessInfo.pass;
+        accessToken = accessInfo.accesstoken;
+        calendarId = accessInfo.calendarid;
+
+        if (params.srcId == null || params.srcId == "") {
+          params.srcId = vEvent.srcId;
+        }
+
+        try{
+          var httpClient = new _p.extension.HttpClient();
+          httpClient.setProxy(host, Number(port), user, pass);
+          var body = "";
+          var headers = {'Authorization': 'Bearer ' + accessToken};
+          var contentType = "application/json";
+          var url = calendarUrl + calendarId + "/events" + "/" + params.__id;
+
+          // params to Json
+          body = toGoogleEvent(params);
+
+
+          var response = httpClient.putParam(url, headers, contentType, body);
+          if(null == response){
+            // access token expire
+            // TODO:get accessToken
+            // retry
+            headers = {'Authorization': 'Bearer ' + accessToken};
+            response = httpClient.put(url, headers, contentType, body);
+          }
+        }catch(e){
+          return {
+            status : 400,
+            headers : {"Content-Type":"application/json"},
+            body: ['{"srcType": "Google"}']
+          };
+        }
+
+        var item = JSON.parse(response.body);
+
+        var exData = parseGoogleEvent(item);
+        exData.__id = vEvent.__id;
+        exData.srcType = "Google";
+        exData.srcUrl = "";
+        exData.srcAccountName = accessInfo.srcAccountName;
 
         personalEntityAccessor.update(exData.__id, exData, "*");
       } else if(vEvent.srcType == "Google"){
@@ -180,7 +227,7 @@ function(request){
       if (vEvent.srcType == "EWS") {
         try {
           ews = new _p.extension.Ews();
-          ews.createService(accessInfo.id, accessInfo.pw);
+          ews.createService(accessInfo.srcAccountName, accessInfo.pw);
           ews.setUrl(accessInfo.srcUrl);
         } catch (e) {
           return {
@@ -210,33 +257,38 @@ function(request){
         var calendarId = null;
         var NO_CONTENT = 204;
         // get setting data
-        for(var i = 0; i < accessInfo.length; i++){
-          if (accessInfo[i].srcType == "Google") {
-            host = accessInfo[i].host;
-            port = accessInfo[i].port;
-            user = accessInfo[i].user;
-            pass = accessInfo[i].pass;
-            accessToken = accessInfo[i].accesstoken;
-            calendarId = accessInfo[i].calendarid;
-          }
-        }
+        host = accessInfo.host;
+        port = accessInfo.port;
+        user = accessInfo.user;
+        pass = accessInfo.pass;
+        accessToken = accessInfo.accesstoken;
+        calendarId = accessInfo.calendarid;
 
-        var httpClient = new _p.extension.HttpClient();
-        httpClient.setProxy(host, Number(port), user, pass);
-        var headers = {'Authorization': 'Bearer ' + accessToken};
-        var response = { status: "", headers : {}, body :"" };
-        var url = "https://www.googleapis.com/calendar/v3/calendars/" + calendarId + "/events" + "/" + vEvent.__id;
+        try{
+          var httpClient = new _p.extension.HttpClient();
+          httpClient.setProxy(host, Number(port), user, pass);
+          var headers = {'Authorization': 'Bearer ' + accessToken};
+          var response = { status: "", headers : {}, body :"" };
+          var url = calendarUrl + calendarId + "/events" + "/" + vEvent.__id;
 
-        // delete execute
-        response = httpClient.delete(url, headers);
-        if(null == response){
-          // access token expire
-          // TODO:get accessToken
-          // retry
-          headers = {'Authorization': 'Bearer ' + accessToken};
+          // delete execute
           response = httpClient.delete(url, headers);
+          if(null == response){
+            // access token expire
+            // TODO:get accessToken
+            // retry
+            headers = {'Authorization': 'Bearer ' + accessToken};
+            response = httpClient.delete(url, headers);
+          }
+        }catch(e){
+          return {
+            status : 400,
+            headers : {"Content-Type":"application/json"},
+            body: ['{"srcType": "Google"}']
+          };
         }
-        if(null != response){
+
+        if(response){
           var status = JSON.parse(response.status);
           if(NO_CONTENT == status){
             personalEntityAccessor.del(vEvent.__id);
@@ -263,7 +315,7 @@ function(request){
       if (params.srcType == "EWS") {
         try {
           ews = new _p.extension.Ews();
-          ews.createService(accessInfo.id, accessInfo.pw);
+          ews.createService(accessInfo.srcAccountName, accessInfo.pw);
           ews.setUrl(accessInfo.srcUrl);
         } catch (e) {
           return {
@@ -278,7 +330,7 @@ function(request){
         var exData = exchangeDataEwsToJcal(result);
         exData.srcType = "EWS";
         exData.srcUrl = accessInfo.srcUrl;
-        exData.srcAccountName = accessInfo.id;
+        exData.srcAccountName = accessInfo.srcAccountName;
         var exist = null;
         try {
           exist = personalEntityAccessor.retrieve(exData.__id);
@@ -327,7 +379,7 @@ function(request){
             }
           } while (loopStatus);
         }
-      } else if(vEvent.srcType == "Google"){
+      } else if(params.srcType == "Google"){
         var accessToken = null;
         var host = null;
         var port = null;
@@ -335,33 +387,30 @@ function(request){
         var pass = null;
         var calendarId = null;
         var refreshToken = null;
-        // get setting data 
-        for(var i = 0; i < accessInfo.length; i++){
-          if (accessInfo[i].srcType == "Google") {
-            host = accessInfo[i].host;
-            port = accessInfo[i].port;
-            user = accessInfo[i].user;
-            pass = accessInfo[i].pass;
-            accessToken = accessInfo[i].accesstoken;
-            refreshToken = accessInfo[i].refreshtoken;
-            calendarId = accessInfo[i].calendarid;
-          }
-        }
-        var URL = "https://www.googleapis.com/calendar/v3/calendars/" + calendarId + "/events";
-        var body = "";
-        var headers = {'Authorization': 'Bearer ' + accessToken};
-        var contentType = "application/json";
-        var httpClient = new _p.extension.HttpClient();
-        httpClient.setProxy(host, Number(port), user, pass);
-        
-        // params to json
-        body = toGoogleEvent(params); 
+        // get setting data
+        host = accessInfo.host;
+        port = accessInfo.port;
+        user = accessInfo.user;
+        pass = accessInfo.pass;
+        accessToken = accessInfo.accesstoken;
+        refreshToken = accessInfo.refreshtoken;
+        calendarId = accessInfo.calendarid;
 
         try {
+          var URL = calendarUrl + calendarId + "/events";
+          var body = "";
+          var headers = {'Authorization': 'Bearer ' + accessToken};
+          var contentType = "application/json";
+          var httpClient = new _p.extension.HttpClient();
+          httpClient.setProxy(host, Number(port), user, pass);
+
+          // params to json
+          body = toGoogleEvent(params);
+
           // post execute
           var response = { status: "", headers : {}, body :"" };
           response = httpClient.postParam(URL, headers, contentType, body);
-          
+
           if(null == response){
             // access token expire
             // TODO: get new access token
@@ -384,12 +433,12 @@ function(request){
         var item = JSON.parse(response.body);
         var exData = {};
 
-        // parse 
+        // parse
         exData = parseGoogleEvent(item);
 
         exData.srcType = "Google";
         exData.srcUrl = "";
-        exData.srcAccountName = calendarId;
+        exData.srcAccountName = accessInfo.srcAccountName;
         var exist = null;
 
         try {
@@ -406,7 +455,7 @@ function(request){
           }
         }
 
-        if (exist != null) {
+        if (exist) {
           var addNum = "1";
           var loopStatus = true;
           do {
@@ -524,11 +573,11 @@ function parseGoogleEvent(item){
   result.srcUpdated = "/Date(" + newdate + ")/";
 
   result.summary = item.summary;
-  result.description = items.description;
+  result.description = item.description;
   result.location = item.location;
   result.organizer = item.organizer.email;
 
-  if(item.attendees != null){
+  if(item.attendees){
     var list = [];
     for(var j = 0; j < item.attendees.length; j++){
       list.push(item.attendees[j].email);
@@ -542,26 +591,27 @@ function parseGoogleEvent(item){
 function toGoogleEvent(params){
 
   var result = {};
-  result.start = [];
-  result.end = [];
-  result.updated = [];
-  result.organizer = [];
+  result.start = {};
+  result.end = {};
+  result.updated = {};
+  result.organizer = {};
 
+  // require dataTime:yyyy-MM-ddTHH:mm:ss.SSSZ
   var date = {"dateTime": params.dtstart}
-  result.start.push(date);
+  result.start = date;
 
   var date = {"dateTime": params.dtend}
-  result.end.push(date);
+  result.end = date;
 
-  result.updated = (params.Updated);
+  // result.updated = params.Updated;
   result.summary = params.summary;
   result.description = params.description;
   result.location = params.location;
 
   var org = {"email":params.organizer}
-  result.organizer.push(org);
-  
-  if(params.attendees != null){
+  result.organizer = org;
+
+  if(params.attendees){
     var list = [];
     for(var j = 0; j < params.attendees.length; j++){
       list.push(params.attendees[j].email);
@@ -570,4 +620,15 @@ function toGoogleEvent(params){
   }
 
   return JSON.stringify(result);
+}
+
+function getAccessInfo(accInfo, temp){
+  var accessInfo = {};
+  for (var i = 0; i < accInfo.length; i++) {
+    if (accInfo[i].srcType == temp.srcType && accInfo[i].srcAccountName == temp.srcAccountName) {
+      accessInfo = accInfo[i];
+      break;
+    }
+  }
+  return accessInfo;
 }

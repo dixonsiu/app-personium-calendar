@@ -507,8 +507,13 @@ Common.displayMessageByKey = function(msg_key) {
 };
 
 Common.openSlide = function() {
-    $("#dvOverlay").toggleClass('overlay-on');
-    $(".slide-menu").toggleClass('slide-on');
+    $("#dvOverlay").addClass('overlay-on');
+    $(".slide-menu").addClass('slide-on');
+};
+
+Common.closeSlide = function() {
+    $("#dvOverlay").removeClass('overlay-on');
+    $(".slide-menu").removeClass('slide-on');
 };
 
 Common.startAnimation = function() {
