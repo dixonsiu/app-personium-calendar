@@ -158,59 +158,6 @@ function(request){
         exData.srcAccountName = accessInfo.srcAccountName;
 
         personalEntityAccessor.update(exData.__id, exData, "*");
-      } else if(vEvent.srcType == "Google"){
-        var accessToken = null;
-        var host = null;
-        var port = null;
-        var user = null;
-        var pass = null;
-        var calendarId = null;
-        var NO_CONTENT = 204;
-        // get setting data
-        for(var i = 0; i < accessInfo.length; i++){
-          if (accessInfo[i].srcType == "Google") {
-            host = accessInfo[i].host;
-            port = accessInfo[i].port;
-            user = accessInfo[i].user;
-            pass = accessInfo[i].pass;
-            accessToken = accessInfo[i].accesstoken;
-            calendarId = accessInfo[i].calendarid;
-          }
-        }
-
-        if (params.srcId == null || params.srcId == "") {
-          params.srcId = vEvent.srcId;
-        }
-
-        var httpClient = new _p.extension.HttpClient();
-        httpClient.setProxy(host, Number(port), user, pass);
-        var body = "";
-        var headers = {'Authorization': 'Bearer ' + accessToken};
-        var contentType = "application/json";
-        var url = "https://www.googleapis.com/calendar/v3/calendars/" + calendarId + "/events" + "/" + params.__id;
-
-        // params to Json
-        body = toGoogleEvent(params);
-
-
-        var response = httpClient.put(url, headers, contentType, body);
-        if(null == response){
-          // access token expire
-          // TODO:get accessToken
-          // retry
-          headers = {'Authorization': 'Bearer ' + accessToken};
-          response = httpClient.put(url, headers, contentType, body);
-        }
-
-        var item = JSON.parse(response.body);
-
-        var exData = parseGoogleEvent(item);
-        exData.__id = vEvent.__id;
-        exData.srcType = "Google";
-        exData.srcUrl = "";
-        exData.srcAccountName = calendarId;
-
-        personalEntityAccessor.update(exData.__id, exData, "*");
 
       } else { // e.g. Google
         // srcType is not EWS.
