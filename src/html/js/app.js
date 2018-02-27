@@ -296,7 +296,7 @@ createInfoTd = function(i, accountInfo) {
 
     let aAnchor = $('<a>', {
         class: 'ellipsisText'
-    }).html(accountInfo.id);
+    }).html(accountInfo.srcAccountName);
     aAnchor.append($(aImg));
 
     let aInfoTd = $('<td>', {
@@ -610,7 +610,7 @@ registerAccount = function() {
 setAccessInfoAPI = function(method) {
     let srcType = $('[name=srcType]:checked').val();
     let srcUrl = $('#srcUrl').val();
-    let id = $('#idCalendarAccount').val();
+    let srcAccountName = $('#idCalendarAccount').val();
     let pw = $('#pwCalendarAccount').val();
     return $.ajax({
         type: method,
@@ -618,7 +618,7 @@ setAccessInfoAPI = function(method) {
         data: {
             'srcType': srcType,
             //'srcUrl': srcUrl,
-            'id': id,
+            'srcAccountName': srcAccountName,
             'pw': pw
         },
         headers: {
@@ -656,7 +656,7 @@ displayAccountModificationDialog = function(aDom, accountInfo) {
     if (aDom) {
         accountInfo = $(aDom).closest("tr").data('account-info');
     }
-    console.log(accountInfo.id);
+    console.log(accountInfo.srcAccountName);
     
     setBackahead(true);
 
@@ -720,8 +720,8 @@ displayAccountModificationDialog = function(aDom, accountInfo) {
     $('input:radio[name=srcType]')
         .val([accountInfo.srcType])
         .prop('disabled', true);
-    $('#id')
-        .val(accountInfo.id)
+    $('#idCalendarAccount')
+        .val(accountInfo.srcAccountName)
         .prop("readonly", true);
 
     $("#setting-panel2").toggleClass('slide-on');
@@ -753,7 +753,7 @@ modifyAccount = function() {
 
 displyAccessInfo = function(aDom) {
     let accountInfo = $(aDom).closest("tr").data('account-info');
-    console.log(accountInfo.id);
+    console.log(accountInfo.srcAccountName);
     return false;
 };
 
@@ -761,7 +761,7 @@ deleteAccessInfo = function(aDom) {
     let accountInfo = $(aDom).closest("tr").data('account-info');
     deleteAccessInfoAPI(accountInfo)
         .done(function(){
-            console.log('Finish deleting ' + accountInfo.id);
+            console.log('Finish deleting ' + accountInfo.srcAccountName);
             // Rerender the account list
             getAccountList().done(function(data) {
                 dispAccountList(data);
