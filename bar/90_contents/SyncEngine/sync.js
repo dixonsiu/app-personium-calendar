@@ -1,7 +1,7 @@
 /*
  * Create VCalendar's events from the specified server.
  *  Input:
- *     srcUrl, srcAccountName 
+ *     srcUrl, srcAccountName
  *     syncPeriod
  *
  */
@@ -121,8 +121,8 @@ function(request){
 
         var uxSyncStart = Date.parse(syncStart);
         var uxSyncEnd = Date.parse(syncEnd);
-        var syncFilter = "srcType eq '" + accessTokenSet.srcType + "' and dtstart ge " + uxSyncStart + " and dtend le " + uxSyncEnd;
-        var syncList = personalEntityAccessor.query().filter(syncFilter).run();
+        var syncFilter = "srcType eq '" + accessTokenSet.srcType + "' and dtstart ge " + uxSyncStart + " and dtstart le " + uxSyncEnd;
+        var syncList = personalEntityAccessor.query().filter(syncFilter).top(1000).run();
 
         var checkList = [];
         for (var j = 0; j < syncList.d.results.length; j++) {
@@ -321,7 +321,7 @@ function(request){
           if(accessTokenSet.pagetoken){
             // set page token
             url += "&pageToken=" + accessTokenSet.pagetoken;
-          } 
+          }
 
           response = httpClient.get(url, headers);
           if(null == response){
@@ -342,8 +342,8 @@ function(request){
         pageToken = responseJSON["nextPageToken"];
         syncToken = responseJSON["nextSyncToken"];
         var results = [];
-  
-        //parse 
+
+        //parse
         results = parseGoogleEvents(items);
 
         // save pageToken
@@ -547,14 +547,15 @@ function(request){
               } while (loopStatus);
             }
           } else if (exist.d.results.length == 1) {
+            exData.__id = exist.d.results[0].__id;
             if (Number(exist.d.results[0].srcUpdated.match(/\d+/)) < Number(exData.srcUpdated.match(/\d+/))) {
               personalEntityAccessor.update(exist.d.results[0].__id, exData, "*");
-              syncCount++;
             }
-            var index = null;
+            var index = -1;
             index = accessTokenSet.checkList.indexOf(exData.srcId);
-            if (index != null) {
+            if (index != -1) {
               accessTokenSet.checkList.splice(index, 1);
+              syncCount++;
             }
           } else {
             return {
@@ -567,11 +568,11 @@ function(request){
         }
 
         var nextStatus = null;
-        if (results.length == Number(maxSyncResults)) {
+        if (results.length == Number(accessTokenSet.maxSyncResults)) {
           accessTokenSet.nextStart = lastDate;
           nextStatus = false;
           if (syncCount == 0) {
-            var nextMax = Number(maxSyncResults) + Number(initMaxSyncResults);
+            var nextMax = Number(accessTokenSet.maxSyncResults) + Number(initMaxSyncResults);
             accessTokenSet.maxSyncResults = String(nextMax);
           } else {
             accessTokenSet.maxSyncResults = initMaxSyncResults;
@@ -641,7 +642,7 @@ function(request){
           httpClient.setProxy(host, Number(port), user, pass);
           var headers = {'Authorization': 'Bearer ' + accessToken};
           var response = { status: "", headers : {}, body :"" };
-          
+
           if(null == syncToken){
             return Response(500, '{"Server Error" : "Google syncToken is null"}')
           }
@@ -665,8 +666,8 @@ function(request){
         items = responseJSON["items"];
         syncToken = responseJSON["nextSyncToken"];
         var results = [];
-  
-        //parse 
+
+        //parse
         results = parseGoogleEvents(items);
         // save accessToken,syncToken
         for (var i = 0; i < accessInfo.length; i++) {

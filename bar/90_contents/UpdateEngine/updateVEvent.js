@@ -334,7 +334,7 @@ function(request){
         var pass = null;
         var calendarId = null;
         var refreshToken = null;
-        // get setting data 
+        // get setting data
         host = accessInfo.host;
         port = accessInfo.port;
         user = accessInfo.user;
@@ -352,12 +352,12 @@ function(request){
           httpClient.setProxy(host, Number(port), user, pass);
 
           // params to json
-          body = toGoogleEvent(params); 
+          body = toGoogleEvent(params);
 
           // post execute
           var response = { status: "", headers : {}, body :"" };
           response = httpClient.postParam(URL, headers, contentType, body);
- 
+
           if(null == response){
             // access token expire
             // TODO: get new access token
@@ -380,7 +380,7 @@ function(request){
         var item = JSON.parse(response.body);
         var exData = {};
 
-        // parse 
+        // parse
         exData = parseGoogleEvent(item);
 
         exData.srcType = "Google";
@@ -557,7 +557,7 @@ function toGoogleEvent(params){
 
   var org = {"email":params.organizer}
   result.organizer = org;
-  
+
   if(params.attendees){
     var list = [];
     for(var j = 0; j < params.attendees.length; j++){
