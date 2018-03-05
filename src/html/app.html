@@ -37,6 +37,9 @@
         <i class="fa fa-bars fa-2x fa-fw"></i>
       </a>
       <h1 data-i18n="glossary:title"></h1>
+      <a id="addIcon" href="#" onclick="addVEvent();return false;">
+        <i class="fa fa-plus fa-2x fa-fw"></i>
+      </a>
       <a id="updateIcon" href="#" onclick="syncData();return false;">
         <i class="fa fa-refresh fa-2x fa-fw"></i>
         <span class="sr-only">Updating...</span>
@@ -44,6 +47,7 @@
     </header>
     <div id="dispMsg" class="container" style="display:none;"></div>
     <div class="container">
+      <div class='panel list-group toggle-panel' id='toggle-panel1' style="display:none;"></div>
       <div id='calendar'></div>
     </div>
     <div class="slide-menu">
