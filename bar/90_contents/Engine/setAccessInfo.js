@@ -81,6 +81,14 @@ function(request) {
                 body: ['{"error": "Required paramter set is already."}']
               };
             }
+          } else if (setInfo.srcType == "Google") {
+            if(setInfo.srcType == accessInfo[i].srcType && setInfo.srcAccountName == accessInfo[i].srcAccountName){
+              return {
+                status : 400,
+                headers : {"Content-Type":"application/json"},
+                body: ['{"error": "Required paramter set is already."}']
+              };
+            }
           } else {
             if (setInfo.srcType == accessInfo[i].srcType && setInfo.srcAccountName == accessInfo[i].srcAccountName && setInfo.pw == accessInfo[i].pw && setInfo.srcUrl == accessInfo[i].srcUrl) {
               return {
@@ -144,21 +152,18 @@ function(request) {
         personalBoxAccessor.put(pathDavTokenName, "application/json", JSON.stringify(setInfo));
 
       } else if (setInfo.srcType == "Google"){
-        var accessToken = null;
-        var refreshToken = null;
-        for(var i = 0; i < accessInfo.length; i++){
-          if (setInfo.srcType == accessInfo[i].srcType && setInfo.srcAccountName == accessInfo[i].srcAccountName) {
-            accessToken = setInfo.accessToken;
-            refreshToken = setInfo.refreshToken;
-          }
-        }
-        if (accessToken == null || refreshToken == null){
+        var accessToken = setInfo.accessToken;
+        var refreshToken = setInfo.refreshToken;
+        var srcAccountName = setInfo.srcAccountName;
+        if (accessToken && refreshToken && srcAccountName){
           return {
             status : 400,
             headers : {"Content-Type":"application/json"},
             body: ['{"error": "Required paramter is not access google server."}']
           };
         }
+        accessInfo.push(setInfo);
+        personalBoxAccessor.put(pathDavName, "application/json", JSON.stringify(accessInfo));
 
         try {
           var pathDavTokenName = pathDavToken + setInfo.srcAccountName + ".json";
@@ -217,6 +222,32 @@ function(request) {
               accessInfo[i].pw = setInfo.pw;
               personalBoxAccessor.put(pathDavName, "application/json", JSON.stringify(accessInfo));
             } else if (setInfo.srcType == accessInfo[i].srcType && setInfo.srcAccountName == accessInfo[i].srcAccountName && setInfo.pw == accessInfo[i].pw) {
+              return {
+                status : 400,
+                headers : {"Content-Type":"application/json"},
+                body: ['{"error": "Required paramter set is not change."}']
+              };
+            } else {
+              return {
+                status : 400,
+                headers : {"Content-Type":"application/json"},
+                body: ['{"error": "Required paramter set is incorrect."}']
+              };
+            }
+          } else if (setInfo.srcType == "Google") {
+            if (setInfo.srcType == accessInfo[i].srcType && setInfo.srcAccountName == accessInfo[i].srcAccountName && setInfo.refreshToken != accessInfo[i].refreshToken) {
+              try {
+                //TODO:check if the refreshToken is correct.
+              } catch (e) {
+                return {
+                  status : 400,
+                  headers : {"Content-Type":"application/json"},
+                  body: ['{"error": "Required paramter is not access Google server."}']
+                };
+              }
+              accessInfo[i].refreshToken = setInfo.refreshToken;
+              personalBoxAccessor.put(pathDavName, "application/json", JSON.stringify(accessInfo));
+            } else if (setInfo.srcType == accessInfo[i].srcType && setInfo.srcAccountName == accessInfo[i].srcAccountName && setInfo.refreshToken == accessInfo[i].refreshToken) {
               return {
                 status : 400,
                 headers : {"Content-Type":"application/json"},

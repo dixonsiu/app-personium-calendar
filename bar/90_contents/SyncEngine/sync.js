@@ -301,9 +301,9 @@ function(request){
             port = accessInfo[i].port;
             user = accessInfo[i].user;
             pass = accessInfo[i].pass;
-            accessToken = accessInfo[i].accesstoken;
-            refreshToken = accessInfo[i].refreshtoken;
-            calendarId = accessInfo[i].calendarid;
+            accessToken = accessInfo[i].accessToken;
+            refreshToken = accessInfo[i].refreshToken;
+            calendarId = accessInfo[i].calendarId;
           }
         }
         if (accessTokenSet.maxSyncResults == null) {
@@ -315,13 +315,12 @@ function(request){
         try {
           var url = calendarUrl + calendarId + "/events" + "?maxResults=" + maxSyncResults + "&singleEvents=true";
           var httpClient = new _p.extension.HttpClient();
-          httpClient.setProxy(host, Number(port), user, pass);
           var headers = {'Authorization': 'Bearer ' + accessToken};
           var response = { status: "", headers : {}, body :"" };
-          if(accessTokenSet.pagetoken){
+          if(accessTokenSet.pageToken){
             // set page token
-            url += "&pageToken=" + accessTokenSet.pagetoken;
-          }
+            url += "&pageToken=" + accessTokenSet.pageToken;
+          } 
 
           response = httpClient.get(url, headers);
           if(null == response){
@@ -347,14 +346,14 @@ function(request){
         results = parseGoogleEvents(items);
 
         // save pageToken
-        accessTokenSet.pagetoken = pageToken;
+        accessTokenSet.pageToken = pageToken;
         personalBoxAccessor.put(pathDavTokenName, "application/json", JSON.stringify(accessTokenSet));
 
         // save accessToken,syncToken
         for (var i = 0; i < accessInfo.length; i++) {
           if(accessInfo[i].srcType == accessTokenSet.srcType && accessInfo[i].srcAccountName == accessTokenSet.srcAccountName){
-            accessInfo[i].accesstoken = accessToken;
-            accessInfo[i].synctoken = syncToken;
+            accessInfo[i].accessToken = accessToken;
+            accessInfo[i].syncToken = syncToken;
           }
         }
         personalBoxAccessor.put(pathDavName, "application/json", JSON.stringify(accessInfo));
@@ -381,11 +380,7 @@ function(request){
                 personalEntityAccessor.create(exData);
                 syncCount++;
               } else {
-                return {
-                  status : 500,
-                  headers : {"Content-Type":"application/json"},
-                  body: [JSON.stringify({"error": e.message})]
-                };
+                return Response(500, '{"error" : ' + e.message + '}')
               }
             }
             if (existRecur != null) {
@@ -401,11 +396,7 @@ function(request){
                     syncCount++;
                     loopStatus = false;
                   } else {
-                    return {
-                      status : 500,
-                      headers : {"Content-Type":"application/json"},
-                      body: [JSON.stringify({"error": e.message})]
-                    };
+                    return Response(500, '{"error" : ' + e.message + '}')
                   }
                 }
                 if (loopStatus) {
@@ -420,11 +411,7 @@ function(request){
               syncCount++;
             }
           } else {
-            return {
-              status : 400,
-              headers : {"Content-Type":"application/json"},
-              body: [JSON.stringify({"error": "srcId filter is wrong."})]
-            };
+            return Response(400, '{"error" :  "srcId filter is wrong."}')
           }
           lastDate = results[i].Start;
         }
@@ -450,26 +437,14 @@ function(request){
         }
 
         if (nextStatus) {
-          return {
-              status: 200,
-              headers: {"Content-Type":"application/json"},
-              body : ['{"syncCompleted" : true}']
-          };
+          return Response(200, '{"syncCompleted" : true}')
         } else {
-          return {
-              status: 200,
-              headers: {"Content-Type":"application/json"},
-              body : ['{"syncCompleted" : false}']
-          };
+          return Response(200, '{"syncCompleted" : false}')
         }
       } else {  // e.g. Google
         // srcType is not EWS.
         // not supported now!
-        return {
-          status : 400,
-          headers : {"Content-Type":"application/json"},
-          body: ['{"error": "Required srcType is not supported."}']
-        };
+          return Response(400, '{"Required srcType is not supported."}')
       }
 
     } else { // diffSync 差分同期
@@ -624,10 +599,10 @@ function(request){
             port = accessInfo[i].port;
             user = accessInfo[i].user;
             pass = accessInfo[i].pass;
-            accessToken = accessInfo[i].accesstoken;
-            refreshToken = accessInfo[i].refreshtoken;
-            calendarId = accessInfo[i].calendarid;
-            syncToken = accessInfo[i].synctoken;
+            accessToken = accessInfo[i].accessToken;
+            refreshToken = accessInfo[i].refreshToken;
+            calendarId = accessInfo[i].calendarId;
+            syncToken = accessInfo[i].syncToken;
           }
         }
         if (accessTokenSet.maxSyncResults == null) {
@@ -639,7 +614,6 @@ function(request){
         try {
           var url = calendarUrl + calendarId + "/events" + "?maxResults=" + maxSyncResults + "&singleEvents=true";
           var httpClient = new _p.extension.HttpClient();
-          httpClient.setProxy(host, Number(port), user, pass);
           var headers = {'Authorization': 'Bearer ' + accessToken};
           var response = { status: "", headers : {}, body :"" };
 
@@ -672,8 +646,8 @@ function(request){
         // save accessToken,syncToken
         for (var i = 0; i < accessInfo.length; i++) {
           if(accessInfo[i].srcType == accessTokenSet.srcType && accessInfo[i].srcAccountName == accessTokenSet.srcAccountName){
-            accessInfo[i].accesstoken = accessToken;
-            accessInfo[i].synctoken = syncToken;
+            accessInfo[i].accessToken = accessToken;
+            accessInfo[i].syncToken = syncToken;
           }
         }
         personalBoxAccessor.put(pathDavName, "application/json", JSON.stringify(accessInfo));
@@ -731,14 +705,15 @@ function(request){
               } while (loopStatus);
             }
           } else if (exist.d.results.length == 1) {
+            exData.__id = exist.d.results[0].__id;
             if (Number(exist.d.results[0].srcUpdated.match(/\d+/)) < Number(exData.srcUpdated.match(/\d+/))) {
               personalEntityAccessor.update(exist.d.results[0].__id, exData, "*");
-              syncCount++;
             }
-            var index = null;
+            var index = -1;
             index = accessTokenSet.checkList.indexOf(exData.srcId);
-            if (index != null) {
+            if (index != -1) {
               accessTokenSet.checkList.splice(index, 1);
+              syncCount++;
             }
           } else {
             return {

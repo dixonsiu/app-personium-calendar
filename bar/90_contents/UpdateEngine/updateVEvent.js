@@ -114,8 +114,8 @@ function(request){
         port = accessInfo.port;
         user = accessInfo.user;
         pass = accessInfo.pass;
-        accessToken = accessInfo.accesstoken;
-        calendarId = accessInfo.calendarid;
+        accessToken = accessInfo.accessToken;
+        calendarId = accessInfo.calendarId;
 
         if (params.srcId == null || params.srcId == "") {
           params.srcId = vEvent.srcId;
@@ -123,7 +123,6 @@ function(request){
 
         try{
           var httpClient = new _p.extension.HttpClient();
-          httpClient.setProxy(host, Number(port), user, pass);
           var body = "";
           var headers = {'Authorization': 'Bearer ' + accessToken};
           var contentType = "application/json";
@@ -208,12 +207,11 @@ function(request){
         port = accessInfo.port;
         user = accessInfo.user;
         pass = accessInfo.pass;
-        accessToken = accessInfo.accesstoken;
-        calendarId = accessInfo.calendarid;
+        accessToken = accessInfo.accessToken;
+        calendarId = accessInfo.calendarId;
 
         try{
           var httpClient = new _p.extension.HttpClient();
-          httpClient.setProxy(host, Number(port), user, pass);
           var headers = {'Authorization': 'Bearer ' + accessToken};
           var response = { status: "", headers : {}, body :"" };
           var url = calendarUrl + calendarId + "/events" + "/" + vEvent.__id;
@@ -339,9 +337,9 @@ function(request){
         port = accessInfo.port;
         user = accessInfo.user;
         pass = accessInfo.pass;
-        accessToken = accessInfo.accesstoken;
-        refreshToken = accessInfo.refreshtoken;
-        calendarId = accessInfo.calendarid;
+        accessToken = accessInfo.accessToken;
+        refreshToken = accessInfo.refreshToken;
+        calendarId = accessInfo.calendarId;
 
         try {
           var URL = calendarUrl + calendarId + "/events";
@@ -349,7 +347,6 @@ function(request){
           var headers = {'Authorization': 'Bearer ' + accessToken};
           var contentType = "application/json";
           var httpClient = new _p.extension.HttpClient();
-          httpClient.setProxy(host, Number(port), user, pass);
 
           // params to json
           body = toGoogleEvent(params);
