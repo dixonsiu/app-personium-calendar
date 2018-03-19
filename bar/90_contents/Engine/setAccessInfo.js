@@ -155,13 +155,54 @@ function(request) {
         var accessToken = setInfo.accessToken;
         var refreshToken = setInfo.refreshToken;
         var srcAccountName = setInfo.srcAccountName;
-        if (accessToken && refreshToken && srcAccountName){
+        if (!(accessToken && refreshToken && srcAccountName)){
           return {
             status : 400,
             headers : {"Content-Type":"application/json"},
             body: ['{"error": "Required paramter is not access google server."}']
           };
         }
+
+        // check connect server
+        try {
+          var url = "https://www.googleapis.com/calendar/v3/users/me/calendarList";
+          var httpClient = new _p.extension.HttpClient();
+          var headers = {'Authorization': 'Bearer ' + accessToken};
+          var response = { status: "", headers : {}, body :"" };
+
+          response = httpClient.get(url, headers);
+          
+          if(200 != response.status){
+            return {
+              status : 400,
+              headers : {"Content-Type":"application/json"},
+              body: ['{"error": "Required paramter is not access google server."}']
+            };
+          }
+          var responsejson = JSON.parse(response.body);
+          var items = [];
+          items = responsejson["items"];
+
+          var calendarId = parseGoogleCalendarList(items);
+          
+          if(calendarId == null){
+            return {
+              status : 400,
+              headers : {"Content-Type":"application/json"},
+              body: ['{"error": "Required paramter is not access google server."}']
+            };
+          }
+        } catch (e) {
+          return {
+            status : 400,
+            headers : {"Content-Type":"application/json"},
+            body: ['{"error": "Required paramter is not access google server."}']
+          };
+        } 
+        
+        // add calendarId to setInfo
+        setInfo.calendarId = calendarId;
+
         accessInfo.push(setInfo);
         personalBoxAccessor.put(pathDavName, "application/json", JSON.stringify(accessInfo));
 
@@ -380,4 +421,13 @@ function(request) {
       headers: {"Content-Type":"application/json"},
       body : ['{"status":"OK"}']
   };
+}
+
+function parseGoogleCalendarList(items){
+  for(var i = 0; i < items.length; i++){
+    if(items[i].primary){ // primary only
+      return items[i].id;
+    }
+  }
+  return null;
 }
