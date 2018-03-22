@@ -25,11 +25,7 @@ function(request) {
 
   // POST, PUT, DELETE, GET 以外は405
   if(request.method !== "POST" && request.method !== "PUT" && request.method !== "DELETE" && request.method !== "GET") {
-    return {
-      status : 405,
-      headers : {"Content-Type":"application/json"},
-      body : ['{"error":"method not allowed"}']
-    };
+    return createResponse(405, {"error": "method not allowed"})
   }
 
   var bodyAsString = "";
@@ -41,11 +37,7 @@ function(request) {
     bodyAsString = " ";
   }
   if (bodyAsString === "") {
-    return {
-      status : 400,
-      headers : {"Content-Type":"application/json"},
-      body : ['{"error":"required parameter not exist."}']
-    };
+    return createResponse(400, {"error": "required parameter not exist."})
   }
 
 
@@ -75,37 +67,21 @@ function(request) {
         for(var i = 0; i < accessInfo.length; i++) {
           if (setInfo.srcType == "EWS") {
             if (setInfo.srcType == accessInfo[i].srcType && setInfo.srcAccountName == accessInfo[i].srcAccountName && setInfo.pw == accessInfo[i].pw) {
-              return {
-                status : 400,
-                headers : {"Content-Type":"application/json"},
-                body: ['{"error": "Required paramter set is already."}']
-              };
+              return createResponse(400, {"error": "required parameter set is already."})
             }
           } else if (setInfo.srcType == "Google") {
             if(setInfo.srcType == accessInfo[i].srcType && setInfo.srcAccountName == accessInfo[i].srcAccountName){
-              return {
-                status : 400,
-                headers : {"Content-Type":"application/json"},
-                body: ['{"error": "Required paramter set is already."}']
-              };
+              return createResponse(400, {"error": "required parameter set is already."})
             }
           } else {
             if (setInfo.srcType == accessInfo[i].srcType && setInfo.srcAccountName == accessInfo[i].srcAccountName && setInfo.pw == accessInfo[i].pw && setInfo.srcUrl == accessInfo[i].srcUrl) {
-              return {
-                status : 400,
-                headers : {"Content-Type":"application/json"},
-                body: ['{"error": "Required paramter set is already."}']
-              };
+              return createResponse(400, {"error": "required parameter set is already."})
             }
           }
         }
       } catch (e) {
         if (e.code != 404) {
-          return {
-            status : 500,
-            headers : {"Content-Type":"application/json"},
-            body: [JSON.stringify({"error": "Box access error."})]
-          };
+          return createResponse(500, {"error": "Box access error."})
         }
       }
 
@@ -115,11 +91,7 @@ function(request) {
           ews.createService(setInfo.srcAccountName, setInfo.pw);
           setInfo.srcUrl = ews.autodiscoverUrl(setInfo.srcAccountName);
         } catch (e) {
-          return {
-            status : 400,
-            headers : {"Content-Type":"application/json"},
-            body: ['{"error": "Required paramter is not access ews server."}']
-          };
+          return createResponse(400, {"error": "Required paramter is not access ews server."})
         }
 
         accessInfo.push(setInfo);
@@ -129,19 +101,11 @@ function(request) {
           var pathDavTokenName = pathDavToken + setInfo.srcAccountName + ".json";
           var tokenSet = personalBoxAccessor.getString(pathDavTokenName);
 
-          return {
-              status : 500,
-              headers : {"Content-Type":"application/json"},
-              body: [JSON.stringify({"error": "Required paramter set is already."})]
-          };
+          return createResponse(500, {"error": "Required paramter set is already."})
 
         } catch (e) {
           if (e.code != 404) {
-            return {
-                status : 500,
-                headers : {"Content-Type":"application/json"},
-                body: [JSON.stringify({"error": "Box access error."})]
-            };
+            return createResponse(500, {"error": "Box access error."})
           }
         }
 
@@ -155,13 +119,38 @@ function(request) {
         var accessToken = setInfo.accessToken;
         var refreshToken = setInfo.refreshToken;
         var srcAccountName = setInfo.srcAccountName;
-        if (accessToken && refreshToken && srcAccountName){
-          return {
-            status : 400,
-            headers : {"Content-Type":"application/json"},
-            body: ['{"error": "Required paramter is not access google server."}']
-          };
+        if (!accessToken || !refreshToken || !srcAccountName){
+          return createResponse(400, {"error": "Required paramter is not access google server."})
         }
+
+        // check connect server
+        try {
+          var url = "https://www.googleapis.com/calendar/v3/users/me/calendarList";
+          var httpClient = new _p.extension.HttpClient();
+          var headers = {'Authorization': 'Bearer ' + accessToken};
+          var response = { status: "", headers : {}, body :"" };
+
+          response = httpClient.get(url, headers);
+          
+          if(200 != response.status){
+            return createResponse(400, {"error": "Required paramter is not access google server."})
+          }
+          var responsejson = JSON.parse(response.body);
+          var items = [];
+          items = responsejson["items"];
+
+          var calendarId = parseGoogleCalendarList(items);
+          
+          if(calendarId == null){
+            return createResponse(400, {"error": "Required paramter is not access google server."})
+          }
+        } catch (e) {
+          return createResponse(400, {"error": "Required paramter is not access google server."})
+        } 
+        
+        // add calendarId to setInfo
+        setInfo.calendarId = calendarId;
+
         accessInfo.push(setInfo);
         personalBoxAccessor.put(pathDavName, "application/json", JSON.stringify(accessInfo));
 
@@ -169,18 +158,10 @@ function(request) {
           var pathDavTokenName = pathDavToken + setInfo.srcAccountName + ".json";
           var tokenSet = personalBoxAccessor.getString(pathDavTokenName);
 
-          return {
-              status : 500,
-              headers : {"Content-Type":"application/json"},
-              body: [JSON.stringify({"error": "Required paramter set is already."})]
-          };
+          return createResponse(500, {"error": "Required paramter set is already."})
         } catch (e) {
           if (e.code != 404) {
-            return {
-                status : 500,
-                headers : {"Content-Type":"application/json"},
-                body: [JSON.stringify({"error": "Box access error."})]
-            };
+            return createResponse(500, {"error": "Box access error."})
           }
         }
 
@@ -193,11 +174,7 @@ function(request) {
       } else { // e.g. Google
         // srcType is not EWS.
         // not supported now!
-        return {
-          status : 400,
-          headers : {"Content-Type":"application/json"},
-          body: ['{"error": "Required srcType is not supported."}']
-        };
+        return createResponse(400, {"error": "Required srcType is not supported."})
       }
 
     } else if (request.method === "PUT") {
@@ -212,79 +189,43 @@ function(request) {
                 ews.createService(setInfo.srcAccountName, setInfo.pw);
                 accessUrl = ews.autodiscoverUrl(setInfo.srcAccountName);
               } catch (e) {
-                return {
-                  status : 400,
-                  headers : {"Content-Type":"application/json"},
-                  body: ['{"error": "Required paramter is not access ews server."}']
-                };
+                return createResponse(400, {"error": "Required paramter is not access ews server."})
               }
               accessInfo[i].srcUrl = accessUrl;
               accessInfo[i].pw = setInfo.pw;
               personalBoxAccessor.put(pathDavName, "application/json", JSON.stringify(accessInfo));
             } else if (setInfo.srcType == accessInfo[i].srcType && setInfo.srcAccountName == accessInfo[i].srcAccountName && setInfo.pw == accessInfo[i].pw) {
-              return {
-                status : 400,
-                headers : {"Content-Type":"application/json"},
-                body: ['{"error": "Required paramter set is not change."}']
-              };
+              return createResponse(400, {"error": "Required paramter set is not change."})
             } else {
-              return {
-                status : 400,
-                headers : {"Content-Type":"application/json"},
-                body: ['{"error": "Required paramter set is incorrect."}']
-              };
+              return createResponse(400, {"error": "Required paramter set is incorrect."})
             }
           } else if (setInfo.srcType == "Google") {
             if (setInfo.srcType == accessInfo[i].srcType && setInfo.srcAccountName == accessInfo[i].srcAccountName && setInfo.refreshToken != accessInfo[i].refreshToken) {
               try {
                 //TODO:check if the refreshToken is correct.
               } catch (e) {
-                return {
-                  status : 400,
-                  headers : {"Content-Type":"application/json"},
-                  body: ['{"error": "Required paramter is not access Google server."}']
-                };
+                return createResponse(400, {"error": "Required paramter is not access Google server."})
               }
               accessInfo[i].refreshToken = setInfo.refreshToken;
               personalBoxAccessor.put(pathDavName, "application/json", JSON.stringify(accessInfo));
             } else if (setInfo.srcType == accessInfo[i].srcType && setInfo.srcAccountName == accessInfo[i].srcAccountName && setInfo.refreshToken == accessInfo[i].refreshToken) {
-              return {
-                status : 400,
-                headers : {"Content-Type":"application/json"},
-                body: ['{"error": "Required paramter set is not change."}']
-              };
+              return createResponse(400, {"error": "Required paramter set is change."})
             } else {
-              return {
-                status : 400,
-                headers : {"Content-Type":"application/json"},
-                body: ['{"error": "Required paramter set is incorrect."}']
-              };
+              return createResponse(400, {"error": "Required paramter set is incorrect."})
             }
           } else {
             if (setInfo.srcType == accessInfo[i].srcType && setInfo.srcAccountName == accessInfo[i].srcAccountName && setInfo.pw == accessInfo[i].pw && setInfo.srcUrl == accessInfo[i].srcUrl) {
-              return {
-                status : 400,
-                headers : {"Content-Type":"application/json"},
-                body: ['{"error": "Required paramter set is not change."}']
-              };
+              return createResponse(400, {"error": "Required paramter set is not change."})
             //} else if () {
             } else { // e.g. Google
               // srcType is not EWS.
               // not supported now!
-              return {
-                status : 400,
-                headers : {"Content-Type":"application/json"},
-                body: ['{"error": "Required srcType is not supported."}']
-              };
+              return createResponse(400, {"error": "Required srcType is not supported."})
             }
           }
         }
       } catch (e) {
-        return {
-          status : e.code,
-          headers : {"Content-Type":"application/json"},
-          body: [JSON.stringify({"code": e.code, "message": e.message})]
-        };
+        return createResponse(500, e)
       }
 
     } else if (request.method === "DELETE") {
@@ -311,21 +252,13 @@ function(request) {
           }
         }
       } catch (e) {
-        return {
-          status : e.code,
-          headers : {"Content-Type":"application/json"},
-          body: [JSON.stringify({"code": e.code, "message": e.message})]
-        };
+        return createResponse(500, e)
       }
       if (delNum != null) {
         accessInfo.splice(delNum, 1);
         personalBoxAccessor.put(pathDavName, "application/json", JSON.stringify(accessInfo));
       } else {
-        return {
-          status : 400,
-          headers : {"Content-Type":"application/json"},
-          body: [JSON.stringify({"error": "Required srcAccountName(" + setInfo.srcAccountName + ") not exist."})]
-        };
+        return createResponse(400, {"error": "Required srcAccountName(" + setInfo.srcAccountName + ") not exist."})
       }
     } else { //GET
       try {
@@ -347,37 +280,36 @@ function(request) {
         }
       } catch (e) {
         if (e.code == 404) {
-          return {
-            status : 200,
-            headers : {"Content-Type":"application/json"},
-            body: [JSON.stringify([])]
-          };
+          return createResponse(200, [])
         } else {
-          return {
-            status : 500,
-            headers : {"Content-Type":"application/json"},
-            body: [JSON.stringify({"error": "Box access error."})]
-          };
+          return createResponse(500, {"error": "Box access error."})
         }
       }
-      return {
-        status : 200,
-        headers : {"Content-Type":"application/json"},
-        body: [JSON.stringify(resultsInfo)]
-      };
+      return createResponse(200, resultsInfo)
     }
   } catch (e) {
-      return {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-        body: ["Server Error occurred. 01 : " + e]
-      };
+      return createResponse(500, {"error": "Server Error occurred. 01 : " + e})
   }
 
   // resを定義
-  return {
-      status: 200,
-      headers: {"Content-Type":"application/json"},
-      body : ['{"status":"OK"}']
-  };
+  return createResponse(200, {"status" : "OK"})
+}
+
+function parseGoogleCalendarList(items){
+  for(var i = 0; i < items.length; i++){
+    if(items[i].primary){ // primary only
+      return items[i].id;
+    }
+  }
+  return null;
+}
+
+function createResponse(tempCode, tempBody) {
+    var isString = typeof tempBody == "string";
+    var tempHeaders = isString ? {"Content-Type":"text/plain"} : {"Content-Type":"application/json"};
+    return {
+        status: tempCode,
+        headers: tempHeaders,
+        body: [isString ? tempBody : JSON.stringify(tempBody)]
+    };
 }
