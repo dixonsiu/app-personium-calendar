@@ -225,7 +225,7 @@ function(request) {
           }
         }
       } catch (e) {
-        return createResponse(e.code, {"message": e.message})
+        return createResponse(500, e)
       }
 
     } else if (request.method === "DELETE") {
@@ -252,7 +252,7 @@ function(request) {
           }
         }
       } catch (e) {
-        return createResponse(e.code, {"message": e.message})
+        return createResponse(500, e)
       }
       if (delNum != null) {
         accessInfo.splice(delNum, 1);
@@ -280,7 +280,7 @@ function(request) {
         }
       } catch (e) {
         if (e.code == 404) {
-          return createResponse(200, {})
+          return createResponse(200, [])
         } else {
           return createResponse(500, {"error": "Box access error."})
         }
@@ -288,7 +288,7 @@ function(request) {
       return createResponse(200, resultsInfo)
     }
   } catch (e) {
-      return createResponse(500, {"Server Error occurred. 01" : e})
+      return createResponse(500, {"error": "Server Error occurred. 01 : " + e})
   }
 
   // resを定義
