@@ -8,6 +8,7 @@
         "type": "Type",
         "types": {
             "Google": "Google $t(glossary:Calendars.label)",
+            "Office365": "Office365",
             "EWS": "EWS"
         },
         "ID": "ID",
