@@ -24,6 +24,23 @@ additionalCallback = function() {
     getListOfVEvents();
 
     syncData();
+
+    $('body').on('change', 'input[type=radio][name=srcType]', function(){
+        let srcType = this.value;
+        switch(srcType) {
+            case 'Google':
+            case 'Office365':
+                $('#pwCalendarAccount')
+                    .val('')
+                    .prop('disabled', true);
+                break;
+            default:
+                $('#pwCalendarAccount')
+                    .val('')
+                    .prop('disabled', false);
+        }
+        $('#idCalendarAccount').val('');
+    });
 };
 
 displayMyDisplayName = function(extUrl, dispName) {
@@ -569,7 +586,7 @@ displayAccountRegistrationDialog = function() {
                     '<span data-i18n="glossary:Account.ID"></span>',
                 '</div>',
                 '<div class="col-sm-11 col-md-11">',
-                    '<input type="text" id="idCalendarAccount" name="idCalendarAccount">',
+                    '<input type="text" id="idCalendarAccount" name="idCalendarAccount" value="">',
                 '</div>',
             '</div>',
             '<div class="row">',
@@ -577,7 +594,7 @@ displayAccountRegistrationDialog = function() {
                     '<span data-i18n="glossary:Account.Password"></span>',
                 '</div>',
                 '<div class="col-sm-11 col-md-11">',
-                    '<input type="password" id="pwCalendarAccount" name="pwCalendarAccount">',
+                    '<input type="password" id="pwCalendarAccount" name="pwCalendarAccount" value="">',
                 '</div>',
             '</div>',
         '</div>',
@@ -599,14 +616,27 @@ registerAccount = function() {
     // show spinner
     $('#dialogOverlay').show();
 
-    setAccessInfoAPI('POST')
-        .done(function(data, status, response){
-            syncFullData();
-        })
-        .fail(function(error){
-            console.log(error.responseJSON.error);
-            $('#dialogOverlay').hide();
-        });
+    let srcType = $('[name=srcType]:checked').val();
+    switch(srcType) {
+        case 'Google':
+        case 'Office365':
+            let paramStr = $.param({
+                srcType: srcType,
+                state: 'hoge',
+                userCellUrl: Common.getCellUrl()
+            });
+            window.location.href = 'https://demo.personium.io/app-personium-calendar/__/Engine/reqOAuthToken?' + paramStr;
+            break;
+        default:
+            setAccessInfoAPI('POST')
+                .done(function(data, status, response){
+                    syncFullData();
+                })
+                .fail(function(error){
+                    console.log(error.responseJSON.error);
+                    $('#dialogOverlay').hide();
+                });
+    }
 
     return false;
 };
