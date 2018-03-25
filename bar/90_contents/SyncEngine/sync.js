@@ -331,7 +331,7 @@ function(request){
             response = httpClient.get(url, headers);
           }
         } catch (e) {
-          return Response(400, '{"srcType" : "Google"}')
+          return createResponse(400, {"srcType": "Google"})
         }
 
         // parse calendar -> json
@@ -380,7 +380,7 @@ function(request){
                 personalEntityAccessor.create(exData);
                 syncCount++;
               } else {
-                return Response(500, '{"error" : ' + e.message + '}')
+                return createResponse(500, {"error": e.message})
               }
             }
             if (existRecur != null) {
@@ -396,7 +396,7 @@ function(request){
                     syncCount++;
                     loopStatus = false;
                   } else {
-                    return Response(500, '{"error" : ' + e.message + '}')
+                    return createResponse(500, {"error": e.message})
                   }
                 }
                 if (loopStatus) {
@@ -411,7 +411,7 @@ function(request){
               syncCount++;
             }
           } else {
-            return Response(400, '{"error" :  "srcId filter is wrong."}')
+            return createResponse(400, {"error": "srcId filter is wrong."})
           }
           lastDate = results[i].Start;
         }
@@ -437,14 +437,14 @@ function(request){
         }
 
         if (nextStatus) {
-          return Response(200, '{"syncCompleted" : true}')
+          return createResponse(200, {"syncCompleted": true})
         } else {
-          return Response(200, '{"syncCompleted" : false}')
+          return createResponse(200, {"syncCompleted": false})
         }
       } else {  // e.g. Google
         // srcType is not EWS.
         // not supported now!
-          return Response(400, '{"Required srcType is not supported."}')
+          return createResponse(400, {"error": "Required srcType is not supported."})
       }
 
     } else { // diffSync 差分同期
@@ -618,7 +618,7 @@ function(request){
           var response = { status: "", headers : {}, body :"" };
 
           if(null == syncToken){
-            return Response(500, '{"Server Error" : "Google syncToken is null"}')
+            return createResponse(500, {"Server Error": "Google syncToken is null."})
           }
 
           url += "&syncToken=" + syncToken;
@@ -631,7 +631,7 @@ function(request){
             response = httpClient.get(url, headers);
           }
         } catch (e) {
-          return Response(400, '{"srcType": "Google"}')
+          return createResponse(400, {"srcType": "Google"})
         }
 
         // parse calendar -> json
@@ -822,14 +822,15 @@ exchangeDataEwsToJcal = function(inData) {
   };
 }
 
-function Response(code, strBody){
-  return {
-    status : code,
-    headers : {"Content-Type":"application/json"},
-    body: [strBody]
-  };
+function createResponse(tempCode, tempBody) {
+    var isString = typeof tempBody == "string";
+    var tempHeaders = isString ? {"Content-Type":"text/plain"} : {"Content-Type":"application/json"};
+    return {
+        status: tempCode,
+        headers: tempHeaders,
+        body: [isString ? tempBody : JSON.stringify(tempBody)]
+    };
 }
-
 //yyyy-MM-ddTHH:mm:ss+09:00 -> yyyy/MM/dd HH:mm:ss
 function toUTC(str){
   var split = str.split("+");
