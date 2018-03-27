@@ -103,17 +103,9 @@ function(request){
         personalEntityAccessor.update(exData.__id, exData, "*");
       } else if(vEvent.srcType == "Google"){
         var accessToken = null;
-        var host = null;
-        var port = null;
-        var user = null;
-        var pass = null;
         var calendarId = null;
         var NO_CONTENT = 204;
         // get setting data
-        host = accessInfo.host;
-        port = accessInfo.port;
-        user = accessInfo.user;
-        pass = accessInfo.pass;
         accessToken = accessInfo.accessToken;
         calendarId = accessInfo.calendarId;
 
@@ -135,10 +127,14 @@ function(request){
           var response = httpClient.putParam(url, headers, contentType, body);
           if(null == response){
             // access token expire
-            // TODO:get accessToken
+            var tempData = {"refresh_token": refreshToken , "srcType": "Google"}
+            accessToken = getAccessToken(tempData);
             // retry
             headers = {'Authorization': 'Bearer ' + accessToken};
-            response = httpClient.put(url, headers, contentType, body);
+            response = httpClient.putParam(url, headers, contentType, body);
+            if (response == null || response.status != 200) {
+              return createResponse(400, {"error": "refresh token is wrong"})
+            }
           }
         }catch(e){
           return {
@@ -196,17 +192,9 @@ function(request){
         }
       } else if(vEvent.srcType == "Google"){
         var accessToken = null;
-        var host = null;
-        var port = null;
-        var user = null;
-        var pass = null;
         var calendarId = null;
         var NO_CONTENT = 204;
         // get setting data
-        host = accessInfo.host;
-        port = accessInfo.port;
-        user = accessInfo.user;
-        pass = accessInfo.pass;
         accessToken = accessInfo.accessToken;
         calendarId = accessInfo.calendarId;
 
@@ -220,10 +208,14 @@ function(request){
           response = httpClient.delete(url, headers);
           if(null == response){
             // access token expire
-            // TODO:get accessToken
+            var tempData = {"refresh_token": refreshToken , "srcType": "Google"}
+            accessToken = getAccessToken(tempData);
             // retry
             headers = {'Authorization': 'Bearer ' + accessToken};
             response = httpClient.delete(url, headers);
+            if (response == null || response.status != 204) {
+              return createResponse(400, {"error": "refresh token is wrong"})
+            }
           }
         }catch(e){
           return {
@@ -326,17 +318,9 @@ function(request){
         }
       } else if(params.srcType == "Google"){
         var accessToken = null;
-        var host = null;
-        var port = null;
-        var user = null;
-        var pass = null;
         var calendarId = null;
         var refreshToken = null;
         // get setting data
-        host = accessInfo.host;
-        port = accessInfo.port;
-        user = accessInfo.user;
-        pass = accessInfo.pass;
         accessToken = accessInfo.accessToken;
         refreshToken = accessInfo.refreshToken;
         calendarId = accessInfo.calendarId;
@@ -357,13 +341,15 @@ function(request){
 
           if(null == response){
             // access token expire
-            // TODO: get new access token
+            var tempData = {"refresh_token": refreshToken , "srcType": "Google"}
+            accessToken = getAccessToken(tempData);
             // retry
             headers = {'Authorization': 'Bearer ' + accessToken};
             response = httpClient.postParam(URL, headers, contentType, body);
+            if (response == null || response.status != 200) {
+              return createResponse(400, {"error": "refresh token is wrong"})
+            }
           }
-
-
         }catch(e){
           return {
             status : 400,
@@ -575,4 +561,29 @@ function getAccessInfo(accInfo, temp){
     }
   }
   return accessInfo;
+}
+
+function getAccessToken(bodyData) {
+  try {
+    var httpClient = new _p.extension.HttpClient();
+    var body = "";
+    var headers = {'Accept': 'text/plain'};
+    var contentType = "application/json";
+
+    var url = "https://demo.personium.io/app-personium-calendar/__/Engine/oauth2callback"
+    var body = JSON.stringify(bodyData)
+    var headers = {}
+    var response = httpClient.put(url, headers, contentType, body)
+    if (response == null || response.status != 200) {
+      return {
+        status : response.status,
+        headers : {"Content-Type":"application/json"},
+        body : ['{"error": {"status":' + response.body + ', "message": "API call failed."}}']
+      };
+    } 
+  } catch (e) {
+    return createResponse(400, e.message)
+  }
+  var res = JSON.parse(response.body);
+  return res.access_token;
 }

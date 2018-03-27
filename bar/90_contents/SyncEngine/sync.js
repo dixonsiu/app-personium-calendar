@@ -317,10 +317,14 @@ function(request){
           response = httpClient.get(url, headers);
           if(null == response){
             // access token expire
-            // TODO:get accessToken
+            var tempData = {"refresh_token": refreshToken , "srcType": "Google"}
+            accessToken = getAccessToken(tempData);
             // retry
             headers = {'Authorization': 'Bearer ' + accessToken};
             response = httpClient.get(url, headers);
+            if (response == null || response.status != 200) {
+              return createResponse(400, {"error": "refresh token is wrong"})
+            }
           }
         } catch (e) {
           return createResponse(400, {"srcType": "Google"})
@@ -556,10 +560,14 @@ function(request){
           response = httpClient.get(url, headers);
           if(null == response){
             // access token expire
-            // TODO:get accessToken
+            var tempData = {"refresh_token": refreshToken , "srcType": "Google"}
+            accessToken = getAccessToken(tempData);
             // retry
             headers = {'Authorization': 'Bearer ' + accessToken};
             response = httpClient.get(url, headers);
+            if (response == null || response.status != 200) {
+              return createResponse(400, {"error": "refresh token is wrong"})
+            }
           }
         } catch (e) {
           return createResponse(400, {"srcType": "Google"})
@@ -750,4 +758,29 @@ function getDateTime(obj){
     ].join("");
     throw new _p.PersoniumException(err);
   }
+}
+
+function getAccessToken(bodyData) {
+  try {
+    var httpClient = new _p.extension.HttpClient();
+    var body = "";
+    var headers = {'Accept': 'text/plain'};
+    var contentType = "application/json";
+
+    var url = "https://demo.personium.io/app-personium-calendar/__/Engine/oauth2callback"
+    var body = JSON.stringify(bodyData)
+    var headers = {}
+    var response = httpClient.put(url, headers, contentType, body)
+    if (response == null || response.status != 200) {
+      return {
+        status : response.status,
+        headers : {"Content-Type":"application/json"},
+        body : ['{"error": {"status":' + response.body + ', "message": "API call failed."}}']
+      };
+    } 
+  } catch (e) {
+    return createResponse(400, e.message)
+  }
+  var res = JSON.parse(response.body);
+  return res.access_token;
 }
