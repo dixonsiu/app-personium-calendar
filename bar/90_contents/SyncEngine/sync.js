@@ -370,6 +370,7 @@ function(request){
             exist = personalEntityAccessor.retrieve(exData.__id);
           } catch (e) {
             if (e.code == 404) {
+              delete exData['status'];
               personalEntityAccessor.create(exData);
             } else {
               return createResponse(500, {"error": e.message})
@@ -615,10 +616,20 @@ function(request){
             exist = personalEntityAccessor.retrieve(exData.__id);
           } catch (e) {
             if (e.code == 404) {
+              delete exData['status'];
+              
               personalEntityAccessor.create(exData);
             } else {
               return createResponse(500, {"error": e.message})
             }
+          }
+          if (exist) {
+            if (exData.status == "cancelled"){
+              personalEntityAccessor.del(exist.__id); 
+            } else {
+              delete exData['status'];
+              personalEntityAccessor.update(exist.__id, exData, "*"); 
+            } 
           }
         }
         var nextStatus = null;
@@ -722,17 +733,24 @@ function parseGoogleEvents(items){
     try{
       result.__id = items[i].id;
       result.srcId = items[i].id;
-      var eventDate = getDateTime(items[i].start);
-      var newdate = toUTC(eventDate);
-    
-      result.dtstart = "/Date(" + newdate + ")/";
+      var eventDate = null;
+      var newdate = null;
+      if (items[i].start){
+        eventDate = getDateTime(items[i].start);
+        newdate = toUTC(eventDate);
+        result.dtstart = "/Date(" + newdate + ")/";
+      }
 
-      eventDate = getDateTime(items[i].end);
-      newdate = toUTC(eventDate);
-      result.dtend = "/Date(" + newdate + ")/";
+      if (items[i].end){
+        eventDate = getDateTime(items[i].end);
+        newdate = toUTC(eventDate);
+        result.dtend = "/Date(" + newdate + ")/";
+      }
 
-      newdate = Date.parse(new Date(items[i].updated));
-      result.srcUpdated = "/Date(" + newdate + ")/";
+      if (items[i].updated){
+        newdate = Date.parse(new Date(items[i].updated));
+        result.srcUpdated = "/Date(" + newdate + ")/";
+      }
     }catch(e){
       continue;
     }
@@ -740,14 +758,20 @@ function parseGoogleEvents(items){
     result.summary = items[i].summary;
     result.description = items[i].description;
     result.location = items[i].location;
-    result.organizer = items[i].organizer.email;
-
+    if (items[i].organizer){
+      result.organizer = items[i].organizer.email;
+    }
+    result.status = items[i].status;
     if(items[i].attendees != null){
       var list = [];
       for(var j = 0; j < items[i].attendees.length; j++){
-        list.push(items[i].attendees[j].email);
+        if (items[i].attendees[j]){
+          list.push(items[i].attendees[j].email);
+        }
       }
-      result.attendees = list;
+      if (list){
+        result.attendees = list;
+      }
     }
     results.push(result);
   }
