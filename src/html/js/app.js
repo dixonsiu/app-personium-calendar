@@ -617,15 +617,29 @@ registerAccount = function() {
     $('#dialogOverlay').show();
 
     let srcType = $('[name=srcType]:checked').val();
+    let srcAccountName = $('#idCalendarAccount').val();
     switch(srcType) {
         case 'Google':
         case 'Office365':
-            let paramStr = $.param({
-                srcType: srcType,
-                state: 'hoge',
-                userCellUrl: Common.getCellUrl()
-            });
-            window.location.href = 'https://demo.personium.io/app-personium-calendar/__/Engine/reqOAuthToken?' + paramStr;
+            let pData = getAccountData(srcType, srcAccountName);
+            
+            if (pData.access_token) {
+                setAccessInfoAPI('POST', pData)
+                    .done(function(data, status, response){
+                        syncFullData();
+                    })
+                    .fail(function(error){
+                        console.log(error.responseJSON.error);
+                        $('#dialogOverlay').hide();
+                    });
+            } else {
+                let paramStr = $.param({
+                    srcType: srcType,
+                    state: 'hoge',
+                    userCellUrl: Common.getCellUrl()
+                });
+                window.location.href = 'https://demo.personium.io/app-personium-calendar/__/Engine/reqOAuthToken?' + paramStr;
+            }
             break;
         default:
             setAccessInfoAPI('POST')
@@ -641,20 +655,53 @@ registerAccount = function() {
     return false;
 };
 
-setAccessInfoAPI = function(method) {
+getAccountData = function(srcType, srcAccountName) {
+    let pData;
+    if (sessionStorage.pData) {
+        pData = JSON.parse(sessionStorage.pData);
+    } else {
+        pData = {
+            srcType: srcType,
+            srcAccountName: srcAccountName
+        };
+        // Save data for later use
+        sessionStorage.setItem('pData', JSON.stringify(pData));
+    }
+
+    return pData;
+};
+
+setAccessInfoAPI = function(method, pData) {
     let srcType = $('[name=srcType]:checked').val();
     let srcUrl = $('#srcUrl').val();
     let srcAccountName = $('#idCalendarAccount').val();
     let pw = $('#pwCalendarAccount').val();
+    let tempData = {
+        'srcType': srcType,
+        //'srcUrl': srcUrl,
+        'srcAccountName': srcAccountName,
+    };
+    if (pData) {
+        $.extend(
+            true,
+            tempData,
+            {
+                'accessToken': pData.access_token,
+                'refreshToken': pData.refresh_token
+            }
+        );
+    } else {
+        $.extend(
+            true,
+            tempData,
+            { 'pw': pw }
+        );
+    };
+
     return $.ajax({
         type: method,
         url: Common.getBoxUrl() + 'Engine/setAccessInfo',
-        data: {
-            'srcType': srcType,
-            //'srcUrl': srcUrl,
-            'srcAccountName': srcAccountName,
-            'pw': pw
-        },
+        data: tempData,
         headers: {
             'Accept':'application/json',
             'Authorization':'Bearer ' + Common.getToken()
