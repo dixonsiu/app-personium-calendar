@@ -30,7 +30,7 @@ function(request){
     var queryValue = "";
     queryValue = request.queryString;
     if (queryValue === "") {
-        return createResponse(400, {"error":"required parameter not exist."});{
+        return createResponse(400, {"error":"required parameter not exist."});
     }
 
     var params = _p.util.queryParse(queryValue);
