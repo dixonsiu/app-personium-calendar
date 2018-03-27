@@ -17,11 +17,7 @@ function(request){
 
   // POST, PUT, DELETE 以外は405
   if(request.method !== "POST" && request.method !== "PUT" && request.method !== "DELETE") {
-    return {
-      status : 405,
-      headers : {"Content-Type":"application/json"},
-      body : ['{"error":"method not allowed"}']
-    };
+    return createResponse(405, {"error": "method not allowed"})
   }
 
   if(request.method === "POST" || request.method === "PUT") {
@@ -30,11 +26,7 @@ function(request){
     bodyAsString = request.queryString;
   }
   if (bodyAsString === "") {
-    return {
-      status : 400,
-      headers : {"Content-Type":"application/json"},
-      body : ['{"error":"required parameter not exist."}']
-    };
+    return createResponse(400, {"error": "required parameter not exist."})
   }
 
   var collectionName = "OData";
@@ -61,11 +53,7 @@ function(request){
       try {
         vEvent = personalEntityAccessor.retrieve(params.__id);
       } catch (e) {
-        return {
-          status: e.code,
-          headers: { "Content-Type": "application/json" },
-          body: [JSON.stringify({"error": e.message})]
-        };
+        return createResponse(e.code, {"error": e.message})
       }
       accessInfo = getAccessInfo(accInfo, vEvent);
     } else { // POST
@@ -81,11 +69,7 @@ function(request){
           ews.createService(accessInfo.srcAccountName, accessInfo.pw);
           ews.setUrl(accessInfo.srcUrl);
         } catch (e) {
-          return {
-            status : 400,
-            headers : {"Content-Type":"application/json"},
-            body: ['{"srcType": "EWS"}']
-          };
+          return createResponse(400, {"srcType": "EWS"})
         }
 
         if (params.srcId == null || params.srcId == "") {
@@ -137,11 +121,7 @@ function(request){
             }
           }
         }catch(e){
-          return {
-            status : 400,
-            headers : {"Content-Type":"application/json"},
-            body: ['{"srcType": "Google"}']
-          };
+          return createResponse(400, {"srcType": "Google"})
         }
 
         var item = JSON.parse(response.body);
@@ -157,11 +137,7 @@ function(request){
       } else { // e.g. Google
         // srcType is not EWS.
         // not supported now!
-        return {
-          status : 400,
-          headers : {"Content-Type":"application/json"},
-          body: ['{"error": "Required srcType is not supported."}']
-        };
+        return createResponse(400, {"error": "Required srcType is not supported."})
       }
 
     } else if (request.method === "DELETE") {
@@ -172,11 +148,7 @@ function(request){
           ews.createService(accessInfo.srcAccountName, accessInfo.pw);
           ews.setUrl(accessInfo.srcUrl);
         } catch (e) {
-          return {
-            status : 400,
-            headers : {"Content-Type":"application/json"},
-            body: ['{"srcType": "EWS"}']
-          };
+          return createResponse(400, {"srcType": "EWS"})
         }
 
         var result = ews.deleteVEvent(vEvent);
@@ -184,11 +156,7 @@ function(request){
         if (result == "OK") {
           personalEntityAccessor.del(vEvent.__id);
         } else {
-          return {
-            status: 500,
-            headers: {"Content-Type":"application/json"},
-            body: [JSON.stringify({"error": "Not delete vEvent of EWS server."})]
-          };
+          return createResponse(500, {"error": "Not delete vEvent of EWS server."})
         }
       } else if(vEvent.srcType == "Google"){
         var accessToken = null;
@@ -218,11 +186,7 @@ function(request){
             }
           }
         }catch(e){
-          return {
-            status : 400,
-            headers : {"Content-Type":"application/json"},
-            body: ['{"srcType": "Google"}']
-          };
+          return createResponse(400, {"srcType": "Google"})
         }
 
         if(response){
@@ -230,21 +194,13 @@ function(request){
           if(NO_CONTENT == status){
             personalEntityAccessor.del(vEvent.__id);
           } else {
-            return {
-              status: 500,
-              headers: {"Content-Type":"application/json"},
-              body: [JSON.stringify({"error": "Not delete vEvent of Google server."})]
-            };
+            return createResponse(500, {"error": "Not delete vEvent of Google server."})
           }
         }
       } else { // e.g. Google
         // srcType is not EWS.
         // not supported now!
-        return {
-          status : 400,
-          headers : {"Content-Type":"application/json"},
-          body: ['{"error": "Required srcType is not supported."}']
-        };
+        return createResponse(400, {"error": "Required srcType is not supported."})
       }
 
     } else { // POST
@@ -255,11 +211,7 @@ function(request){
           ews.createService(accessInfo.srcAccountName, accessInfo.pw);
           ews.setUrl(accessInfo.srcUrl);
         } catch (e) {
-          return {
-            status : 400,
-            headers : {"Content-Type":"application/json"},
-            body: ['{"srcType": "EWS"}']
-          };
+          return createResponse(400, {"srcType": "EWS"})
         }
 
         var result = ews.createVEvent(params);
@@ -275,11 +227,7 @@ function(request){
           if (e.code == 404) {
             personalEntityAccessor.create(exData);
           } else {
-            return {
-              status : 500,
-              headers : {"Content-Type":"application/json"},
-              body: [JSON.stringify({"error": e.message})]
-            };
+            return createResponse(500, {"error": e.message})
           }
         }
 
@@ -288,11 +236,7 @@ function(request){
           var loopStatus = true;
           do {
             if (exist.srcId == exData.srcId) {
-              return {
-                status : 400,
-                headers : {"Content-Type":"application/json"},
-                body: ['{"error": "A strange condition occurred."}']
-              };
+              return createResponse(400, {"error": "A strange condition occurred."})
             } else {
               exData.__id = exist.__id + "_recur_" + addNum;
               try {
@@ -302,11 +246,7 @@ function(request){
                   personalEntityAccessor.create(exData);
                   loopStatus = false;
                 } else {
-                  return {
-                    status : 500,
-                    headers : {"Content-Type":"application/json"},
-                    body: [JSON.stringify({"error": e.message})]
-                  };
+                  return createResponse(500, {"error": e.message})
                 }
               }
               if (loopStatus) {
@@ -351,11 +291,7 @@ function(request){
             }
           }
         }catch(e){
-          return {
-            status : 400,
-            headers : {"Content-Type":"application/json"},
-            body: ['{"srcType": "Google"}']
-          };
+          return createResponse(400, {"srcType": "Google"})
         }
 
         // register
@@ -377,11 +313,7 @@ function(request){
           if (e.code == 404) {
             personalEntityAccessor.create(exData);
           } else {
-            return {
-              status : 500,
-              headers : {"Content-Type":"application/json"},
-              body: [JSON.stringify({"error": e.message})]
-            };
+            return createResponse(500, {"error": e.message})
           }
         }
 
@@ -390,11 +322,7 @@ function(request){
           var loopStatus = true;
           do {
             if (exist.srcId == exData.srcId) {
-              return {
-                status : 400,
-                headers : {"Content-Type":"application/json"},
-                body: ['{"error": "A strange condition occurred."}']
-              };
+              return createResponse(400, {"error": "A strange condition occurred."})
             } else {
               exData.__id = exist.__id + "_recur_" + addNum;
               try {
@@ -404,11 +332,7 @@ function(request){
                   personalEntityAccessor.create(exData);
                   loopStatus = false;
                 } else {
-                  return {
-                    status : 500,
-                    headers : {"Content-Type":"application/json"},
-                    body: [JSON.stringify({"error": e.message})]
-                  };
+                  return createResponse(500, {"error": e.message})
                 }
               }
               if (loopStatus) {
@@ -421,29 +345,17 @@ function(request){
       } else { // e.g. Google
         // srcType is not EWS.
         // not supported now!
-        return {
-          status : 400,
-          headers : {"Content-Type":"application/json"},
-          body: ['{"error": "Required srcType is not supported."}']
-        };
+        return createResponse(400, {"error": "Required srcType is not supported."})
       }
 
     }
 
   } catch (e) {
-      return {
-        status: 500,
-        headers: {"Content-Type":"application/json"},
-        body: [JSON.stringify({"error": e.message})]
-      };
+      return createResponse(500, {"error": e.message})
   }
 
   // resを定義
-  return {
-      status: 200,
-      headers: {"Content-Type":"application/json"},
-      body : ['{"status":"OK"}']
-  };
+  return createResponse(200, {"status":"OK"})
 }
 
 
@@ -491,15 +403,12 @@ function parseGoogleEvent(item){
   result.srcId = item.id;
 
   var newdate = toUTC(item.start.dateTime);
-  result.uxtDtstart = newdate;
   result.dtstart = "/Date(" + newdate + ")/";
 
   newdate = toUTC(item.end.dateTime);
-  result.uxtDtend = newdate;
   result.dtend = "/Date(" + newdate + ")/";
 
   newdate = Date.parse(new Date(item.updated));
-  result.uxtUpdated = newdate;
   result.srcUpdated = "/Date(" + newdate + ")/";
 
   result.summary = item.summary;
@@ -561,6 +470,16 @@ function getAccessInfo(accInfo, temp){
     }
   }
   return accessInfo;
+}
+
+function createResponse(tempCode, tempBody) {
+    var isString = typeof tempBody == "string";
+    var tempHeaders = isString ? {"Content-Type":"text/plain"} : {"Content-Type":"application/json"};
+    return {
+        status: tempCode,
+        headers: tempHeaders,
+        body: [isString ? tempBody : JSON.stringify(tempBody)]
+    };
 }
 
 function getAccessToken(bodyData) {

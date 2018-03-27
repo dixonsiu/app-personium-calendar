@@ -707,16 +707,13 @@ function parseGoogleEvents(items){
       var eventDate = getDateTime(items[i].start);
       var newdate = toUTC(eventDate);
     
-      //result.uxtDtstart = newdate;
       result.dtstart = "/Date(" + newdate + ")/";
 
       eventDate = getDateTime(items[i].end);
       newdate = toUTC(eventDate);
-      //result.uxtDtend = newdate;
       result.dtend = "/Date(" + newdate + ")/";
 
       newdate = Date.parse(new Date(items[i].updated));
-      //result.uxtUpdated = newdate;
       result.srcUpdated = "/Date(" + newdate + ")/";
     }catch(e){
       continue;
