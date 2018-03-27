@@ -180,6 +180,8 @@ Common.setInfo = function(url) {
     Common.accessData.cellName = Common.getCellNameFromUrl(Common.accessData.cellUrl);
     Common.setBoxUrl(url);
     Common.accessData.boxName = _.last(_.compact(urlSplit));
+
+    sessionStorage.setItem("Common.accessData", JSON.stringify(Common.accessData));
 };
 
 Common.getUnitUrl = function() {
