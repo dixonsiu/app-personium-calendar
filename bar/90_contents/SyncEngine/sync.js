@@ -291,13 +291,9 @@ function(request){
         var pageToken = "";
         var syncToken = "";
         // get setting data
-        for(var i = 0; i < accessInfo.length; i++){
-          if (accessInfo[i].srcType == accessTokenSet.srcType && accessInfo[i].srcAccountName == accessTokenSet.srcAccountName) {
-            accessToken = accessInfo[i].accessToken;
-            refreshToken = accessInfo[i].refreshToken;
-            calendarId = accessInfo[i].calendarId;
-          }
-        }
+        accessToken = accessTokenSet.accessToken;
+        refreshToken = accessTokenSet.refreshToken;
+        calendarId = accessTokenSet.calendarId;
         if (accessTokenSet.maxSyncResults == null) {
           maxSyncResults = initMaxSyncResults;
         } else {
@@ -360,9 +356,9 @@ function(request){
           exData.srcType = "Google";
           exData.srcUrl = "";
           exData.srcAccountName = accessTokenSet.srcAccountName;
-          var existRecur = null;
+          var exist = null;
           try {
-            existRecur = personalEntityAccessor.retrieve(exData.__id);
+            exist = personalEntityAccessor.retrieve(exData.__id);
           } catch (e) {
             if (e.code == 404) {
               personalEntityAccessor.create(exData);
@@ -376,7 +372,11 @@ function(request){
           nextStatus = false;
         } else {
           personalBoxAccessor.del(pathDavTokenName);
-          nextStatus = true;
+          if (syncDavCnt == 1) {
+            nextStatus = true;
+          } else {
+            nextStatus = false;
+          }
         }
 
         if (nextStatus) {
@@ -532,14 +532,10 @@ function(request){
         var refreshToken = null;
         var syncToken = "";
         // get setting data
-        for(var i = 0; i < accessInfo.length; i++){
-          if (accessInfo[i].srcType == accessTokenSet.srcType && accessInfo[i].srcAccountName == accessTokenSet.srcAccountName) {
-            accessToken = accessInfo[i].accessToken;
-            refreshToken = accessInfo[i].refreshToken;
-            calendarId = accessInfo[i].calendarId;
-            syncToken = accessInfo[i].syncToken;
-          }
-        }
+        accessToken = accessTokenSet.accessToken;
+        refreshToken = accessTokenSet.refreshToken;
+        calendarId = accessTokenSet.calendarId;
+        syncToken = accessTokenSet.syncToken;
         if (accessTokenSet.maxSyncResults == null) {
           maxSyncResults = initMaxSyncResults;
         } else {
@@ -596,9 +592,9 @@ function(request){
           exData.srcType = "Google";
           exData.srcUrl = "";
           exData.srcAccountName = accessTokenSet.srcAccountName;
-          var existRecur = null;
+          var exist = null;
           try {
-            existRecur = personalEntityAccessor.retrieve(exData.__id);
+            exist = personalEntityAccessor.retrieve(exData.__id);
           } catch (e) {
             if (e.code == 404) {
               personalEntityAccessor.create(exData);
@@ -612,7 +608,11 @@ function(request){
           nextStatus = false;
         } else {
           personalBoxAccessor.del(pathDavTokenName);
-          nextStatus = true;
+          if (syncDavCnt == 1) {
+            nextStatus = true;
+          } else {
+            nextStatus = false;
+          }
         }
 
         if (nextStatus) {
