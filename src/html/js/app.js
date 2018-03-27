@@ -1,5 +1,6 @@
-const APP_URL = "https://nks18.zetta.flab.fujitsu.co.jp/app-personium-calendar/";
+const APP_URL = "https://demo.personium.io/app-personium-calendar/";
 const APP_BOX_NAME = 'app-personium-calendar';
+PCalendar = {};
 
 getEngineEndPoint = function() {
     return Common.getAppCellUrl() + "__/html/Engine/getAppAuthToken";
@@ -28,16 +29,16 @@ additionalCallback = function() {
     $('body').on('change', 'input[type=radio][name=srcType]', function(){
         let srcType = this.value;
         switch(srcType) {
-            case 'Google':
-            case 'Office365':
-                $('#pwCalendarAccount')
-                    .val('')
-                    .prop('disabled', true);
-                break;
-            default:
-                $('#pwCalendarAccount')
-                    .val('')
-                    .prop('disabled', false);
+        case 'Google':
+        case 'Office365':
+            $('#pwCalendarAccount')
+                .val('')
+                .prop('disabled', true);
+            break;
+        default:
+            $('#pwCalendarAccount')
+                .val('')
+                .prop('disabled', false);
         }
         $('#idCalendarAccount').val('');
     });
@@ -168,17 +169,17 @@ toggleEditMenu = function(aDom) {
 moveBackahead = function() {
     var no = Common.settingNowPage;
     switch (no) {
-        case 0:
-            window.location.href = cm.user.prevUrl;
-            break;
-        case 1:
-            closeSetting();
-            break;
-        default:
-            $('.edit-menu').show();
-            $("#setting-panel" + no).toggleClass("slide-on");
-            $("#setting-panel" + (no - 1)).toggleClass("slide-on-holder");
-            break;
+    case 0:
+        window.location.href = cm.user.prevUrl;
+        break;
+    case 1:
+        closeSetting();
+        break;
+    default:
+        $('.edit-menu').show();
+        $("#setting-panel" + no).toggleClass("slide-on");
+        $("#setting-panel" + (no - 1)).toggleClass("slide-on-holder");
+        break;
     }
 
     Common.settingNowPage = no - 1;
@@ -212,18 +213,18 @@ setBackahead = function(flg) {
     if (document.getElementById('setting-panel' + (Common.settingNowPage + 1)) == null) {
         $("#" + boardId).append('<div style="height:100%;overflow:auto;padding-bottom:85px;" class="panel list-group toggle-panel" id="setting-panel' + (Common.settingNowPage + 1) + '"></div>');
     }
-}
+};
 
 setTitleMenu = function(title, flg) {
-        if (i18next.exists(title)) {
-            $("#settingTitleMenu").html('<h4 class="ellipsisText" data-i18n="' + title + '"></h4>').localize();
-        } else {
-            $("#settingTitleMenu").html('<h4 class="ellipsisText">' + title + '</h4>');
-        }
-        var titles = Common.settingNowTitle;
-        titles[Common.settingNowPage] = title;
-        Common.settingNowTitle = titles;
-}
+    if (i18next.exists(title)) {
+        $("#settingTitleMenu").html('<h4 class="ellipsisText" data-i18n="' + title + '"></h4>').localize();
+    } else {
+        $("#settingTitleMenu").html('<h4 class="ellipsisText">' + title + '</h4>');
+    }
+    var titles = Common.settingNowTitle;
+    titles[Common.settingNowPage] = title;
+    Common.settingNowTitle = titles;
+};
 
 /*
  * Display the followings:
@@ -420,12 +421,27 @@ renderFullCalendar = function() {
             listWeek: { buttonText: 'list week' }
         },
 
-        defaultView: 'month',
+        defaultView: 'listDay',
         defaultDate: moment().format(),
         navLinks: true, // can click day/week names to navigate views
         editable: true,
         eventLimit: true, // allow "more" link when too many events
-        events: []
+        events: [],
+        eventClick: function(calEvent, jsEvent, view) {
+            let eventId = calEvent.id;
+            if (window.confirm('Remove Event: ' + calEvent.title)) {
+                deleteEventAPI({__id: eventId})
+                    .done(function(){
+                        $('#calendar').fullCalendar('removeEvents', eventId);
+                    })
+                    .fail(function(error){
+                        console.log(error.responseJSON.error);
+                    });  
+            } else {
+                console.log("Cancelled");
+            };
+            return false;
+        }
     });
 };
 
@@ -442,10 +458,7 @@ getListOfVEvents = function() {
         .done(function(data) {
             _.each(data.d.results, function(item) { 
                 // do something
-                let startMoment = Common.getMomentString(item.dtstart);
-                let endMoment = Common.getMomentString(item.dtend);
-                let events = [ { title: item.summary, start: startMoment, end: endMoment }];
-                $('#calendar').fullCalendar('addEventSource', events);
+                PCalendar.renderEvent(item);
             });
         })
         .always(function(){
@@ -453,14 +466,50 @@ getListOfVEvents = function() {
         });
 };
 
-Common.getMomentString = function(dateString) {
-    let eventObj = moment(dateString);
-    if ("00:00:00" == eventObj.format("HH:mm:ss")) {
-        // all day event
-        return eventObj.format("YYYY-MM-DD");
-    } else {
-        return eventObj.format();
+/*
+ * Create event (https://fullcalendar.io/docs/event-object)
+ */
+PCalendar.renderEvent = function(item) {
+    let startMoment = moment(item.dtstart);
+    let endMoment = moment(item.dtend);
+    let event =
+    {
+        id: item.srcId,
+        title: item.summary,
+        allDay: PCalendar.isAllDay(startMoment, endMoment),
+        start: startMoment.format(),
+        end: endMoment.format(),
+        editable: true,
+        color: PCalendar.getEventColor(item.srcType),
+        description: item.description
+    };
+    $('#calendar').fullCalendar('renderEvent', event, true);
+};
+
+PCalendar.isAllDay = function(start, end) {
+    if ("00:00:00" != start.format("HH:mm:ss")) {
+        return false;
     }
+
+    return (end.diff(start, 'days') == 1);
+};
+
+PCalendar.getEventColor = function(srcType) {
+    switch(srcType) {
+    case 'EWS':
+        color = '#3366ff';
+        break;
+    case 'Google':
+        color = '#ff3333';
+        break;
+    case 'Office365':
+        color = '#0066ff';
+        break;
+    default:
+        color = '#ccd9ff';
+    }
+
+    return color;
 };
 
 Common.getListOfOData = function(url, token) {
@@ -864,6 +913,17 @@ deleteAccessInfoAPI = function(accountInfo) {
     return $.ajax({
         type: "DELETE",
         url: Common.getBoxUrl() + 'Engine/setAccessInfo' + '?' + $.param(accountInfo),
+        headers: {
+            'Accept':'application/json',
+            'Authorization':'Bearer ' + Common.getToken()
+        }
+    });
+};
+
+deleteEventAPI = function(eventInfo) {
+    return $.ajax({
+        type: "DELETE",
+        url: Common.getBoxUrl() + 'UpdateEngine/updateVEvent' + '?' + $.param(eventInfo),
         headers: {
             'Accept':'application/json',
             'Authorization':'Bearer ' + Common.getToken()
