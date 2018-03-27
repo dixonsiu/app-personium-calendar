@@ -832,12 +832,32 @@ function createResponse(tempCode, tempBody) {
     };
 }
 //yyyy-MM-ddTHH:mm:ss+09:00 -> yyyy/MM/dd HH:mm:ss
-function toUTC(str){
-  var split = str.split("+");
-  var repl = split[0].replace("T"," ");
-  repl = repl.replace(/-/g, "/");
-  var newdate = Date.parse(new Date(repl));
-  return newdate;
+function toUTC(dateObj){
+    var str = "";
+    if (dateObj.dateTime) {
+        str = dateObj.dateTime;
+    } else if (dateObj.date) {
+        str = dateObj.date;
+    } else {
+        // throw exception
+        var err = [
+            "io.personium.client.DaoException: 400,",
+            JSON.stringify({
+                "code": "PR400-OD-0047",
+                "message": {
+                    "lang": "en",
+                    "value": "Operand or argument for date has unsupported/invalid format."
+                }
+            })
+        ].join("");
+        throw new _p.PersoniumException(err);
+    }
+
+    var split = str.split("+");
+    var repl = split[0].replace("T"," ");
+    repl = repl.replace(/-/g, "/");
+    var newdate = Date.parse(new Date(repl));
+    return newdate;
 }
 
 function parseGoogleEvents(items){
@@ -848,11 +868,11 @@ function parseGoogleEvents(items){
     result.__id = items[i].id;
     result.srcId = items[i].id;
 
-    var newdate = toUTC(items[i].start.dateTime);
+    var newdate = toUTC(items[i].start);
     result.uxtDtstart = newdate;
     result.dtstart = "/Date(" + newdate + ")/";
 
-    newdate = toUTC(items[i].end.dateTime);
+    newdate = toUTC(items[i].end);
     result.uxtDtend = newdate;
     result.dtend = "/Date(" + newdate + ")/";
 
