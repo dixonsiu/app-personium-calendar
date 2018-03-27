@@ -286,10 +286,6 @@ function(request){
 
         // initialization
         var accessToken = null;
-        var host = null;
-        var port = null;
-        var user = null;
-        var pass = null;
         var calendarId = null;
         var refreshToken = null;
         var pageToken = "";
@@ -297,10 +293,6 @@ function(request){
         // get setting data
         for(var i = 0; i < accessInfo.length; i++){
           if (accessInfo[i].srcType == accessTokenSet.srcType && accessInfo[i].srcAccountName == accessTokenSet.srcAccountName) {
-            host = accessInfo[i].host;
-            port = accessInfo[i].port;
-            user = accessInfo[i].user;
-            pass = accessInfo[i].pass;
             accessToken = accessInfo[i].accessToken;
             refreshToken = accessInfo[i].refreshToken;
             calendarId = accessInfo[i].calendarId;
@@ -358,82 +350,29 @@ function(request){
         }
         personalBoxAccessor.put(pathDavName, "application/json", JSON.stringify(accessInfo));
 
-        var syncCount = 0;
-        var lastDate = null;
         // data regist
         for(var i = 0; i < results.length; i++) {
           var exData = results[i];
           exData.srcType = "Google";
           exData.srcUrl = "";
           exData.srcAccountName = accessTokenSet.srcAccountName;
-
-          var existFilter = "srcId eq '" + exData.srcId + "'";
-          var exist = personalEntityAccessor.query().filter(existFilter).run();
-
-          if (exist.d.results.length == 0) {
-            //Check whether it is recursive event or not
-            var existRecur = null;
-            try {
-              existRecur = personalEntityAccessor.retrieve(exData.__id);
-            } catch (e) {
-              if (e.code == 404) {
-                personalEntityAccessor.create(exData);
-                syncCount++;
-              } else {
-                return createResponse(500, {"error": e.message})
-              }
+          var existRecur = null;
+          try {
+            existRecur = personalEntityAccessor.retrieve(exData.__id);
+          } catch (e) {
+            if (e.code == 404) {
+              personalEntityAccessor.create(exData);
+            } else {
+              return createResponse(500, {"error": e.message})
             }
-            if (existRecur != null) {
-              var addNum = "1";
-              var loopStatus = true;
-              do {
-                exData.__id = existRecur.__id + "_recur_" + addNum;
-                try {
-                  var exist2 = personalEntityAccessor.retrieve(exData.__id);
-                } catch (e) {
-                  if (e.code == 404) {
-                    personalEntityAccessor.create(exData);
-                    syncCount++;
-                    loopStatus = false;
-                  } else {
-                    return createResponse(500, {"error": e.message})
-                  }
-                }
-                if (loopStatus) {
-                  var addNumNext = Number(addNum) + Number(1);
-                  addNum = String(addNumNext);
-                }
-              } while (loopStatus);
-            }
-          } else if (exist.d.results.length == 1) {
-            if (Number(exist.d.results[0].srcUpdated.match(/\d+/)) < Number(exData.srcUpdated.match(/\d+/))) {
-              personalEntityAccessor.update(exist.d.results[0].__id, exData, "*");
-              syncCount++;
-            }
-          } else {
-            return createResponse(400, {"error": "srcId filter is wrong."})
           }
-          lastDate = results[i].Start;
         }
-
         var nextStatus = null;
         if (results.length == Number(maxSyncResults)) {
-          accessTokenSet.nextStart = lastDate;
           nextStatus = false;
-          if (syncCount == 0) {
-            var nextMax = Number(maxSyncResults) + Number(initMaxSyncResults);
-            accessTokenSet.maxSyncResults = String(nextMax);
-          } else {
-            accessTokenSet.maxSyncResults = initMaxSyncResults;
-          }
-          personalBoxAccessor.put(pathDavTokenName, "application/json", JSON.stringify(accessTokenSet));
         } else {
           personalBoxAccessor.del(pathDavTokenName);
-          if (syncDavCnt == 1) {
-            nextStatus = true;
-          } else {
-            nextStatus = false;
-          }
+          nextStatus = true;
         }
 
         if (nextStatus) {
@@ -585,20 +524,12 @@ function(request){
       }else if (accessTokenSet.srcType == "Google"){
         // initialization
         var accessToken = null;
-        var host = null;
-        var port = null;
-        var user = null;
-        var pass = null;
         var calendarId = null;
         var refreshToken = null;
         var syncToken = "";
         // get setting data
         for(var i = 0; i < accessInfo.length; i++){
           if (accessInfo[i].srcType == accessTokenSet.srcType && accessInfo[i].srcAccountName == accessTokenSet.srcAccountName) {
-            host = accessInfo[i].host;
-            port = accessInfo[i].port;
-            user = accessInfo[i].user;
-            pass = accessInfo[i].pass;
             accessToken = accessInfo[i].accessToken;
             refreshToken = accessInfo[i].refreshToken;
             calendarId = accessInfo[i].calendarId;
@@ -657,114 +588,31 @@ function(request){
           exData.srcType = "Google";
           exData.srcUrl = "";
           exData.srcAccountName = accessTokenSet.srcAccountName;
-
-          var existFilter = "srcId eq '" + exData.srcId + "'";
-          var exist = personalEntityAccessor.query().filter(existFilter).run();
-
-          if (exist.d.results.length == 0) {
-            //Check whether it is recursive event or not
-            var existRecur = null;
-            try {
-              existRecur = personalEntityAccessor.retrieve(exData.__id);
-            } catch (e) {
-              if (e.code == 404) {
-                personalEntityAccessor.create(exData);
-                syncCount++;
-              } else {
-                return {
-                  status : 500,
-                  headers : {"Content-Type":"application/json"},
-                  body: [JSON.stringify({"error": e.message})]
-                };
-              }
+          var existRecur = null;
+          try {
+            existRecur = personalEntityAccessor.retrieve(exData.__id);
+          } catch (e) {
+            if (e.code == 404) {
+              personalEntityAccessor.create(exData);
+            } else {
+              return createResponse(500, {"error": e.message})
             }
-            if (existRecur != null) {
-              var addNum = "1";
-              var loopStatus = true;
-              do {
-                exData.__id = existRecur.__id + "_recur_" + addNum;
-                try {
-                  var exist2 = personalEntityAccessor.retrieve(exData.__id);
-                } catch (e) {
-                  if (e.code == 404) {
-                    personalEntityAccessor.create(exData);
-                    syncCount++;
-                    loopStatus = false;
-                  } else {
-                    return {
-                      status : 500,
-                      headers : {"Content-Type":"application/json"},
-                      body: [JSON.stringify({"error": e.message})]
-                    };
-                  }
-                }
-                if (loopStatus) {
-                  var addNumNext = Number(addNum) + Number(1);
-                  addNum = String(addNumNext);
-                }
-              } while (loopStatus);
-            }
-          } else if (exist.d.results.length == 1) {
-            exData.__id = exist.d.results[0].__id;
-            if (Number(exist.d.results[0].srcUpdated.match(/\d+/)) < Number(exData.srcUpdated.match(/\d+/))) {
-              personalEntityAccessor.update(exist.d.results[0].__id, exData, "*");
-            }
-            var index = -1;
-            index = accessTokenSet.checkList.indexOf(exData.srcId);
-            if (index != -1) {
-              accessTokenSet.checkList.splice(index, 1);
-              syncCount++;
-            }
-          } else {
-            return {
-              status : 400,
-              headers : {"Content-Type":"application/json"},
-              body: [JSON.stringify({"error": "srcId filter is wrong."})]
-            };
           }
-          lastDate = results[i].Start;
         }
-
         var nextStatus = null;
         if (results.length == Number(maxSyncResults)) {
-          accessTokenSet.nextStart = lastDate;
           nextStatus = false;
-          if (syncCount == 0) {
-            var nextMax = Number(maxSyncResults) + Number(initMaxSyncResults);
-            accessTokenSet.maxSyncResults = String(nextMax);
-          } else {
-            accessTokenSet.maxSyncResults = initMaxSyncResults;
-          }
-          personalBoxAccessor.put(pathDavTokenName, "application/json", JSON.stringify(accessTokenSet));
         } else {
-          //checkList に残っているsrcIdのエントリーを削除
-          for(var i = 0; i < accessTokenSet.checkList.length; i++) {
-            var checkFilter = "srcId eq '" + accessTokenSet.checkList[i] + "'";
-            var deleteIndex = personalEntityAccessor.query().filter(checkFilter).run();
-            personalEntityAccessor.del(deleteIndex.d.results[0].__id);
-          }
-
           personalBoxAccessor.del(pathDavTokenName);
-          if (syncDavCnt == 1) {
-            nextStatus = true;
-          } else {
-            nextStatus = false;
-          }
+          nextStatus = true;
         }
 
         if (nextStatus) {
-          return {
-              status: 200,
-              headers: {"Content-Type":"application/json"},
-              body : ['{"syncCompleted" : true}']
-          };
+          return createResponse(200, {"syncCompleted": true})
         } else {
-          return {
-              status: 200,
-              headers: {"Content-Type":"application/json"},
-              body : ['{"syncCompleted" : false}']
-          };
+          return createResponse(200, {"syncCompleted": false})
         }
+
       } else {  // e.g. Google
         // srcType is not EWS.
         // not supported now!
@@ -845,20 +693,26 @@ function parseGoogleEvents(items){
   for(var i = 0; i < items.length; i++){
 
     var result = {};
-    result.__id = items[i].id;
-    result.srcId = items[i].id;
+    try{
+      result.__id = items[i].id;
+      result.srcId = items[i].id;
+      var eventDate = getDateTime(items[i].start);
+      var newdate = toUTC(eventDate);
+    
+      //result.uxtDtstart = newdate;
+      result.dtstart = "/Date(" + newdate + ")/";
 
-    var newdate = toUTC(items[i].start.dateTime);
-    result.uxtDtstart = newdate;
-    result.dtstart = "/Date(" + newdate + ")/";
+      eventDate = getDateTime(items[i].end);
+      newdate = toUTC(eventDate);
+      //result.uxtDtend = newdate;
+      result.dtend = "/Date(" + newdate + ")/";
 
-    newdate = toUTC(items[i].end.dateTime);
-    result.uxtDtend = newdate;
-    result.dtend = "/Date(" + newdate + ")/";
-
-    newdate = Date.parse(new Date(items[i].updated));
-    result.uxtUpdated = newdate;
-    result.srcUpdated = "/Date(" + newdate + ")/";
+      newdate = Date.parse(new Date(items[i].updated));
+      //result.uxtUpdated = newdate;
+      result.srcUpdated = "/Date(" + newdate + ")/";
+    }catch(e){
+      continue;
+    }
 
     result.summary = items[i].summary;
     result.description = items[i].description;
@@ -876,4 +730,24 @@ function parseGoogleEvents(items){
   }
 
   return results;
+}
+
+function getDateTime(obj){
+  if(obj.dateTime){
+    return obj.dateTime;
+  } else if (obj.date){
+    return obj.date;
+  } else { // date format error
+    var err = [
+      "io.personium.client.DaoException: 400,",
+      JSON.stringify({
+        "code": "PR400-OD-0047",
+        "message": {
+        "lang": "en",
+        "value": "Operand or argument for date has unsupported/invalid format."
+        }
+      })
+    ].join("");
+    throw new _p.PersoniumException(err);
+  }
 }
