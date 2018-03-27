@@ -24,6 +24,23 @@ additionalCallback = function() {
     getListOfVEvents();
 
     syncData();
+
+    $('body').on('change', 'input[type=radio][name=srcType]', function(){
+        let srcType = this.value;
+        switch(srcType) {
+            case 'Google':
+            case 'Office365':
+                $('#pwCalendarAccount')
+                    .val('')
+                    .prop('disabled', true);
+                break;
+            default:
+                $('#pwCalendarAccount')
+                    .val('')
+                    .prop('disabled', false);
+        }
+        $('#idCalendarAccount').val('');
+    });
 };
 
 displayMyDisplayName = function(extUrl, dispName) {
@@ -539,13 +556,17 @@ displayAccountRegistrationDialog = function() {
                 '</div>',
                 '<div class="col-sm-11 col-md-11">',
                     '<div class="row">',
-                        '<div class="col-sm-6 col-md-6">',
+                        '<div class="col-sm-4 col-md-4">',
                             '<input type="radio" id="srcTypeEWS" name="srcType" value="EWS" checked>',
                             '<label for="srcTypeEWS" data-i18n="glossary:Account.types.EWS"></label>',
                         '</div>',
-                        '<div class="col-sm-6 col-md-6">',
-                            '<input type="radio" id="srcTypeGOOGLE" name="srcType" value="GOOGLE">',
+                        '<div class="col-sm-4 col-md-4">',
+                            '<input type="radio" id="srcTypeGOOGLE" name="srcType" value="Google">',
                             '<label for="srcTypeGOOGLE" data-i18n="glossary:Account.types.Google"></label>',
+                        '</div>',
+                        '<div class="col-sm-4 col-md-4">',
+                            '<input type="radio" id="srcTypeOffice365" name="srcType" value="Office365">',
+                            '<label for="srcTypeOffice365" data-i18n="glossary:Account.types.Office365"></label>',
                         '</div>',
                     '</div>',
                 '</div>',
@@ -565,7 +586,7 @@ displayAccountRegistrationDialog = function() {
                     '<span data-i18n="glossary:Account.ID"></span>',
                 '</div>',
                 '<div class="col-sm-11 col-md-11">',
-                    '<input type="text" id="idCalendarAccount" name="idCalendarAccount">',
+                    '<input type="text" id="idCalendarAccount" name="idCalendarAccount" value="">',
                 '</div>',
             '</div>',
             '<div class="row">',
@@ -573,7 +594,7 @@ displayAccountRegistrationDialog = function() {
                     '<span data-i18n="glossary:Account.Password"></span>',
                 '</div>',
                 '<div class="col-sm-11 col-md-11">',
-                    '<input type="password" id="pwCalendarAccount" name="pwCalendarAccount">',
+                    '<input type="password" id="pwCalendarAccount" name="pwCalendarAccount" value="">',
                 '</div>',
             '</div>',
         '</div>',
@@ -595,14 +616,27 @@ registerAccount = function() {
     // show spinner
     $('#dialogOverlay').show();
 
-    setAccessInfoAPI('POST')
-        .done(function(data, status, response){
-            syncFullData();
-        })
-        .fail(function(error){
-            console.log(error.responseJSON.error);
-            $('#dialogOverlay').hide();
-        });
+    let srcType = $('[name=srcType]:checked').val();
+    switch(srcType) {
+        case 'Google':
+        case 'Office365':
+            let paramStr = $.param({
+                srcType: srcType,
+                state: 'hoge',
+                userCellUrl: Common.getCellUrl()
+            });
+            window.location.href = 'https://demo.personium.io/app-personium-calendar/__/Engine/reqOAuthToken?' + paramStr;
+            break;
+        default:
+            setAccessInfoAPI('POST')
+                .done(function(data, status, response){
+                    syncFullData();
+                })
+                .fail(function(error){
+                    console.log(error.responseJSON.error);
+                    $('#dialogOverlay').hide();
+                });
+    }
 
     return false;
 };
@@ -670,13 +704,17 @@ displayAccountModificationDialog = function(aDom, accountInfo) {
                 '</div>',
                 '<div class="col-sm-11 col-md-11">',
                     '<div class="row">',
-                        '<div class="col-sm-6 col-md-6">',
+                        '<div class="col-sm-4 col-md-4">',
                             '<input type="radio" id="srcTypeEWS" name="srcType" value="EWS" checked>',
                             '<label for="srcTypeEWS" data-i18n="glossary:Account.types.EWS"></label>',
                         '</div>',
-                        '<div class="col-sm-6 col-md-6">',
-                            '<input type="radio" id="srcTypeGOOGLE" name="srcType" value="GOOGLE">',
+                        '<div class="col-sm-4 col-md-4">',
+                            '<input type="radio" id="srcTypeGOOGLE" name="srcType" value="Google">',
                             '<label for="srcTypeGOOGLE" data-i18n="glossary:Account.types.Google"></label>',
+                        '</div>',
+                        '<div class="col-sm-4 col-md-4">',
+                            '<input type="radio" id="srcTypeOffice365" name="srcType" value="Office365">',
+                            '<label for="srcTypeOffice365" data-i18n="glossary:Account.types.Office365"></label>',
                         '</div>',
                     '</div>',
                 '</div>',
