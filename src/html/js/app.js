@@ -247,7 +247,12 @@ displayAccountPanel = function() {
     getAccountList().done(function(data) {
         dispAccountList(data);
     }).fail(function(error) {
-        console.log(error);
+        console.log(error.responseJSON.error);
+        Common.openWarningDialog(
+            'warningDialog.title',
+            error.responseJSON.error,
+            function(){ $('#modal-common').modal('hide')}
+        );
     }).always(function(){
         $(".setting-menu").toggleClass('slide-on');
     });
@@ -436,11 +441,27 @@ renderFullCalendar = function() {
                     })
                     .fail(function(error){
                         console.log(error.responseJSON.error);
+                        Common.openWarningDialog(
+                            'warningDialog.title',
+                            error.responseJSON.error,
+                            function(){ $('#modal-common').modal('hide')}
+                        );
                     });  
             } else {
                 console.log("Cancelled");
             };
             return false;
+        },
+        eventRender: function(eventObj, $el) {
+            // https://www.w3schools.com/bootstrap/bootstrap_ref_js_popover.asp
+            $el.popover({
+                title: eventObj.title,
+                html: true,
+                content: eventObj.description ? '<div style="word-break: break-all">'+eventObj.description+'</div>':'',
+                trigger: 'hover',
+                placement: 'top',
+                container: 'body'
+            });
         }
     });
 };
@@ -535,10 +556,10 @@ syncData = function() {
                  * 2. Fill form
                  * 3. Call setAccessInfoAPI
                  */
-                 Common.stopAnimation();
-                 Common.openSlide();
-                 displayAccountPanel();
-                 displayAccountRegistrationDialog();
+                Common.stopAnimation();
+                Common.openSlide();
+                displayAccountPanel();
+                displayAccountRegistrationDialog();
             } else {
                 if (data.status == 'OK') {
                     Common.stopAnimation();
@@ -577,6 +598,12 @@ syncData = function() {
                     // Display edit account panel
                     displayAccountModificationDialog(null, accountInfo);
                 }
+            } else {
+                Common.openWarningDialog(
+                    'warningDialog.title',
+                    jqXHR.responseJSON.error,
+                    function(){ $('#modal-common').modal('hide')}
+                );
             }
         });
 };
@@ -668,40 +695,59 @@ registerAccount = function() {
     let srcType = $('[name=srcType]:checked').val();
     let srcAccountName = $('#idCalendarAccount').val();
     switch(srcType) {
-        case 'Google':
-        case 'Office365':
-            let pData = getAccountData(srcType, srcAccountName);
-            
-            if (pData.access_token) {
-                setAccessInfoAPI('POST', pData)
-                    .done(function(data, status, response){
-                        syncFullData();
-                    })
-                    .fail(function(error){
-                        console.log(error.responseJSON.error);
-                        $('#dialogOverlay').hide();
-                    });
-            } else {
-                let paramStr = $.param({
-                    srcType: srcType,
-                    state: 'hoge',
-                    userCellUrl: Common.getCellUrl()
-                });
-                window.location.href = 'https://demo.personium.io/app-personium-calendar/__/Engine/reqOAuthToken?' + paramStr;
-            }
-            break;
-        default:
-            setAccessInfoAPI('POST')
-                .done(function(data, status, response){
-                    syncFullData();
-                })
-                .fail(function(error){
-                    console.log(error.responseJSON.error);
-                    $('#dialogOverlay').hide();
-                });
+    case 'Google':
+    case 'Office365':
+        PCalendar.prepareOAuth2Account(srcType, srcAccountName);
+        break;
+    default:
+        setAccessInfoAPI('POST')
+            .done(function(data, status, response){
+                syncFullData();
+            })
+            .fail(function(error){
+                console.log(error.responseJSON.error);
+                Common.openWarningDialog(
+                    'warningDialog.title',
+                    error.responseJSON.error,
+                    function(){ $('#modal-common').modal('hide')}
+                );
+                $('#dialogOverlay').hide();
+            });
     }
 
     return false;
+};
+
+PCalendar.prepareOAuth2Account = function(srcType, srcAccountName) {
+    let pData = getAccountData(srcType, srcAccountName);
+    
+    if (pData.access_token) {
+        setAccessInfoAPI('POST', pData)
+            .done(function(data, status, response){
+                syncFullData();
+            })
+            .fail(function(error){
+                console.log(error.responseJSON.error);
+                Common.openWarningDialog(
+                    'warningDialog.title',
+                    error.responseJSON.error,
+                    function(){
+                        $('#modal-common').modal('hide');
+                    }
+                );
+                $('#dialogOverlay').hide();
+            })
+            .always(function(){
+                sessionStorage.removeItem('pData');
+            });
+    } else {
+        let paramStr = $.param({
+            srcType: srcType,
+            state: 'hoge',
+            userCellUrl: Common.getCellUrl()
+        });
+        window.location.href = 'https://demo.personium.io/app-personium-calendar/__/Engine/reqOAuthToken?' + paramStr;
+    }
 };
 
 getAccountData = function(srcType, srcAccountName) {
@@ -769,6 +815,11 @@ syncFullData = function() {
                     dispAccountList(data);
                 }).fail(function(error) {
                     console.log(error.responseJSON.error);
+                    Common.openWarningDialog(
+                        'warningDialog.title',
+                        error.responseJSON.error,
+                        function(){ $('#modal-common').modal('hide')}
+                    );
                 }).always(function(){
                     reRenderCalendar();
                 });
@@ -778,6 +829,11 @@ syncFullData = function() {
         })
         .fail(function(error){
             console.log(error.responseJSON.error);
+            Common.openWarningDialog(
+                'warningDialog.title',
+                error.responseJSON.error,
+                function(){ $('#modal-common').modal('hide')}
+            );
             $('#dialogOverlay').hide();
         });
 };
@@ -875,10 +931,21 @@ modifyAccount = function() {
             getAccountList().done(function(data) {
                 dispAccountList(data);
             }).fail(function(error) {
-                console.log(error);
+                console.log(error.responseJSON.error);
+                Common.openWarningDialog(
+                    'warningDialog.title',
+                    error.responseJSON.error,
+                    function(){ $('#modal-common').modal('hide')}
+                );
             });
         })
-        .fail(function(){
+        .fail(function(error){
+            console.log(error.responseJSON.error);
+            Common.openWarningDialog(
+                'warningDialog.title',
+                error.responseJSON.error,
+                function(){ $('#modal-common').modal('hide')}
+            );
             $('#dialogOverlay').hide();
         });
 
@@ -900,11 +967,21 @@ deleteAccessInfo = function(aDom) {
             getAccountList().done(function(data) {
                 dispAccountList(data);
             }).fail(function(error) {
-                console.log(error);
+                console.log(error.responseJSON.error);
+                Common.openWarningDialog(
+                    'warningDialog.title',
+                    error.responseJSON.error,
+                    function(){ $('#modal-common').modal('hide')}
+                );
             });
         })
         .fail(function(error){
             console.log(error.responseJSON.error);
+            Common.openWarningDialog(
+                'warningDialog.title',
+                error.responseJSON.error,
+                function(){ $('#modal-common').modal('hide')}
+            );
         });
     return false;
 };

@@ -376,6 +376,26 @@ Common.openCommonDialog = function(title_key, message_key, okBtnCallback) {
         .modal('show');
 };
 
+Common.openWarningDialog = function(title_key, message, okBtnCallback) {
+    $("#modal-common .modal-title")
+        .attr('data-i18n', title_key);
+
+    $("#modal-common .modal-body")
+        .html(message);
+
+    $('#b-common-ok').one('click', function() {
+        if ((typeof okBtnCallback !== "undefined") && $.isFunction(okBtnCallback)) {
+            okBtnCallback();
+        } else {
+            Common.closeTab();
+        }
+    });
+
+    $("#modal-common")
+        .localize()
+        .modal('show');
+};
+
 /*
  * clean up data and close tab/window
  */
