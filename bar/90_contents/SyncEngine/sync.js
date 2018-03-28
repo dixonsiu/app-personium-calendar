@@ -311,7 +311,7 @@ function(request){
           } 
 
           response = httpClient.get(url, headers);
-          if(null == response){
+          if(null == response || response.status != 200){
             // access token expire
             var tempData = {"refresh_token": refreshToken , "srcType": "Google"}
             accessToken = getAccessToken(tempData);
@@ -571,7 +571,7 @@ function(request){
 
           url += "&syncToken=" + syncToken;
           response = httpClient.get(url, headers);
-          if(null == response){
+          if(null == response || response.status != 200){
             // access token expire
             var tempData = {"refresh_token": refreshToken , "srcType": "Google"}
             accessToken = getAccessToken(tempData);

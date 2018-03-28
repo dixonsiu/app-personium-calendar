@@ -109,7 +109,7 @@ function(request){
 
 
           var response = httpClient.putParam(url, headers, contentType, body);
-          if(null == response){
+          if(null == response || response.status != 200){
             // access token expire
             var tempData = {"refresh_token": refreshToken , "srcType": "Google"}
             accessToken = getAccessToken(tempData);
@@ -174,7 +174,7 @@ function(request){
 
           // delete execute
           response = httpClient.delete(url, headers);
-          if(null == response){
+          if(null == response || response.status != 204){
             // access token expire
             var tempData = {"refresh_token": refreshToken , "srcType": "Google"}
             accessToken = getAccessToken(tempData);
@@ -279,7 +279,7 @@ function(request){
           var response = { status: "", headers : {}, body :"" };
           response = httpClient.postParam(URL, headers, contentType, body);
 
-          if(null == response){
+          if(null == response || response.status != 200){
             // access token expire
             var tempData = {"refresh_token": refreshToken , "srcType": "Google"}
             accessToken = getAccessToken(tempData);
