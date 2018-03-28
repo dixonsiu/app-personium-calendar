@@ -87,10 +87,12 @@ function(request){
         personalEntityAccessor.update(exData.__id, exData, "*");
       } else if(vEvent.srcType == "Google"){
         var accessToken = null;
+        var refreshToken = null;
         var calendarId = null;
         var NO_CONTENT = 204;
         // get setting data
         accessToken = accessInfo.accessToken;
+        refreshToken = accessInfo.refreshToken;
         calendarId = accessInfo.calendarId;
 
         if (params.srcId == null || params.srcId == "") {
@@ -107,17 +109,30 @@ function(request){
           // params to Json
           body = toGoogleEvent(params);
 
+          var response = { status: "", headers : {}, body :"" };
+          response = httpClient.putParam(url, headers, contentType, body);
 
-          var response = httpClient.putParam(url, headers, contentType, body);
           if(null == response || response.status != 200){
-            // access token expire
-            var tempData = {"refresh_token": refreshToken , "srcType": "Google"}
-            accessToken = getAccessToken(tempData);
-            // retry
-            headers = {'Authorization': 'Bearer ' + accessToken};
-            response = httpClient.putParam(url, headers, contentType, body);
-            if (response == null || response.status != 200) {
-              return createResponse(400, {"error": "refresh token is wrong"})
+            if(response.status == 401){
+              // access token expire
+              var tempData = {"refresh_token": refreshToken , "srcType": "Google"}
+              accessToken = getAccessToken(tempData);
+              // retry
+              headers = {'Authorization': 'Bearer ' + accessToken};
+              response = httpClient.putParam(url, headers, contentType, body);
+              if (response == null || response.status != 200) {
+                return createResponse(400, {"error": "refresh token is wrong"})
+              }
+            
+              // save accessToken
+              for (var i = 0; i < accInfo.length; i++){
+                if(accInfo[i].srcType == accessInfo.srcType && accInfo[i].srcAccountName == accessInfo.srcAccountName){
+                  accInfo[i].accessToken = accessToken;
+                }
+              }
+              personalBoxAccessor.put(pathDavName, "application/json", JSON.stringify(accInfo));
+            }else{
+              return createResponse(400, {"error": response.body})
             }
           }
         }catch(e){
@@ -161,9 +176,11 @@ function(request){
       } else if(vEvent.srcType == "Google"){
         var accessToken = null;
         var calendarId = null;
+        var refreshToken = null;
         var NO_CONTENT = 204;
         // get setting data
         accessToken = accessInfo.accessToken;
+        refreshToken = accessInfo.refreshToken;
         calendarId = accessInfo.calendarId;
 
         try{
@@ -175,14 +192,26 @@ function(request){
           // delete execute
           response = httpClient.delete(url, headers);
           if(null == response || response.status != 204){
-            // access token expire
-            var tempData = {"refresh_token": refreshToken , "srcType": "Google"}
-            accessToken = getAccessToken(tempData);
-            // retry
-            headers = {'Authorization': 'Bearer ' + accessToken};
-            response = httpClient.delete(url, headers);
-            if (response == null || response.status != 204) {
-              return createResponse(400, {"error": "refresh token is wrong"})
+            if(response.status == 401){
+              // access token expire
+              var tempData = {"refresh_token": refreshToken , "srcType": "Google"}
+              accessToken = getAccessToken(tempData);
+              // retry
+              headers = {'Authorization': 'Bearer ' + accessToken};
+              response = httpClient.delete(url, headers);
+              if (response == null || response.status != 204) {
+                return createResponse(400, {"error": "refresh token is wrong"})
+              }
+
+              // save accessToken
+              for (var i = 0; i < accInfo.length; i++){
+                if(accInfo[i].srcType == accessInfo.srcType && accInfo[i].srcAccountName == accessInfo.srcAccountName){
+                  accInfo[i].accessToken = accessToken;
+                }
+              }
+              personalBoxAccessor.put(pathDavName, "application/json", JSON.stringify(accInfo));
+            }else{
+              return createResponse(400, {"error": response.body})
             }
           }
         }catch(e){
@@ -280,14 +309,26 @@ function(request){
           response = httpClient.postParam(URL, headers, contentType, body);
 
           if(null == response || response.status != 200){
-            // access token expire
-            var tempData = {"refresh_token": refreshToken , "srcType": "Google"}
-            accessToken = getAccessToken(tempData);
-            // retry
-            headers = {'Authorization': 'Bearer ' + accessToken};
-            response = httpClient.postParam(URL, headers, contentType, body);
-            if (response == null || response.status != 200) {
-              return createResponse(400, {"error": "refresh token is wrong"})
+            if(response.status == 401){
+              // access token expire
+              var tempData = {"refresh_token": refreshToken , "srcType": "Google"}
+              accessToken = getAccessToken(tempData);
+              // retry
+              headers = {'Authorization': 'Bearer ' + accessToken};
+              response = httpClient.postParam(URL, headers, contentType, body);
+              if (response == null || response.status != 200) {
+                return createResponse(400, {"error": "refresh token is wrong"})
+              }
+              
+              // save accessToken
+              for (var i = 0; i < accInfo.length; i++){
+                if(accInfo[i].srcType == accessInfo.srcType && accInfo[i].srcAccountName == accessInfo.srcAccountName){
+                  accInfo[i].accessToken = accessToken;
+                }
+              }
+              personalBoxAccessor.put(pathDavName, "application/json", JSON.stringify(accInfo));
+            }else{
+              return createResponse(400, {"error": response.body})
             }
           }
         }catch(e){
@@ -387,13 +428,9 @@ exchangeDataEwsToJcal = function(inData) {
   };
 }
 
-//yyyy-MM-ddTHH:mm:ss+09:00 -> yyyy/MM/dd HH:mm:ss
 function toUTC(str){
-  var split = str.split("+");
-  var repl = split[0].replace("T"," ");
-  repl = repl.replace(/-/g, "/");
-  var newdate = Date.parse(new Date(repl));
-  return newdate;
+  var newdate = new Date(str);
+  return newdate.valueOf();
 }
 
 function parseGoogleEvent(item){
@@ -401,27 +438,41 @@ function parseGoogleEvent(item){
   var result = {};
   result.__id = item.id;
   result.srcId = item.id;
+  var eventDate = null;
+  var newdate = null;
 
-  var newdate = toUTC(item.start.dateTime);
-  result.dtstart = "/Date(" + newdate + ")/";
+  if (item.start){
+    eventDate = getDateTime(item.start);
+    newdate = toUTC(eventDate);
+    result.dtstart = "/Date(" + newdate + ")/";
+  }
 
-  newdate = toUTC(item.end.dateTime);
-  result.dtend = "/Date(" + newdate + ")/";
+  if (item.end){
+    eventDate = getDateTime(item.end);
+    newdate = toUTC(eventDate);
+    result.dtend = "/Date(" + newdate + ")/";
+  }
 
-  newdate = Date.parse(new Date(item.updated));
-  result.srcUpdated = "/Date(" + newdate + ")/";
+  if (item.update){
+    newdate = Date.parse(new Date(item.updated));
+    result.srcUpdated = "/Date(" + newdate + ")/";
+  }
 
   result.summary = item.summary;
   result.description = item.description;
   result.location = item.location;
-  result.organizer = item.organizer.email;
+  if (item.organizer){
+    result.organizer = item.organizer.email;
+  }
 
   if(item.attendees){
     var list = [];
     for(var j = 0; j < item.attendees.length; j++){
       list.push(item.attendees[j].email);
     }
-    result.attendees = list;
+    if (list){
+      result.attendees = list;
+    }
   }
 
   return result;
@@ -459,6 +510,26 @@ function toGoogleEvent(params){
   }
 
   return JSON.stringify(result);
+}
+
+function getDateTime(obj){
+  if(obj.dateTime){
+    return obj.dateTime;
+  } else if (obj.date){
+    return obj.date;
+  } else { // date format error
+    var err = [
+      "io.personium.client.DaoException: 400,",
+      JSON.stringify({
+        "code": "PR400-OD-0047",
+        "message": {
+        "lang": "en",
+        "value": "Operand or argument for date has unsupported/invalid format."
+        }
+      })
+    ].join("");
+    throw new _p.PersoniumException(err);
+  }
 }
 
 function getAccessInfo(accInfo, temp){
