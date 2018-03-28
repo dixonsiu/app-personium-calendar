@@ -724,13 +724,10 @@ function createResponse(tempCode, tempBody) {
         body: [isString ? tempBody : JSON.stringify(tempBody)]
     };
 }
-//yyyy-MM-ddTHH:mm:ss+09:00 -> yyyy/MM/dd HH:mm:ss
+
 function toUTC(str){
-  var split = str.split("+");
-  var repl = split[0].replace("T"," ");
-  repl = repl.replace(/-/g, "/");
-  var newdate = Date.parse(new Date(repl));
-  return newdate;
+  var newdate = new Date(str);
+  return newdate.valueOf();
 }
 
 function parseGoogleEvents(items){
