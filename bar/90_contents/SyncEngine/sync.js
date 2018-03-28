@@ -365,15 +365,24 @@ function(request){
           exData.srcType = "Google";
           exData.srcUrl = "";
           exData.srcAccountName = accessTokenSet.srcAccountName;
-          var exist = null;
+          var existFilter = "srcId eq '" + exData.srcId + "'";
+          var exist = personalEntityAccessor.query().filter(existFilter).run();
+          
+          var existEvent = null;
           try {
-            exist = personalEntityAccessor.retrieve(exData.__id);
+            existEvent = personalEntityAccessor.retrieve(exData.__id);
           } catch (e) {
             if (e.code == 404) {
               delete exData['status'];
               personalEntityAccessor.create(exData);
             } else {
               return createResponse(500, {"error": e.message})
+            }
+          }
+          if (existEvent) {
+            if (Number(exist.d.results[0].srcUpdated.match(/\d+/)) < Number(exData.srcUpdated.match(/\d+/))) {
+              delete exData['status'];
+              personalEntityAccessor.update(exist.d.results[0].__id, exData, "*");
             }
           }
         }
@@ -765,9 +774,7 @@ function parseGoogleEvents(items){
     if(items[i].attendees != null){
       var list = [];
       for(var j = 0; j < items[i].attendees.length; j++){
-        if (items[i].attendees[j]){
-          list.push(items[i].attendees[j].email);
-        }
+        list.push(items[i].attendees[j].email);
       }
       if (list){
         result.attendees = list;
