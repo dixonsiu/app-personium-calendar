@@ -291,13 +291,9 @@ function(request){
         var pageToken = "";
         var syncToken = "";
         // get setting data
-        for(var i = 0; i < accessInfo.length; i++){
-          if (accessInfo[i].srcType == accessTokenSet.srcType && accessInfo[i].srcAccountName == accessTokenSet.srcAccountName) {
-            accessToken = accessInfo[i].accessToken;
-            refreshToken = accessInfo[i].refreshToken;
-            calendarId = accessInfo[i].calendarId;
-          }
-        }
+        accessToken = accessTokenSet.accessToken;
+        refreshToken = accessTokenSet.refreshToken;
+        calendarId = accessTokenSet.calendarId;
         if (accessTokenSet.maxSyncResults == null) {
           maxSyncResults = initMaxSyncResults;
         } else {
@@ -317,10 +313,22 @@ function(request){
           response = httpClient.get(url, headers);
           if(null == response){
             // access token expire
-            // TODO:get accessToken
+            var tempData = {"refresh_token": refreshToken , "srcType": "Google"}
+            accessToken = getAccessToken(tempData);
             // retry
             headers = {'Authorization': 'Bearer ' + accessToken};
             response = httpClient.get(url, headers);
+            if (response == null || response.status != 200) {
+              return createResponse(400, {"error": "refresh token is wrong"})
+            }
+
+            // save accessToken
+            for (var i = 0; i < accessInfo.length; i++) {
+              if(accessInfo[i].srcType == accessTokenSet.srcType && accessInfo[i].srcAccountName == accessTokenSet.srcAccountName){
+                accessInfo[i].accessToken = accessToken;
+              }
+            }
+            personalBoxAccessor.put(pathDavName, "application/json", JSON.stringify(accessInfo));
           }
         } catch (e) {
           return createResponse(400, {"srcType": "Google"})
@@ -337,33 +345,42 @@ function(request){
         //parse
         results = parseGoogleEvents(items);
 
-        // save pageToken
-        accessTokenSet.pageToken = pageToken;
-        personalBoxAccessor.put(pathDavTokenName, "application/json", JSON.stringify(accessTokenSet));
-
-        // save accessToken,syncToken
-        for (var i = 0; i < accessInfo.length; i++) {
-          if(accessInfo[i].srcType == accessTokenSet.srcType && accessInfo[i].srcAccountName == accessTokenSet.srcAccountName){
-            accessInfo[i].accessToken = accessToken;
-            accessInfo[i].syncToken = syncToken;
-          }
+        if (pageToken){
+          // save pageToken
+          accessTokenSet.pageToken = pageToken;
+          personalBoxAccessor.put(pathDavTokenName, "application/json", JSON.stringify(accessTokenSet));
         }
-        personalBoxAccessor.put(pathDavName, "application/json", JSON.stringify(accessInfo));
-
+        if (syncToken){
+          // save synctoken
+          for (var i = 0; i < accessInfo.length; i++) {
+            if(accessInfo[i].srcType == accessTokenSet.srcType && accessInfo[i].srcAccountName == accessTokenSet.srcAccountName){
+              accessInfo[i].syncToken = syncToken;
+            }
+          }
+          personalBoxAccessor.put(pathDavName, "application/json", JSON.stringify(accessInfo));
+        }
         // data regist
         for(var i = 0; i < results.length; i++) {
           var exData = results[i];
           exData.srcType = "Google";
           exData.srcUrl = "";
           exData.srcAccountName = accessTokenSet.srcAccountName;
-          var existRecur = null;
+          
+          var exist = null;
           try {
-            existRecur = personalEntityAccessor.retrieve(exData.__id);
+            exist = personalEntityAccessor.retrieve(exData.__id);
           } catch (e) {
             if (e.code == 404) {
+              delete exData['status'];
               personalEntityAccessor.create(exData);
             } else {
               return createResponse(500, {"error": e.message})
+            }
+          }
+          if (exist) {
+            if (Number(exist.srcUpdated.match(/\d+/)) < Number(exData.srcUpdated.match(/\d+/))) {
+              delete exData['status'];
+              personalEntityAccessor.update(exist.__id, exData, "*");
             }
           }
         }
@@ -372,7 +389,11 @@ function(request){
           nextStatus = false;
         } else {
           personalBoxAccessor.del(pathDavTokenName);
-          nextStatus = true;
+          if (syncDavCnt == 1) {
+            nextStatus = true;
+          } else {
+            nextStatus = false;
+          }
         }
 
         if (nextStatus) {
@@ -528,14 +549,10 @@ function(request){
         var refreshToken = null;
         var syncToken = "";
         // get setting data
-        for(var i = 0; i < accessInfo.length; i++){
-          if (accessInfo[i].srcType == accessTokenSet.srcType && accessInfo[i].srcAccountName == accessTokenSet.srcAccountName) {
-            accessToken = accessInfo[i].accessToken;
-            refreshToken = accessInfo[i].refreshToken;
-            calendarId = accessInfo[i].calendarId;
-            syncToken = accessInfo[i].syncToken;
-          }
-        }
+        accessToken = accessTokenSet.accessToken;
+        refreshToken = accessTokenSet.refreshToken;
+        calendarId = accessTokenSet.calendarId;
+        syncToken = accessTokenSet.syncToken;
         if (accessTokenSet.maxSyncResults == null) {
           maxSyncResults = initMaxSyncResults;
         } else {
@@ -556,10 +573,21 @@ function(request){
           response = httpClient.get(url, headers);
           if(null == response){
             // access token expire
-            // TODO:get accessToken
+            var tempData = {"refresh_token": refreshToken , "srcType": "Google"}
+            accessToken = getAccessToken(tempData);
             // retry
             headers = {'Authorization': 'Bearer ' + accessToken};
             response = httpClient.get(url, headers);
+            if (response == null || response.status != 200) {
+              return createResponse(400, {"error": "refresh token is wrong"})
+            }
+            // save accessToken
+            for (var i = 0; i < accessInfo.length; i++) {
+              if(accessInfo[i].srcType == accessTokenSet.srcType && accessInfo[i].srcAccountName == accessTokenSet.srcAccountName){
+                accessInfo[i].accessToken = accessToken;
+              }
+            }
+            personalBoxAccessor.put(pathDavName, "application/json", JSON.stringify(accessInfo));
           }
         } catch (e) {
           return createResponse(400, {"srcType": "Google"})
@@ -574,29 +602,41 @@ function(request){
 
         //parse
         results = parseGoogleEvents(items);
-        // save accessToken,syncToken
-        for (var i = 0; i < accessInfo.length; i++) {
-          if(accessInfo[i].srcType == accessTokenSet.srcType && accessInfo[i].srcAccountName == accessTokenSet.srcAccountName){
-            accessInfo[i].accessToken = accessToken;
-            accessInfo[i].syncToken = syncToken;
-          }
-        }
-        personalBoxAccessor.put(pathDavName, "application/json", JSON.stringify(accessInfo));
 
+        if (syncToken){
+          // save synctoken
+          for (var i = 0; i < accessInfo.length; i++) {
+            if(accessInfo[i].srcType == accessTokenSet.srcType && accessInfo[i].srcAccountName == accessTokenSet.srcAccountName){
+              accessInfo[i].syncToken = syncToken;
+            }
+          }
+          personalBoxAccessor.put(pathDavName, "application/json", JSON.stringify(accessInfo));
+        }
+        // data regist
         for(var i = 0; i < results.length; i++) {
           var exData = results[i];
           exData.srcType = "Google";
           exData.srcUrl = "";
           exData.srcAccountName = accessTokenSet.srcAccountName;
-          var existRecur = null;
+          var exist = null;
           try {
-            existRecur = personalEntityAccessor.retrieve(exData.__id);
+            exist = personalEntityAccessor.retrieve(exData.__id);
           } catch (e) {
             if (e.code == 404) {
+              delete exData['status'];
+              
               personalEntityAccessor.create(exData);
             } else {
               return createResponse(500, {"error": e.message})
             }
+          }
+          if (exist) {
+            if (exData.status == "cancelled"){
+              personalEntityAccessor.del(exist.__id); 
+            } else {
+              delete exData['status'];
+              personalEntityAccessor.update(exist.__id, exData, "*"); 
+            } 
           }
         }
         var nextStatus = null;
@@ -604,7 +644,11 @@ function(request){
           nextStatus = false;
         } else {
           personalBoxAccessor.del(pathDavTokenName);
-          nextStatus = true;
+          if (syncDavCnt == 1) {
+            nextStatus = true;
+          } else {
+            nextStatus = false;
+          }
         }
 
         if (nextStatus) {
@@ -696,20 +740,24 @@ function parseGoogleEvents(items){
     try{
       result.__id = items[i].id;
       result.srcId = items[i].id;
-      var eventDate = getDateTime(items[i].start);
-      var newdate = toUTC(eventDate);
-    
-      //result.uxtDtstart = newdate;
-      result.dtstart = "/Date(" + newdate + ")/";
+      var eventDate = null;
+      var newdate = null;
+      if (items[i].start){
+        eventDate = getDateTime(items[i].start);
+        newdate = toUTC(eventDate);
+        result.dtstart = "/Date(" + newdate + ")/";
+      }
 
-      eventDate = getDateTime(items[i].end);
-      newdate = toUTC(eventDate);
-      //result.uxtDtend = newdate;
-      result.dtend = "/Date(" + newdate + ")/";
+      if (items[i].end){
+        eventDate = getDateTime(items[i].end);
+        newdate = toUTC(eventDate);
+        result.dtend = "/Date(" + newdate + ")/";
+      }
 
-      newdate = Date.parse(new Date(items[i].updated));
-      //result.uxtUpdated = newdate;
-      result.srcUpdated = "/Date(" + newdate + ")/";
+      if (items[i].updated){
+        newdate = Date.parse(new Date(items[i].updated));
+        result.srcUpdated = "/Date(" + newdate + ")/";
+      }
     }catch(e){
       continue;
     }
@@ -717,14 +765,18 @@ function parseGoogleEvents(items){
     result.summary = items[i].summary;
     result.description = items[i].description;
     result.location = items[i].location;
-    result.organizer = items[i].organizer.email;
-
+    if (items[i].organizer){
+      result.organizer = items[i].organizer.email;
+    }
+    result.status = items[i].status;
     if(items[i].attendees != null){
       var list = [];
       for(var j = 0; j < items[i].attendees.length; j++){
         list.push(items[i].attendees[j].email);
       }
-      result.attendees = list;
+      if (list){
+        result.attendees = list;
+      }
     }
     results.push(result);
   }
@@ -750,4 +802,29 @@ function getDateTime(obj){
     ].join("");
     throw new _p.PersoniumException(err);
   }
+}
+
+function getAccessToken(bodyData) {
+  try {
+    var httpClient = new _p.extension.HttpClient();
+    var body = "";
+    var headers = {'Accept': 'text/plain'};
+    var contentType = "application/json";
+
+    var url = "https://demo.personium.io/app-personium-calendar/__/Engine/oauth2callback"
+    var body = JSON.stringify(bodyData)
+    var headers = {}
+    var response = httpClient.put(url, headers, contentType, body)
+    if (response == null || response.status != 200) {
+      return {
+        status : response.status,
+        headers : {"Content-Type":"application/json"},
+        body : ['{"error": {"status":' + response.body + ', "message": "API call failed."}}']
+      };
+    } 
+  } catch (e) {
+    return createResponse(400, e.message)
+  }
+  var res = JSON.parse(response.body);
+  return res.access_token;
 }

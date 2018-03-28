@@ -17,11 +17,7 @@ function(request){
 
   // POST, PUT, DELETE 以外は405
   if(request.method !== "POST" && request.method !== "PUT" && request.method !== "DELETE") {
-    return {
-      status : 405,
-      headers : {"Content-Type":"application/json"},
-      body : ['{"error":"method not allowed"}']
-    };
+    return createResponse(405, {"error": "method not allowed"})
   }
 
   if(request.method === "POST" || request.method === "PUT") {
@@ -30,11 +26,7 @@ function(request){
     bodyAsString = request.queryString;
   }
   if (bodyAsString === "") {
-    return {
-      status : 400,
-      headers : {"Content-Type":"application/json"},
-      body : ['{"error":"required parameter not exist."}']
-    };
+    return createResponse(400, {"error": "required parameter not exist."})
   }
 
   var collectionName = "OData";
@@ -61,11 +53,7 @@ function(request){
       try {
         vEvent = personalEntityAccessor.retrieve(params.__id);
       } catch (e) {
-        return {
-          status: e.code,
-          headers: { "Content-Type": "application/json" },
-          body: [JSON.stringify({"error": e.message})]
-        };
+        return createResponse(e.code, {"error": e.message})
       }
       accessInfo = getAccessInfo(accInfo, vEvent);
     } else { // POST
@@ -81,11 +69,7 @@ function(request){
           ews.createService(accessInfo.srcAccountName, accessInfo.pw);
           ews.setUrl(accessInfo.srcUrl);
         } catch (e) {
-          return {
-            status : 400,
-            headers : {"Content-Type":"application/json"},
-            body: ['{"srcType": "EWS"}']
-          };
+          return createResponse(400, {"srcType": "EWS"})
         }
 
         if (params.srcId == null || params.srcId == "") {
@@ -103,17 +87,9 @@ function(request){
         personalEntityAccessor.update(exData.__id, exData, "*");
       } else if(vEvent.srcType == "Google"){
         var accessToken = null;
-        var host = null;
-        var port = null;
-        var user = null;
-        var pass = null;
         var calendarId = null;
         var NO_CONTENT = 204;
         // get setting data
-        host = accessInfo.host;
-        port = accessInfo.port;
-        user = accessInfo.user;
-        pass = accessInfo.pass;
         accessToken = accessInfo.accessToken;
         calendarId = accessInfo.calendarId;
 
@@ -135,17 +111,17 @@ function(request){
           var response = httpClient.putParam(url, headers, contentType, body);
           if(null == response){
             // access token expire
-            // TODO:get accessToken
+            var tempData = {"refresh_token": refreshToken , "srcType": "Google"}
+            accessToken = getAccessToken(tempData);
             // retry
             headers = {'Authorization': 'Bearer ' + accessToken};
-            response = httpClient.put(url, headers, contentType, body);
+            response = httpClient.putParam(url, headers, contentType, body);
+            if (response == null || response.status != 200) {
+              return createResponse(400, {"error": "refresh token is wrong"})
+            }
           }
         }catch(e){
-          return {
-            status : 400,
-            headers : {"Content-Type":"application/json"},
-            body: ['{"srcType": "Google"}']
-          };
+          return createResponse(400, {"srcType": "Google"})
         }
 
         var item = JSON.parse(response.body);
@@ -161,11 +137,7 @@ function(request){
       } else { // e.g. Google
         // srcType is not EWS.
         // not supported now!
-        return {
-          status : 400,
-          headers : {"Content-Type":"application/json"},
-          body: ['{"error": "Required srcType is not supported."}']
-        };
+        return createResponse(400, {"error": "Required srcType is not supported."})
       }
 
     } else if (request.method === "DELETE") {
@@ -176,11 +148,7 @@ function(request){
           ews.createService(accessInfo.srcAccountName, accessInfo.pw);
           ews.setUrl(accessInfo.srcUrl);
         } catch (e) {
-          return {
-            status : 400,
-            headers : {"Content-Type":"application/json"},
-            body: ['{"srcType": "EWS"}']
-          };
+          return createResponse(400, {"srcType": "EWS"})
         }
 
         var result = ews.deleteVEvent(vEvent);
@@ -188,25 +156,13 @@ function(request){
         if (result == "OK") {
           personalEntityAccessor.del(vEvent.__id);
         } else {
-          return {
-            status: 500,
-            headers: {"Content-Type":"application/json"},
-            body: [JSON.stringify({"error": "Not delete vEvent of EWS server."})]
-          };
+          return createResponse(500, {"error": "Not delete vEvent of EWS server."})
         }
       } else if(vEvent.srcType == "Google"){
         var accessToken = null;
-        var host = null;
-        var port = null;
-        var user = null;
-        var pass = null;
         var calendarId = null;
         var NO_CONTENT = 204;
         // get setting data
-        host = accessInfo.host;
-        port = accessInfo.port;
-        user = accessInfo.user;
-        pass = accessInfo.pass;
         accessToken = accessInfo.accessToken;
         calendarId = accessInfo.calendarId;
 
@@ -220,17 +176,17 @@ function(request){
           response = httpClient.delete(url, headers);
           if(null == response){
             // access token expire
-            // TODO:get accessToken
+            var tempData = {"refresh_token": refreshToken , "srcType": "Google"}
+            accessToken = getAccessToken(tempData);
             // retry
             headers = {'Authorization': 'Bearer ' + accessToken};
             response = httpClient.delete(url, headers);
+            if (response == null || response.status != 204) {
+              return createResponse(400, {"error": "refresh token is wrong"})
+            }
           }
         }catch(e){
-          return {
-            status : 400,
-            headers : {"Content-Type":"application/json"},
-            body: ['{"srcType": "Google"}']
-          };
+          return createResponse(400, {"srcType": "Google"})
         }
 
         if(response){
@@ -238,21 +194,13 @@ function(request){
           if(NO_CONTENT == status){
             personalEntityAccessor.del(vEvent.__id);
           } else {
-            return {
-              status: 500,
-              headers: {"Content-Type":"application/json"},
-              body: [JSON.stringify({"error": "Not delete vEvent of Google server."})]
-            };
+            return createResponse(500, {"error": "Not delete vEvent of Google server."})
           }
         }
       } else { // e.g. Google
         // srcType is not EWS.
         // not supported now!
-        return {
-          status : 400,
-          headers : {"Content-Type":"application/json"},
-          body: ['{"error": "Required srcType is not supported."}']
-        };
+        return createResponse(400, {"error": "Required srcType is not supported."})
       }
 
     } else { // POST
@@ -263,11 +211,7 @@ function(request){
           ews.createService(accessInfo.srcAccountName, accessInfo.pw);
           ews.setUrl(accessInfo.srcUrl);
         } catch (e) {
-          return {
-            status : 400,
-            headers : {"Content-Type":"application/json"},
-            body: ['{"srcType": "EWS"}']
-          };
+          return createResponse(400, {"srcType": "EWS"})
         }
 
         var result = ews.createVEvent(params);
@@ -283,11 +227,7 @@ function(request){
           if (e.code == 404) {
             personalEntityAccessor.create(exData);
           } else {
-            return {
-              status : 500,
-              headers : {"Content-Type":"application/json"},
-              body: [JSON.stringify({"error": e.message})]
-            };
+            return createResponse(500, {"error": e.message})
           }
         }
 
@@ -296,11 +236,7 @@ function(request){
           var loopStatus = true;
           do {
             if (exist.srcId == exData.srcId) {
-              return {
-                status : 400,
-                headers : {"Content-Type":"application/json"},
-                body: ['{"error": "A strange condition occurred."}']
-              };
+              return createResponse(400, {"error": "A strange condition occurred."})
             } else {
               exData.__id = exist.__id + "_recur_" + addNum;
               try {
@@ -310,11 +246,7 @@ function(request){
                   personalEntityAccessor.create(exData);
                   loopStatus = false;
                 } else {
-                  return {
-                    status : 500,
-                    headers : {"Content-Type":"application/json"},
-                    body: [JSON.stringify({"error": e.message})]
-                  };
+                  return createResponse(500, {"error": e.message})
                 }
               }
               if (loopStatus) {
@@ -326,17 +258,9 @@ function(request){
         }
       } else if(params.srcType == "Google"){
         var accessToken = null;
-        var host = null;
-        var port = null;
-        var user = null;
-        var pass = null;
         var calendarId = null;
         var refreshToken = null;
         // get setting data
-        host = accessInfo.host;
-        port = accessInfo.port;
-        user = accessInfo.user;
-        pass = accessInfo.pass;
         accessToken = accessInfo.accessToken;
         refreshToken = accessInfo.refreshToken;
         calendarId = accessInfo.calendarId;
@@ -357,19 +281,17 @@ function(request){
 
           if(null == response){
             // access token expire
-            // TODO: get new access token
+            var tempData = {"refresh_token": refreshToken , "srcType": "Google"}
+            accessToken = getAccessToken(tempData);
             // retry
             headers = {'Authorization': 'Bearer ' + accessToken};
             response = httpClient.postParam(URL, headers, contentType, body);
+            if (response == null || response.status != 200) {
+              return createResponse(400, {"error": "refresh token is wrong"})
+            }
           }
-
-
         }catch(e){
-          return {
-            status : 400,
-            headers : {"Content-Type":"application/json"},
-            body: ['{"srcType": "Google"}']
-          };
+          return createResponse(400, {"srcType": "Google"})
         }
 
         // register
@@ -391,11 +313,7 @@ function(request){
           if (e.code == 404) {
             personalEntityAccessor.create(exData);
           } else {
-            return {
-              status : 500,
-              headers : {"Content-Type":"application/json"},
-              body: [JSON.stringify({"error": e.message})]
-            };
+            return createResponse(500, {"error": e.message})
           }
         }
 
@@ -404,11 +322,7 @@ function(request){
           var loopStatus = true;
           do {
             if (exist.srcId == exData.srcId) {
-              return {
-                status : 400,
-                headers : {"Content-Type":"application/json"},
-                body: ['{"error": "A strange condition occurred."}']
-              };
+              return createResponse(400, {"error": "A strange condition occurred."})
             } else {
               exData.__id = exist.__id + "_recur_" + addNum;
               try {
@@ -418,11 +332,7 @@ function(request){
                   personalEntityAccessor.create(exData);
                   loopStatus = false;
                 } else {
-                  return {
-                    status : 500,
-                    headers : {"Content-Type":"application/json"},
-                    body: [JSON.stringify({"error": e.message})]
-                  };
+                  return createResponse(500, {"error": e.message})
                 }
               }
               if (loopStatus) {
@@ -435,29 +345,17 @@ function(request){
       } else { // e.g. Google
         // srcType is not EWS.
         // not supported now!
-        return {
-          status : 400,
-          headers : {"Content-Type":"application/json"},
-          body: ['{"error": "Required srcType is not supported."}']
-        };
+        return createResponse(400, {"error": "Required srcType is not supported."})
       }
 
     }
 
   } catch (e) {
-      return {
-        status: 500,
-        headers: {"Content-Type":"application/json"},
-        body: [JSON.stringify({"error": e.message})]
-      };
+      return createResponse(500, {"error": e.message})
   }
 
   // resを定義
-  return {
-      status: 200,
-      headers: {"Content-Type":"application/json"},
-      body : ['{"status":"OK"}']
-  };
+  return createResponse(200, {"status":"OK"})
 }
 
 
@@ -505,15 +403,12 @@ function parseGoogleEvent(item){
   result.srcId = item.id;
 
   var newdate = toUTC(item.start.dateTime);
-  result.uxtDtstart = newdate;
   result.dtstart = "/Date(" + newdate + ")/";
 
   newdate = toUTC(item.end.dateTime);
-  result.uxtDtend = newdate;
   result.dtend = "/Date(" + newdate + ")/";
 
   newdate = Date.parse(new Date(item.updated));
-  result.uxtUpdated = newdate;
   result.srcUpdated = "/Date(" + newdate + ")/";
 
   result.summary = item.summary;
@@ -575,4 +470,39 @@ function getAccessInfo(accInfo, temp){
     }
   }
   return accessInfo;
+}
+
+function createResponse(tempCode, tempBody) {
+    var isString = typeof tempBody == "string";
+    var tempHeaders = isString ? {"Content-Type":"text/plain"} : {"Content-Type":"application/json"};
+    return {
+        status: tempCode,
+        headers: tempHeaders,
+        body: [isString ? tempBody : JSON.stringify(tempBody)]
+    };
+}
+
+function getAccessToken(bodyData) {
+  try {
+    var httpClient = new _p.extension.HttpClient();
+    var body = "";
+    var headers = {'Accept': 'text/plain'};
+    var contentType = "application/json";
+
+    var url = "https://demo.personium.io/app-personium-calendar/__/Engine/oauth2callback"
+    var body = JSON.stringify(bodyData)
+    var headers = {}
+    var response = httpClient.put(url, headers, contentType, body)
+    if (response == null || response.status != 200) {
+      return {
+        status : response.status,
+        headers : {"Content-Type":"application/json"},
+        body : ['{"error": {"status":' + response.body + ', "message": "API call failed."}}']
+      };
+    } 
+  } catch (e) {
+    return createResponse(400, e.message)
+  }
+  var res = JSON.parse(response.body);
+  return res.access_token;
 }
