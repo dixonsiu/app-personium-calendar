@@ -91,7 +91,7 @@ function(request) {
           ews.createService(setInfo.srcAccountName, setInfo.pw);
           setInfo.srcUrl = ews.autodiscoverUrl(setInfo.srcAccountName);
         } catch (e) {
-          return createResponse(400, {"error": "Required paramter is not access ews server."})
+          return createResponse(400, {"error": "Fail to access EWS server. Please check ID/Password/Network availability."})
         }
 
         accessInfo.push(setInfo);
