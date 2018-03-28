@@ -365,12 +365,10 @@ function(request){
           exData.srcType = "Google";
           exData.srcUrl = "";
           exData.srcAccountName = accessTokenSet.srcAccountName;
-          var existFilter = "srcId eq '" + exData.srcId + "'";
-          var exist = personalEntityAccessor.query().filter(existFilter).run();
           
-          var existEvent = null;
+          var exist = null;
           try {
-            existEvent = personalEntityAccessor.retrieve(exData.__id);
+            exist = personalEntityAccessor.retrieve(exData.__id);
           } catch (e) {
             if (e.code == 404) {
               delete exData['status'];
@@ -379,10 +377,10 @@ function(request){
               return createResponse(500, {"error": e.message})
             }
           }
-          if (existEvent) {
-            if (Number(exist.d.results[0].srcUpdated.match(/\d+/)) < Number(exData.srcUpdated.match(/\d+/))) {
+          if (exist) {
+            if (Number(exist.srcUpdated.match(/\d+/)) < Number(exData.srcUpdated.match(/\d+/))) {
               delete exData['status'];
-              personalEntityAccessor.update(exist.d.results[0].__id, exData, "*");
+              personalEntityAccessor.update(exist.__id, exData, "*");
             }
           }
         }
