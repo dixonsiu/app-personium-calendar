@@ -623,9 +623,10 @@ function(request){
             exist = personalEntityAccessor.retrieve(exData.__id);
           } catch (e) {
             if (e.code == 404) {
-              delete exData['status'];
-              
-              personalEntityAccessor.create(exData);
+              if (exData.status != "cancelled"){
+                delete exData['status'];
+                personalEntityAccessor.create(exData);
+              }
             } else {
               return createResponse(500, {"error": e.message})
             }
