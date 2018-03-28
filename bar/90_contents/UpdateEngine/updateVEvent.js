@@ -89,7 +89,6 @@ function(request){
         var accessToken = null;
         var refreshToken = null;
         var calendarId = null;
-        var NO_CONTENT = 204;
         // get setting data
         accessToken = accessInfo.accessToken;
         refreshToken = accessInfo.refreshToken;
@@ -112,31 +111,31 @@ function(request){
           var response = { status: "", headers : {}, body :"" };
           response = httpClient.putParam(url, headers, contentType, body);
 
-          if(null == response || response.status != 200){
-            if(response.status == 401){
-              // access token expire
-              var tempData = {"refresh_token": refreshToken , "srcType": "Google"}
-              accessToken = getAccessToken(tempData);
-              // retry
-              headers = {'Authorization': 'Bearer ' + accessToken};
-              response = httpClient.putParam(url, headers, contentType, body);
-              if (response == null || response.status != 200) {
-                return createResponse(400, {"error": "refresh token is wrong"})
-              }
-            
-              // save accessToken
-              for (var i = 0; i < accInfo.length; i++){
-                if(accInfo[i].srcType == accessInfo.srcType && accInfo[i].srcAccountName == accessInfo.srcAccountName){
-                  accInfo[i].accessToken = accessToken;
-                }
-              }
-              personalBoxAccessor.put(pathDavName, "application/json", JSON.stringify(accInfo));
-            }else{
-              return createResponse(400, {"error": response.body})
+          if(null == response || response.status == 401){
+            // access token expire
+            var tempData = {"refresh_token": refreshToken , "srcType": "Google"}
+            accessToken = getAccessToken(tempData);
+            // retry
+            headers = {'Authorization': 'Bearer ' + accessToken};
+            response = httpClient.putParam(url, headers, contentType, body);
+            if (response == null || response.status == 401) {
+              return createResponse(400, {"error": "refresh token is wrong"})
             }
+          
+            // save accessToken
+            for (var i = 0; i < accInfo.length; i++){
+              if(accInfo[i].srcType == accessInfo.srcType && accInfo[i].srcAccountName == accessInfo.srcAccountName){
+                accInfo[i].accessToken = accessToken;
+              }
+            }
+            personalBoxAccessor.put(pathDavName, "application/json", JSON.stringify(accInfo));
           }
         }catch(e){
           return createResponse(400, {"srcType": "Google"})
+        }
+
+        if (null == response || response.status != 200){
+          return createResponse(400, {"error": response.body})
         }
 
         var item = JSON.parse(response.body);
@@ -191,28 +190,24 @@ function(request){
 
           // delete execute
           response = httpClient.delete(url, headers);
-          if(null == response || response.status != 204){
-            if(response.status == 401){
-              // access token expire
-              var tempData = {"refresh_token": refreshToken , "srcType": "Google"}
-              accessToken = getAccessToken(tempData);
-              // retry
-              headers = {'Authorization': 'Bearer ' + accessToken};
-              response = httpClient.delete(url, headers);
-              if (response == null || response.status != 204) {
-                return createResponse(400, {"error": "refresh token is wrong"})
-              }
-
-              // save accessToken
-              for (var i = 0; i < accInfo.length; i++){
-                if(accInfo[i].srcType == accessInfo.srcType && accInfo[i].srcAccountName == accessInfo.srcAccountName){
-                  accInfo[i].accessToken = accessToken;
-                }
-              }
-              personalBoxAccessor.put(pathDavName, "application/json", JSON.stringify(accInfo));
-            }else{
-              return createResponse(400, {"error": response.body})
+          if(null == response || response.status == 401){
+            // access token expire
+            var tempData = {"refresh_token": refreshToken , "srcType": "Google"}
+            accessToken = getAccessToken(tempData);
+            // retry
+            headers = {'Authorization': 'Bearer ' + accessToken};
+            response = httpClient.delete(url, headers);
+            if (response == null || response.status == 401) {
+              return createResponse(400, {"error": "refresh token is wrong"})
             }
+
+            // save accessToken
+            for (var i = 0; i < accInfo.length; i++){
+              if(accInfo[i].srcType == accessInfo.srcType && accInfo[i].srcAccountName == accessInfo.srcAccountName){
+                accInfo[i].accessToken = accessToken;
+              }
+            }
+            personalBoxAccessor.put(pathDavName, "application/json", JSON.stringify(accInfo));
           }
         }catch(e){
           return createResponse(400, {"srcType": "Google"})
@@ -220,7 +215,8 @@ function(request){
 
         if(response){
           var status = JSON.parse(response.status);
-          if(NO_CONTENT == status){
+          if(NO_CONTENT == status || 404 == status || 410 == status){
+            // success delete or already remove event on google calendar
             personalEntityAccessor.del(vEvent.__id);
           } else {
             return createResponse(500, {"error": "Not delete vEvent of Google server."})
@@ -308,31 +304,31 @@ function(request){
           var response = { status: "", headers : {}, body :"" };
           response = httpClient.postParam(URL, headers, contentType, body);
 
-          if(null == response || response.status != 200){
-            if(response.status == 401){
-              // access token expire
-              var tempData = {"refresh_token": refreshToken , "srcType": "Google"}
-              accessToken = getAccessToken(tempData);
-              // retry
-              headers = {'Authorization': 'Bearer ' + accessToken};
-              response = httpClient.postParam(URL, headers, contentType, body);
-              if (response == null || response.status != 200) {
-                return createResponse(400, {"error": "refresh token is wrong"})
-              }
-              
-              // save accessToken
-              for (var i = 0; i < accInfo.length; i++){
-                if(accInfo[i].srcType == accessInfo.srcType && accInfo[i].srcAccountName == accessInfo.srcAccountName){
-                  accInfo[i].accessToken = accessToken;
-                }
-              }
-              personalBoxAccessor.put(pathDavName, "application/json", JSON.stringify(accInfo));
-            }else{
-              return createResponse(400, {"error": response.body})
+          if(null == response || response.status == 401){
+            // access token expire
+            var tempData = {"refresh_token": refreshToken , "srcType": "Google"}
+            accessToken = getAccessToken(tempData);
+            // retry
+            headers = {'Authorization': 'Bearer ' + accessToken};
+            response = httpClient.postParam(URL, headers, contentType, body);
+            if (response == null || response.status == 401) {
+              return createResponse(400, {"error": "refresh token is wrong"})
             }
+            
+            // save accessToken
+            for (var i = 0; i < accInfo.length; i++){
+              if(accInfo[i].srcType == accessInfo.srcType && accInfo[i].srcAccountName == accessInfo.srcAccountName){
+                accInfo[i].accessToken = accessToken;
+              }
+            }
+            personalBoxAccessor.put(pathDavName, "application/json", JSON.stringify(accInfo));
           }
         }catch(e){
           return createResponse(400, {"srcType": "Google"})
+        }
+
+        if (null == response || response.status != 200){
+          return createResponse(400, {"error": response.body})
         }
 
         // register
