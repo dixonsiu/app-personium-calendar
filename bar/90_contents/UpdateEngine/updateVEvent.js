@@ -109,7 +109,7 @@ function(request){
           body = toGoogleEvent(params);
 
           var response = { status: "", headers : {}, body :"" };
-          response = httpClient.putParam(url, headers, contentType, body);
+          response = httpClient.put(url, headers, contentType, body);
 
           if(null == response || response.status == 401){
             // access token expire
@@ -117,7 +117,7 @@ function(request){
             accessToken = getAccessToken(tempData);
             // retry
             headers = {'Authorization': 'Bearer ' + accessToken};
-            response = httpClient.putParam(url, headers, contentType, body);
+            response = httpClient.put(url, headers, contentType, body);
             if (response == null || response.status == 401) {
               return createResponse(400, {"error": "refresh token is wrong"})
             }
