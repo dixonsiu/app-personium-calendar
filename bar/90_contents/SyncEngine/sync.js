@@ -311,14 +311,14 @@ function(request){
           } 
 
           response = httpClient.get(url, headers);
-          if(null == response || response.status != 200){
+          if(null == response || response.status == 401){
             // access token expire
             var tempData = {"refresh_token": refreshToken , "srcType": "Google"}
             accessToken = getAccessToken(tempData);
             // retry
             headers = {'Authorization': 'Bearer ' + accessToken};
             response = httpClient.get(url, headers);
-            if (response == null || response.status != 200) {
+            if (response == null || response.status == 401) {
               return createResponse(400, {"error": "refresh token is wrong"})
             }
 
@@ -332,6 +332,10 @@ function(request){
           }
         } catch (e) {
           return createResponse(400, {"srcType": "Google"})
+        }
+
+        if (null == response || response.status != 200){
+          return createResponse(400, {"error": response.body})
         }
 
         // parse calendar -> json
@@ -571,14 +575,14 @@ function(request){
 
           url += "&syncToken=" + syncToken;
           response = httpClient.get(url, headers);
-          if(null == response || response.status != 200){
+          if(null == response || response.status == 401){
             // access token expire
             var tempData = {"refresh_token": refreshToken , "srcType": "Google"}
             accessToken = getAccessToken(tempData);
             // retry
             headers = {'Authorization': 'Bearer ' + accessToken};
             response = httpClient.get(url, headers);
-            if (response == null || response.status != 200) {
+            if (response == null || response.status == 401) {
               return createResponse(400, {"error": "refresh token is wrong"})
             }
             // save accessToken
@@ -591,6 +595,10 @@ function(request){
           }
         } catch (e) {
           return createResponse(400, {"srcType": "Google"})
+        }
+
+        if (null == response || response.status != 200){
+          return createResponse(400, {"error": response.body})
         }
 
         // parse calendar -> json
