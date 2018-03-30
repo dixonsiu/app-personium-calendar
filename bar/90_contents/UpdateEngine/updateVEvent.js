@@ -514,7 +514,7 @@ function toGoogleEvent(params){
   if(params.attendees){
     var list = [];
     for(var j = 0; j < params.attendees.length; j++){
-      list.push(params.attendees[j].email);
+      list.push({"email": params.attendees[j]});
     }
     result.attendees = list;
   }
