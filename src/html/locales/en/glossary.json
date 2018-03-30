@@ -1,7 +1,25 @@
 {
     "title": "Personium Calendar",
     "Calendars": {
-        "label": "Calendar"
+        "label": "Calendar",
+        "VEvent": {
+            "summary": "Title",
+            "dtstart": "Start",
+            "dtend": "End",
+            "location": "Location",
+            "organizer": "Organizer",
+            "attendees": "Attendees",
+            "description": "Description",
+            "btn": {
+                "add": "Add",
+                "modify": "Edit",
+                "delete": "Delete"
+            }
+        },
+        "msg": {
+            "info": {
+            }
+        }
     },
     "Account": {
         "label": "Account",
@@ -11,6 +29,7 @@
             "Office365": "Office365",
             "EWS": "EWS"
         },
+        "srcAccountName": "Account Name",
         "ID": "ID",
         "Password": "Password",
         "Register": {
