@@ -1050,10 +1050,14 @@ PCalendar.displayAddVEventDialog = function(accountList) {
             })
             .fail(function(error){
                 console.log(error.responseJSON.error);
+                $('#modal-vevent').modal('hide');
                 Common.openWarningDialog(
                     'warningDialog.title',
                     error.responseJSON.error,
-                    function(){ $('#modal-common').modal('hide')}
+                    function(){
+                        $('#modal-common').modal('hide');
+                        $('#modal-vevent').modal('show');
+                    }
                 );
             });
     });
