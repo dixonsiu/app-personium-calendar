@@ -17,6 +17,7 @@
 :root {
   --overlay-zindex: 1030;
   --side-menu: 1031;
+  --warning-dialog: 1100;
 }
 
 html,body {
@@ -368,4 +369,8 @@ a.list-group-button {
 a.list-group-button:hover {
   color: #fff;
   background-color: #DCDCDC;
+}
+
+#modal-common {
+  z-index: var(--warning-dialog);
 }

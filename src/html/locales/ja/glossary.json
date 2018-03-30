@@ -1,7 +1,25 @@
 {
     "title": "Personiumカレンダー",
     "Calendars": {
-        "label": "カレンダー"
+        "label": "カレンダー",
+        "VEvent": {
+            "summary": "件名",
+            "dtstart": "開始時刻",
+            "dtend": "終了時刻",
+            "location": "場所",
+            "organizer": "オーガナイザー",
+            "attendees": "出席者",
+            "description": "内容",
+            "btn": {
+                "add": "追加",
+                "modify": "編集",
+                "delete": "削除"
+            }
+        },
+        "msg": {
+            "info": {
+            }
+        }
     },
     "Account": {
         "label": "アカウント",
@@ -11,6 +29,7 @@
             "Office365": "Office365",
             "EWS": "EWS"
         },
+        "srcAccountName": "アカウント名",
         "ID": "ID",
         "Password": "パスワード",
         "Register": {

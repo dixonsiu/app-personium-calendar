@@ -1,0 +1,56 @@
+<span>OAuth 2.0 - setting account info ...</span>
+<i class="fa fa-refresh fa-2x fa-fw fa-spin" style="color: black !important;"></i>
+<script>
+    setAccessInfoAPI = function(pData) {
+        let boxUrl = JSON.parse(sessionStorage.getItem("Common.accessData")).boxUrl;
+        let tempData = {
+            'srcType': pData.srcType,
+            //'srcUrl': srcUrl,
+            'srcAccountName': pData.srcAccountName,
+            'accessToken': pData.access_token,
+            'refreshToken': pData.refresh_token
+        };
+        let token = JSON.parse(sessionStorage.getItem("Common.accessData")).token;
+
+        return $.ajax({
+            type: 'POST',
+            url: boxUrl + 'Engine/setAccessInfo',
+            data: tempData,
+            headers: {
+                'Accept':'application/json',
+                'Authorization':'Bearer ' + token
+            }
+        });
+    };
+    $(document).ready(function() {
+        let app_url = JSON.parse(sessionStorage.getItem("Common.accessData")).appUrl;
+        let cell_url = JSON.parse(sessionStorage.getItem("Common.accessData")).cellUrl;
+        let refresh_token= JSON.parse(sessionStorage.getItem("Common.accessData")).refToken;
+        var tempData = JSON.parse(sessionStorage.pData);
+        $.extend(true, tempData, $("#pData").data('ret'));
+        sessionStorage.setItem("pData", JSON.stringify(tempData));
+        console.log(tempData);
+
+        if (tempData.refresh_token) {
+            setAccessInfoAPI(tempData)
+                .done(function(data, status, response){
+                    // Jump back to the app.
+                    window.location.href = app_url + '__/html/app.html' + '#cell=' + cell_url + '&refresh_token=' + refresh_token;
+                })
+                .fail(function(error){
+                    console.log(error.responseJSON.error);
+                    alert(error.responseJSON.error);
+                    // Jump back to the app.
+                    window.location.href = app_url + '__/html/app.html' + '#cell=' + cell_url + '&refresh_token=' + refresh_token;
+                })
+                .always(function(){
+                    sessionStorage.removeItem('pData');
+                });
+        } else {
+            alert('Token missing. This account is already registered by another user. Please use another account.');
+            sessionStorage.removeItem('pData');
+            // Jump back to the app.
+            window.location.href = app_url + '__/html/app.html' + '#cell=' + cell_url + '&refresh_token=' + refresh_token;
+        }
+    });
+</script>

@@ -177,12 +177,13 @@ function createHTML(params, ret) {
     var html = [
         '<html>',
             '<head>',
+                '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.4.0/css/font-awesome.min.css" />',
                 '<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>',
             '</head>',
             '<body>',
               "<div id='pData' data-ret='" + JSON.stringify(ret) + "'></div>",
               '<div id="content"></div>',
-              '<script>$("body #content").load("../html/_template.html");</script>',
+              '<script>$("body #content").load("../html/templates/_register_oauth2_account.html");</script>',
             '</body>',
         '</html>'
     ].join("");
