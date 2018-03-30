@@ -720,54 +720,28 @@ registerAccount = function() {
 };
 
 PCalendar.prepareOAuth2Account = function(srcType, srcAccountName) {
-    let pData = getAccountData(srcType, srcAccountName);
-    
-    if (pData.access_token) {
-        setAccessInfoAPI('POST', pData)
-            .done(function(data, status, response){
-                syncFullData();
-            })
-            .fail(function(error){
-                console.log(error.responseJSON.error);
-                Common.openWarningDialog(
-                    'warningDialog.title',
-                    error.responseJSON.error,
-                    function(){
-                        $('#modal-common').modal('hide');
-                    }
-                );
-                $('#dialogOverlay').hide();
-            })
-            .always(function(){
-                sessionStorage.removeItem('pData');
-            });
-    } else {
-        let paramStr = $.param({
-            srcType: srcType,
-            state: 'hoge',
-            userCellUrl: Common.getCellUrl()
-        });
-        window.location.href = 'https://demo.personium.io/app-personium-calendar/__/Engine/reqOAuthToken?' + paramStr;
-    }
+    let pData = setAccountData(srcType, srcAccountName);
+    let paramStr = $.param({
+        srcType: srcType,
+        state: 'hoge',
+        userCellUrl: Common.getCellUrl()
+    });
+    window.location.href = 'https://demo.personium.io/app-personium-calendar/__/Engine/reqOAuthToken?' + paramStr;
 };
 
-getAccountData = function(srcType, srcAccountName) {
+setAccountData = function(srcType, srcAccountName) {
     let pData;
-    if (sessionStorage.pData) {
-        pData = JSON.parse(sessionStorage.pData);
-    } else {
-        pData = {
-            srcType: srcType,
-            srcAccountName: srcAccountName
-        };
-        // Save data for later use
-        sessionStorage.setItem('pData', JSON.stringify(pData));
-    }
+    pData = {
+        srcType: srcType,
+        srcAccountName: srcAccountName
+    };
+    // Save data for later use
+    sessionStorage.setItem('pData', JSON.stringify(pData));
 
     return pData;
 };
 
-setAccessInfoAPI = function(method, pData) {
+setAccessInfoAPI = function(method) {
     let srcType = $('[name=srcType]:checked').val();
     let srcUrl = $('#srcUrl').val();
     let srcAccountName = $('#idCalendarAccount').val();
@@ -777,22 +751,11 @@ setAccessInfoAPI = function(method, pData) {
         //'srcUrl': srcUrl,
         'srcAccountName': srcAccountName,
     };
-    if (pData) {
-        $.extend(
-            true,
-            tempData,
-            {
-                'accessToken': pData.access_token,
-                'refreshToken': pData.refresh_token
-            }
-        );
-    } else {
-        $.extend(
-            true,
-            tempData,
-            { 'pw': pw }
-        );
-    };
+    $.extend(
+        true,
+        tempData,
+        { 'pw': pw }
+    );
 
     return $.ajax({
         type: method,
