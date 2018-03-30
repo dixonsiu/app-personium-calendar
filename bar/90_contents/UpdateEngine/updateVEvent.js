@@ -37,6 +37,7 @@ function(request){
   var calendarUrl = "https://www.googleapis.com/calendar/v3/calendars/";
 
   var params = _p.util.queryParse(bodyAsString);
+  var returnParam = null;
 
   try {
     var personalBoxAccessor = _p.as("client").cell(pjvm.getCellName()).box(pjvm.getBoxName());
@@ -85,6 +86,7 @@ function(request){
         exData.srcAccountName = accessInfo.srcAccountName;
 
         personalEntityAccessor.update(exData.__id, exData, "*");
+        returnParam = personalEntityAccessor.retrieve(exData.__id);
       } else if(vEvent.srcType == "Google"){
         var accessToken = null;
         var refreshToken = null;
@@ -147,6 +149,7 @@ function(request){
         exData.srcAccountName = accessInfo.srcAccountName;
 
         personalEntityAccessor.update(exData.__id, exData, "*");
+        returnParam = personalEntityAccessor.retrieve(exData.__id);
 
       } else { // e.g. Google
         // srcType is not EWS.
@@ -251,6 +254,7 @@ function(request){
         } catch (e) {
           if (e.code == 404) {
             personalEntityAccessor.create(exData);
+            returnParam = personalEntityAccessor.retrieve(exData.__id);
           } else {
             return createResponse(500, {"error": e.message})
           }
@@ -349,6 +353,7 @@ function(request){
         } catch (e) {
           if (e.code == 404) {
             personalEntityAccessor.create(exData);
+            returnParam = personalEntityAccessor.retrieve(exData.__id);
           } else {
             return createResponse(500, {"error": e.message})
           }
@@ -391,8 +396,13 @@ function(request){
       return createResponse(500, {"error": e.message})
   }
 
-  // resを定義
-  return createResponse(200, {"status":"OK"})
+  if (request.method == "POST" || request.method == "PUT"){
+    return createResponse(200, returnParam)
+  
+  } else{
+    // resを定義
+    return createResponse(204, [])
+  }
 }
 
 
