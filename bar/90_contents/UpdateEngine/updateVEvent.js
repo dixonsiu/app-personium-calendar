@@ -50,6 +50,10 @@ function(request){
     var info = personalBoxAccessor.getString(pathDavName);
     var accInfo = JSON.parse(info);
 
+    if (!(checkParams(request, params))){
+      return createResponse(400, {"error": "missing required parameter. " + JSON.stringify(params)})
+    }
+
     if (request.method === "PUT" || request.method === "DELETE") {
       try {
         vEvent = personalEntityAccessor.retrieve(params.__id);
@@ -582,4 +586,27 @@ function getAccessToken(bodyData) {
   }
   var res = JSON.parse(response.body);
   return res.access_token;
+}
+
+function checkParams(request, params){
+  try {
+    if(request.method == "POST"){
+      if(!params.srcType || !params.srcAccountName || !params.dtstart || !params.dtend || !params.organizer){
+        return false;
+      }
+    } else if (request.method == "PUT"){
+      if(!params.__id || !params.dtstart || !params.dtend || !params.organizer){
+        return false;
+      }
+
+    } else {
+      // delete
+      if(!params.__id){
+        return false;
+      }
+    }
+  } catch(e){
+    return false;
+  }
+  return true;
 }
