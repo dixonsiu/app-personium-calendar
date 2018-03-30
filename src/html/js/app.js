@@ -494,7 +494,7 @@ PCalendar.renderEvent = function(item) {
     let endMoment = moment(item.dtend);
     let event =
     {
-        id: item.srcId,
+        id: item.__id,
         title: item.summary,
         allDay: PCalendar.isAllDay(startMoment, endMoment),
         start: startMoment.format(),
