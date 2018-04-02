@@ -1,0 +1,100 @@
+<div id="modal-vevent" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header login-header">
+        <button type="button" class="close" data-dismiss="modal">x</button>
+        <h4 class="modal-title" data-i18n="Event">Event Dialog</h4>
+      </div>
+      <div class="modal-body">
+        <div class="row">
+          <div class="col-sm-3 col-md-3">
+            <span data-i18n="glossary:Account.type"></span>
+          </div>
+          <div class="col-sm-9 col-md-9">
+            <div class="row">
+              <div class="col-sm-4 col-md-4">
+                <input type="radio" id="srcTypeEWS" name="srcType" value="EWS" checked>
+                <label for="srcTypeEWS" data-i18n="glossary:Account.types.EWS"></label>
+              </div>
+              <div class="col-sm-4 col-md-4">
+                <input type="radio" id="srcTypeGOOGLE" name="srcType" value="Google">
+                <label for="srcTypeGOOGLE" data-i18n="glossary:Account.types.Google"></label>
+              </div>
+              <div class="col-sm-4 col-md-4">
+                <input type="radio" id="srcTypeOffice365" name="srcType" value="Office365"><label for="srcTypeOffice365" data-i18n="glossary:Account.types.Office365"></label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-sm-3 col-md-3">
+            <span data-i18n="glossary:Account.srcAccountName"></span>
+          </div>
+          <div class="col-sm-9 col-md-9">
+            <input type="text" id="srcAccountName" name="srcAccountName" value="">
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-sm-3 col-md-3">
+            <span data-i18n="glossary:Calendars.VEvent.dtstart"></span>
+          </div>
+          <div class="col-sm-9 col-md-9">
+            <input type="text" id="dtstart" name="dtstart" value="">
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-sm-3 col-md-3">
+            <span data-i18n="glossary:Calendars.VEvent.dtend"></span>
+          </div>
+          <div class="col-sm-9 col-md-9">
+            <input type="text" id="dtend" name="dtend" value="">
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-sm-3 col-md-3">
+            <span data-i18n="glossary:Calendars.VEvent.summary"></span>
+          </div>
+          <div class="col-sm-9 col-md-9">
+            <input type="text" id="summary" name="summary" value="">
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-sm-3 col-md-3">
+            <span data-i18n="glossary:Calendars.VEvent.description"></span>
+          </div>
+          <div class="col-sm-9 col-md-9">
+            <textarea class="form-control" rows="5" id="description" name="description"></textarea>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-sm-3 col-md-3">
+            <span data-i18n="glossary:Calendars.VEvent.location"></span>
+          </div>
+          <div class="col-sm-9 col-md-9">
+            <input type="text" id="location" name="location" value="">
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-sm-3 col-md-3">
+            <span data-i18n="glossary:Calendars.VEvent.organizer"></span>
+          </div>
+          <div class="col-sm-9 col-md-9">
+            <input type="url" id="organizer" name="organizer" value="">
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-sm-3 col-md-3">
+            <span data-i18n="glossary:Calendars.VEvent.attendees"></span>
+          </div>
+          <div class="col-sm-9 col-md-9">
+            <input type="text" id="attendees" name="attendees" value="">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal" data-i18n="Cancel">Cancel</button>
+        <button type="button" class="btn btn-primary" id="b-add-vevent-ok" >OK</button>
+      </div>
+    </div>
+  </div>
+</div>

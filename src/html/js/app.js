@@ -966,44 +966,24 @@ deleteAccessInfoAPI = function(accountInfo) {
  * Example:  [{"srcType":"Google","srcAccountName":"john.doe@gmail.com"}]
  */
 PCalendar.displayAddVEventDialog = function(accountList) {
-    $('#modal-vevent').remove();
+    $("body #modalDialogContainer").load(
+        "../html/templates/_vevent_template.html",
+        function(responseText, textStatus, jqXHR) {
+            $('body #modal-vevent').localize();
 
-    // $("body").load("../html/templates/_vevnet_template.html")
+            let srcTypeDefault = accountList[0].srcType;
+            $('#modal-vevent input[name=srcType][value=' + srcTypeDefault + ']').prop('checked', true);
+            let srcAccountNameDefault = accountList[0].srcAccountName;
+            $('#modal-vevent #srcAccountName').val(srcAccountNameDefault);
 
-    let html = [
-        '<div id="modal-vevent" class="modal fade" role="dialog">',
-            '<div class="modal-dialog">',
-                '<div class="modal-content">',
-                    '<div class="modal-header login-header">',
-                        '<button type="button" class="close" data-dismiss="modal">x</button>',
-                        '<h4 class="modal-title" data-i18n="Event">Event Dialog</h4>',
-                    '</div>',
-                    '<div class="modal-body">',
-                        srcTypeField(),
-                        srcAccountNameField(),
-                        dtstartField(),
-                        dtendField(),
-                        summaryField(),
-                        descriptionField(),
-                        locationField(),
-                        organizerField(),
-                        attendeesField(),
-                    '</div>',
-                    '<div class="modal-footer">',
-                        '<button type="button" class="btn btn-default" data-dismiss="modal" data-i18n="Cancel">Cancel</button>',
-                        '<button type="button" class="btn btn-primary" id="b-add-vevent-ok" >OK</button>',
-                    '</div>',
-                '</div>',
-            '</div>',
-        '</div>'
-    ].join('');
-    $(document.body).append(html).localize();
+            PCalendar.addVEventBtnHandler();
 
-    let srcTypeDefault = accountList[0].srcType;
-    $('#modal-vevent input[name=srcType][value=' + srcTypeDefault + ']').prop('checked', true);
-    let srcAccountNameDefault = accountList[0].srcAccountName;
-    $('#modal-vevent #srcAccountName').val(srcAccountNameDefault);
+            $('#modal-vevent').modal('show');
+        }
+    );    
+};
 
+PCalendar.addVEventBtnHandler = function() {
     $('#b-add-vevent-ok').click(function(){
         console.log('Add event');
         let tempVEvent = PCalendar.prepareVEvent('POST');
@@ -1024,138 +1004,6 @@ PCalendar.displayAddVEventDialog = function(accountList) {
                 );
             });
     });
-
-    $('#modal-vevent').modal('show');
-};
-
-srcTypeField = function() {
-    return [
-        '<div class="row">',
-            '<div class="col-sm-2 col-md-2">',
-                '<span data-i18n="glossary:Account.type"></span>',
-            '</div>',
-            '<div class="col-sm-10 col-md-10">',
-                '<div class="row">',
-                    '<div class="col-sm-4 col-md-4">',
-                        '<input type="radio" id="srcTypeEWS" name="srcType" value="EWS" checked>',
-                        '<label for="srcTypeEWS" data-i18n="glossary:Account.types.EWS"></label>',
-                    '</div>',
-                    '<div class="col-sm-4 col-md-4">',
-                        '<input type="radio" id="srcTypeGOOGLE" name="srcType" value="Google">',
-                        '<label for="srcTypeGOOGLE" data-i18n="glossary:Account.types.Google"></label>',
-                    '</div>',
-                    '<div class="col-sm-4 col-md-4">',
-                        '<input type="radio" id="srcTypeOffice365" name="srcType" value="Office365">',
-                        '<label for="srcTypeOffice365" data-i18n="glossary:Account.types.Office365"></label>',
-                    '</div>',
-                '</div>',
-            '</div>',
-        '</div>'
-    ].join('');
-};
-
-srcAccountNameField = function() {
-    return [
-        '<div class="row">',
-            '<div class="col-sm-2 col-md-2">',
-                '<span data-i18n="glossary:Account.srcAccountName"></span>',
-            '</div>',
-            '<div class="col-sm-10 col-md-10">',
-                '<input type="text" id="srcAccountName" name="srcAccountName" value="">',
-            '</div>',
-        '</div>'
-    ].join('');
-};
-
-dtstartField = function() {
-    return [
-        '<div class="row">',
-            '<div class="col-sm-2 col-md-2">',
-                '<span data-i18n="glossary:Calendars.VEvent.dtstart"></span>',
-            '</div>',
-            '<div class="col-sm-10 col-md-10">',
-                '<input type="text" id="dtstart" name="dtstart" value="">',
-            '</div>',
-        '</div>'
-    ].join('');
-};
-
-dtendField = function() {
-    return [
-        '<div class="row">',
-            '<div class="col-sm-2 col-md-2">',
-                '<span data-i18n="glossary:Calendars.VEvent.dtend"></span>',
-            '</div>',
-            '<div class="col-sm-10 col-md-10">',
-                '<input type="text" id="dtend" name="dtend" value="">',
-            '</div>',
-        '</div>'
-    ].join('');
-};
-
-summaryField = function() {
-    return [
-        '<div class="row">',
-            '<div class="col-sm-2 col-md-2">',
-                '<span data-i18n="glossary:Calendars.VEvent.summary"></span>',
-            '</div>',
-            '<div class="col-sm-10 col-md-10">',
-                '<input type="text" id="summary" name="summary" value="">',
-            '</div>',
-        '</div>'
-    ].join('');
-};
-
-descriptionField = function() {
-    return [
-        '<div class="row">',
-            '<div class="col-sm-2 col-md-2">',
-                '<span data-i18n="glossary:Calendars.VEvent.description"></span>',
-            '</div>',
-            '<div class="col-sm-10 col-md-10">',
-                '<textarea class="form-control" rows="5" id="description" name="description"></textarea>',
-            '</div>',
-        '</div>'
-    ].join('');
-};
-
-locationField = function() {
-    return [
-        '<div class="row">',
-            '<div class="col-sm-2 col-md-2">',
-                '<span data-i18n="glossary:Calendars.VEvent.location"></span>',
-            '</div>',
-            '<div class="col-sm-10 col-md-10">',
-                '<input type="text" id="location" name="location" value="">',
-            '</div>',
-        '</div>'
-    ].join('');
-};
-
-organizerField = function() {
-    return [
-        '<div class="row">',
-            '<div class="col-sm-2 col-md-2">',
-                '<span data-i18n="glossary:Calendars.VEvent.organizer"></span>',
-            '</div>',
-            '<div class="col-sm-10 col-md-10">',
-                '<input type="text" id="organizer" name="organizer" value="">',
-            '</div>',
-        '</div>'
-    ].join('');
-};
-
-attendeesField = function() {
-    return [
-        '<div class="row">',
-            '<div class="col-sm-2 col-md-2">',
-                '<span data-i18n="glossary:Calendars.VEvent.attendees"></span>',
-            '</div>',
-            '<div class="col-sm-10 col-md-10">',
-                '<input type="text" id="attendees" name="attendees" value="">',
-            '</div>',
-        '</div>'
-    ].join('');
 };
 
 PCalendar.displayVEventDialog = function(calEvent, jsEvent, view) {
