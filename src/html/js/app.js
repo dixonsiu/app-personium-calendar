@@ -976,20 +976,37 @@ PCalendar.displayAddVEventDialog = function(accountList) {
             let srcAccountNameDefault = accountList[0].srcAccountName;
             $('#modal-vevent #srcAccountName').val(srcAccountNameDefault);
 
-            PCalendar.addVEventBtnHandler();
+            PCalendar.addVEventBtnHandler(accountList);
 
             $('#modal-vevent').modal('show');
         }
     );    
 };
 
-PCalendar.addVEventBtnHandler = function() {
+PCalendar.addVEventBtnHandler = function(accountList) {
+    let listEWS = _.where(accountList, { srcType: 'EWS'});
+    let listGoogle = _.where(accountList, { srcType: 'Google'});
+    let listOffice365 = _.where(accountList, { srcType: 'Office365'});
+
+    $('#srcTypeEWS').prop('disabled', (listEWS.length == 0));
+    $('#srcTypeGOOGLE').prop('disabled', (listGoogle.length == 0));
+    $('#srcTypeOffice365').prop('disabled', (listOffice365.length == 0));
+
+    $('#modal-vevent').on('change', 'input[type=radio][name=srcType]', function(){
+        console.log('Calendar type clicked. ' + this.value);
+        let tempAccountList = accountList;
+        let srcType = this.value;
+        let tempAccount = _.where(tempAccountList, { srcType: srcType });
+        let srcAccountName = tempAccount[0].srcAccountName;
+        $('#srcAccountName').val(srcAccountName);
+    });
+
     $('#b-add-vevent-ok').click(function(){
         console.log('Add event');
         let tempVEvent = PCalendar.prepareVEvent('POST');
         PCalendar.updateVEventAPI('POST', tempVEvent)
-            .done(function(){
-                PCalendar.renderEvent(tempVEvent);
+            .done(function(data){
+                PCalendar.renderEvent(data);
             })
             .fail(function(error){
                 console.log(error.responseJSON.error);
@@ -1004,6 +1021,62 @@ PCalendar.addVEventBtnHandler = function() {
                 );
             });
     });
+};
+
+/*
+ *     let requiredParams = {
+        'srcType': 'Google',
+        'srcAccountName':'dixon.siu@gmail.com',
+        'dtstart': '2018-03-29T21:14:26+09:00', //'2018-03-29T11:00:00Z',
+        'dtend': '2018-03-29T21:14:26+09:00', //'2018-03-29T15:00:00Z',
+        'organizer': 'hoge'
+    };
+    let optionalParams = {
+        'summary': 'IT_0327',
+        'description': '',
+        'location': '',
+        'attendees': []
+    };
+ */
+PCalendar.prepareVEvent = function(method, tempVEvent) {
+    let tempData = {
+        srcType: $('#modal-vevent [name=srcType]:checked').val(),
+        srcAccountName: $('#srcAccountName').val(),
+        dtstart: $('#dtstart').val(),
+        dtend: $('#dtend').val(),
+        organizer: $('#organizer').val(),
+        summary: $('#organizer').val(),
+        description: $('#description').val(),
+        location: $('#location').val(),
+        attendees: $('#attendees').val()
+    };
+    if (method == 'POST') {
+        // do something
+    } else {
+        // PUT
+    }
+
+    $.extend(true, tempData, requiredParams, optionalParams);
+
+    return tempData;
+};
+
+PCalendar.displayEditVEventDialog = function(accountInfo) {
+    $("body #modalDialogContainer").load(
+        "../html/templates/_vevent_template.html",
+        function(responseText, textStatus, jqXHR) {
+            $('body #modal-vevent').localize();
+
+            let srcTypeDefault = accountInfo.srcType;
+            $('#modal-vevent input[name=srcType][value=' + srcTypeDefault + ']').prop('checked', true);
+            let srcAccountNameDefault = accountInfo.srcAccountName;
+            $('#modal-vevent #srcAccountName').val(srcAccountNameDefault);
+
+            PCalendar.addVEventBtnHandler();
+
+            $('#modal-vevent').modal('show');
+        }
+    );    
 };
 
 PCalendar.displayVEventDialog = function(calEvent, jsEvent, view) {
@@ -1025,35 +1098,6 @@ PCalendar.displayVEventDialog = function(calEvent, jsEvent, view) {
         console.log("Cancelled");
     };
     return false;
-};
-
-/*
- *     let requiredParams = {
-        'srcType': 'Google',
-        'srcAccountName':'dixon.siu@gmail.com',
-        'dtstart': '2018-03-29T21:14:26+09:00', //'2018-03-29T11:00:00Z',
-        'dtend': '2018-03-29T21:14:26+09:00', //'2018-03-29T15:00:00Z',
-        'organizer': 'hoge'
-    };
-    let optionalParams = {
-        'summary': 'IT_0327',
-        'description': '',
-        'location': '',
-        'attendees': []
-    };
- */
-PCalendar.prepareVEvent = function(method, tempVEvent) {
-    let tempData = {};
-    if (method == 'POST') {
-        // do something
-    } else {
-        // PUT
-
-    }
-
-    $.extend(true, tempData, requiredParams, optionalParams);
-
-    return tempData;
 };
 
 /*
