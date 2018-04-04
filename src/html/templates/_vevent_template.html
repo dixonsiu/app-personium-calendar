@@ -36,6 +36,30 @@
         </div>
         <div class="row">
           <div class="col-sm-3 col-md-3">
+            <span data-i18n="glossary:Calendars.VEvent.attendees"></span>
+          </div>
+          <div class="col-sm-9 col-md-9">
+            <input type="text" id="attendees" name="attendees" value="">
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-sm-3 col-md-3">
+            <span data-i18n="glossary:Calendars.VEvent.summary"></span>
+          </div>
+          <div class="col-sm-9 col-md-9">
+            <input type="text" id="summary" name="summary" value="">
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-sm-3 col-md-3">
+            <span data-i18n="glossary:Calendars.VEvent.location"></span>
+          </div>
+          <div class="col-sm-9 col-md-9">
+            <input type="text" id="location" name="location" value="">
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-sm-3 col-md-3">
             <span data-i18n="glossary:Calendars.VEvent.dtstart"></span>
           </div>
           <div class="col-sm-9 col-md-9">
@@ -52,42 +76,19 @@
         </div>
         <div class="row">
           <div class="col-sm-3 col-md-3">
-            <span data-i18n="glossary:Calendars.VEvent.summary"></span>
-          </div>
-          <div class="col-sm-9 col-md-9">
-            <input type="text" id="summary" name="summary" value="">
-          </div>
-        </div>
-        <div class="row">
-          <div class="col-sm-3 col-md-3">
             <span data-i18n="glossary:Calendars.VEvent.description"></span>
           </div>
           <div class="col-sm-9 col-md-9">
             <textarea class="form-control" rows="5" id="description" name="description"></textarea>
           </div>
         </div>
-        <div class="row">
-          <div class="col-sm-3 col-md-3">
-            <span data-i18n="glossary:Calendars.VEvent.location"></span>
-          </div>
-          <div class="col-sm-9 col-md-9">
-            <input type="text" id="location" name="location" value="">
-          </div>
-        </div>
-        <div class="row">
+        
+        <div class="row hidden d-none">
           <div class="col-sm-3 col-md-3">
             <span data-i18n="glossary:Calendars.VEvent.organizer"></span>
           </div>
           <div class="col-sm-9 col-md-9">
-            <input type="url" id="organizer" name="organizer" value="">
-          </div>
-        </div>
-        <div class="row">
-          <div class="col-sm-3 col-md-3">
-            <span data-i18n="glossary:Calendars.VEvent.attendees"></span>
-          </div>
-          <div class="col-sm-9 col-md-9">
-            <input type="text" id="attendees" name="attendees" value="">
+            <input type="hidden" id="organizer" name="organizer" value="">
           </div>
         </div>
       </div>

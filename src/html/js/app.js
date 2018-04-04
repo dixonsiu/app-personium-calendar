@@ -454,16 +454,24 @@ renderFullCalendar = function() {
         eventRender: function(eventObj, $el) {
             // https://www.w3schools.com/bootstrap/bootstrap_ref_js_popover.asp
             $el.popover({
-                title: eventObj.title,
+                title: PCalendar.displayCalendarTitle(eventObj.title),
                 html: true,
                 content: eventObj.description ? '<div style="word-break: break-all">'+eventObj.description+'</div>':'',
                 trigger: 'hover',
-                placement: 'top',
+                delay: {
+                    show: 500,
+                    hide: 100
+                },
+                placement: 'auto',
                 container: 'body'
             });
         }
     });
 };
+
+PCalendar.displayCalendarTitle = function(str) {
+    return str || i18next.t('glossary:Calendars.No_title');
+}
 
 getListOfVEvents = function() {
     let urlOData = Common.getBoxUrl() + 'OData/vevent';
@@ -976,6 +984,9 @@ PCalendar.displayAddVEventDialog = function(accountList) {
             let srcAccountNameDefault = accountList[0].srcAccountName;
             $('#modal-vevent #srcAccountName').val(srcAccountNameDefault);
 
+            $('#dtstart').val(moment().format());
+            $('#dtend').val(moment().add(1, 'hours').format());
+
             PCalendar.addVEventBtnHandler(accountList);
 
             $('#modal-vevent').modal('show');
@@ -1007,6 +1018,7 @@ PCalendar.addVEventBtnHandler = function(accountList) {
         PCalendar.updateVEventAPI('POST', tempVEvent)
             .done(function(data){
                 PCalendar.renderEvent(data);
+                $('#modal-vevent').modal('hide');
             })
             .fail(function(error){
                 console.log(error.responseJSON.error);
@@ -1044,12 +1056,15 @@ PCalendar.prepareVEvent = function(method, tempVEvent) {
         srcAccountName: $('#srcAccountName').val(),
         dtstart: $('#dtstart').val(),
         dtend: $('#dtend').val(),
-        organizer: $('#organizer').val(),
-        summary: $('#organizer').val(),
+        organizer: $('#organizer').val() || $('#srcAccountName').val(), // Usually the organizer is the account owner
+        summary: $('#summary').val(),
         description: $('#description').val(),
         location: $('#location').val(),
         attendees: $('#attendees').val()
     };
+    let requiredParams = {};
+    let optionalParams = {};
+    
     if (method == 'POST') {
         // do something
     } else {
@@ -1081,6 +1096,7 @@ PCalendar.displayEditVEventDialog = function(accountInfo) {
 
 PCalendar.displayVEventDialog = function(calEvent, jsEvent, view) {
     let eventId = calEvent.id;
+    $('.popover').popover('hide');
     if (window.confirm('Remove Event: ' + calEvent.title)) {
         PCalendar.deleteVEventAPI({__id: eventId})
             .done(function(){
