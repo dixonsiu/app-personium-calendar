@@ -40,8 +40,6 @@ function(request) {
     return createResponse(400, {"error": "required parameter not exist."})
   }
 
-
-  var collectionName = "OData";
   var davName = "AccessInfo";
   var entityType = "vevent";
   var pathDavName = "AccessInfo/AccessInfo.json";
@@ -50,8 +48,6 @@ function(request) {
 
   try {
     var personalBoxAccessor = _p.as("client").cell(pjvm.getCellName()).box(pjvm.getBoxName());
-    var personalCollectionAccessor = personalBoxAccessor.odata(collectionName);
-    var personalEntityAccessor = personalCollectionAccessor.entitySet(entityType);
 
     var accessInfo = [];
     var ews = null;
@@ -69,7 +65,7 @@ function(request) {
             if (setInfo.srcType == accessInfo[i].srcType && setInfo.srcAccountName == accessInfo[i].srcAccountName && setInfo.pw == accessInfo[i].pw) {
               return createResponse(400, {"error": "required parameter set is already."})
             }
-          } else if (setInfo.srcType == "Google") {
+          } else if (setInfo.srcType == "Google" || setInfo.srcType == "Office365") {
             if(setInfo.srcType == accessInfo[i].srcType && setInfo.srcAccountName == accessInfo[i].srcAccountName){
               return createResponse(400, {"error": "required parameter set is already."})
             }
@@ -131,7 +127,7 @@ function(request) {
           var response = { status: "", headers : {}, body :"" };
 
           response = httpClient.get(url, headers);
-          
+
           if(200 != response.status){
             return createResponse(400, {"error": "Required paramter is not access google server."})
           }
@@ -140,14 +136,14 @@ function(request) {
           items = responsejson["items"];
 
           var calendarId = parseGoogleCalendarList(items);
-          
+
           if(calendarId == null){
             return createResponse(400, {"error": "Required paramter is not access google server."})
           }
         } catch (e) {
           return createResponse(400, {"error": "Required paramter is not access google server."})
-        } 
-        
+        }
+
         // add calendarId to setInfo
         setInfo.calendarId = calendarId;
 
@@ -170,6 +166,51 @@ function(request) {
         setInfo.maxSyncResults = null;
 
         personalBoxAccessor.put(pathDavTokenName, "application/json", JSON.stringify(setInfo));
+
+    } else if (setInfo.srcType == "Office365") {
+
+      var accessToken = setInfo.accessToken;
+      var refreshToken = setInfo.refreshToken;
+      var srcAccountName = setInfo.srcAccountName;
+      if (!accessToken || !refreshToken || !srcAccountName){
+        return createResponse(400, {"error": "Required paramter is not access Office365 server."})
+      }
+
+      // check connect server
+      try {
+        var url = "https://outlook.office.com/api/v2.0/users/" + setInfo.srcAccountName + "/calendars";
+        var httpClient = new _p.extension.HttpClient();
+        var headers = {'Authorization': 'Bearer ' + accessToken};
+        var response = { status: "", headers : {}, body :"" };
+
+        response = httpClient.get(url, headers);
+
+        if(200 != response.status){
+          return createResponse(400, {"error": "Required paramter is not access Office365 server."})
+        }
+      } catch (e) {
+        return createResponse(400, {"error": "Required paramter is not access Office365 server."})
+      }
+
+      accessInfo.push(setInfo);
+      personalBoxAccessor.put(pathDavName, "application/json", JSON.stringify(accessInfo));
+
+      try {
+        var pathDavTokenName = pathDavToken + setInfo.srcAccountName + ".json";
+        var tokenSet = personalBoxAccessor.getString(pathDavTokenName);
+
+        return createResponse(500, {"error": "Required paramter set is already."})
+      } catch (e) {
+        if (e.code != 404) {
+          return createResponse(500, {"error": "Box access error."})
+        }
+      }
+
+      setInfo.syncType = "FIRST";
+      setInfo.nextStart = null;
+      setInfo.maxSyncResults = null;
+
+      personalBoxAccessor.put(pathDavTokenName, "application/json", JSON.stringify(setInfo));
 
       } else { // e.g. Google
         // srcType is not EWS.
@@ -199,12 +240,12 @@ function(request) {
             } else {
               return createResponse(400, {"error": "Required paramter set is incorrect."})
             }
-          } else if (setInfo.srcType == "Google") {
+          } else if (setInfo.srcType == "Google" || setInfo.srcType == "Office365") {
             if (setInfo.srcType == accessInfo[i].srcType && setInfo.srcAccountName == accessInfo[i].srcAccountName && setInfo.refreshToken != accessInfo[i].refreshToken) {
               try {
                 //TODO:check if the refreshToken is correct.
               } catch (e) {
-                return createResponse(400, {"error": "Required paramter is not access Google server."})
+                return createResponse(400, {"error": "Required paramter is not access " + setInfo.srcType + " server."})
               }
               accessInfo[i].refreshToken = setInfo.refreshToken;
               personalBoxAccessor.put(pathDavName, "application/json", JSON.stringify(accessInfo));
@@ -216,9 +257,7 @@ function(request) {
           } else {
             if (setInfo.srcType == accessInfo[i].srcType && setInfo.srcAccountName == accessInfo[i].srcAccountName && setInfo.pw == accessInfo[i].pw && setInfo.srcUrl == accessInfo[i].srcUrl) {
               return createResponse(400, {"error": "Required paramter set is not change."})
-            //} else if () {
-            } else { // e.g. Google
-              // srcType is not EWS.
+            } else { // e.g. Yahoo!
               // not supported now!
               return createResponse(400, {"error": "Required srcType is not supported."})
             }
