@@ -449,7 +449,7 @@ renderFullCalendar = function() {
         eventLimit: true, // allow "more" link when too many events
         events: [],
         eventClick: function(calEvent, jsEvent, view) {
-            return PCalendar.displayVEventDialog(calEvent, jsEvent, view);
+            return PCalendar.displayEditVEventDialog(calEvent, jsEvent, view);
         },
         eventRender: function(eventObj, $el) {
             // https://www.w3schools.com/bootstrap/bootstrap_ref_js_popover.asp
@@ -514,6 +514,25 @@ PCalendar.renderEvent = function(item) {
     };
     //$.extend(true, event, item);
     $('#calendar').fullCalendar('renderEvent', event, true);
+};
+
+PCalendar.updateEvent = function(item) {
+    let startMoment = moment(item.dtstart);
+    let endMoment = moment(item.dtend);
+    let event =
+    {
+        id: item.__id,
+        title: item.summary,
+        allDay: PCalendar.isAllDay(startMoment, endMoment),
+        start: startMoment.format(),
+        end: endMoment.format(),
+        editable: true,
+        color: PCalendar.getEventColor(item.srcType),
+        description: item.description,
+        vEvent: item
+    };
+    //$.extend(true, event, item);
+    $('#calendar').fullCalendar('updateEvent', event);
 };
 
 PCalendar.isAllDay = function(start, end) {
@@ -979,10 +998,7 @@ PCalendar.displayAddVEventDialog = function(accountList) {
         function(responseText, textStatus, jqXHR) {
             $('body #modal-vevent').localize();
 
-            let srcTypeDefault = accountList[0].srcType;
-            $('#modal-vevent input[name=srcType][value=' + srcTypeDefault + ']').prop('checked', true);
-            let srcAccountNameDefault = accountList[0].srcAccountName;
-            $('#modal-vevent #srcAccountName').val(srcAccountNameDefault);
+            PCalendar.setAccountInfo(accountList[0]);
 
             $('#dtstart').val(moment().format());
             $('#dtend').val(moment().add(1, 'hours').format());
@@ -992,6 +1008,13 @@ PCalendar.displayAddVEventDialog = function(accountList) {
             $('#modal-vevent').modal('show');
         }
     );    
+};
+
+PCalendar.setAccountInfo = function(accountInfo) {
+    let srcTypeDefault = accountInfo.srcType;
+    $('#modal-vevent input[name=srcType][value=' + srcTypeDefault + ']').prop('checked', true);
+    let srcAccountNameDefault = accountInfo.srcAccountName;
+    $('#modal-vevent #srcAccountName').val(srcAccountNameDefault);
 };
 
 PCalendar.addVEventBtnHandler = function(accountList) {
@@ -1018,6 +1041,77 @@ PCalendar.addVEventBtnHandler = function(accountList) {
         PCalendar.updateVEventAPI('POST', tempVEvent)
             .done(function(data){
                 PCalendar.renderEvent(data);
+                $('#modal-vevent').modal('hide');
+            })
+            .fail(function(error){
+                console.log(error.responseJSON.error);
+                $('#modal-vevent').modal('hide');
+                Common.openWarningDialog(
+                    'warningDialog.title',
+                    error.responseJSON.error,
+                    function(){
+                        $('#modal-common').modal('hide');
+                        $('#modal-vevent').modal('show');
+                    }
+                );
+            });
+    });
+};
+
+PCalendar.displayEditVEventDialog = function(calEvent, jsEvent, view) {
+    $("body #modalDialogContainer").load(
+        "../html/templates/_vevent_template.html",
+        function(responseText, textStatus, jqXHR) {
+            $('body #modal-vevent').localize();
+
+            PCalendar.setEditVEventInfo(calEvent);
+
+            PCalendar.editVEventBtnHandler(calEvent);
+
+            $('#modal-vevent').modal('show');
+        }
+    );    
+};
+PCalendar.setEditVEventInfo = function(calEvent) {
+    let tempVEvent = calEvent.vEvent;
+    $('#modal-vevent input:radio[name=srcType]')
+        .val([tempVEvent.srcType])
+        .prop('disabled', true);
+    $('#modal-vevent #srcAccountName')
+        .val(tempVEvent.srcAccountName)
+        .prop("readonly", true);
+    if (tempVEvent.attendees) {
+        $('#modal-vevent #attendees').val(tempVEvent.attendees);
+    }
+    if (tempVEvent.summary) {
+        $('#modal-vevent #summary').val(tempVEvent.summary);
+    }
+    if (tempVEvent.location) {
+        $('#modal-vevent #location').val(tempVEvent.location);
+    }
+    if (tempVEvent.dtstart) {
+        $('#modal-vevent #dtstart').val(moment(tempVEvent.dtstart).format());
+    }
+    if (tempVEvent.dtend) {
+        $('#modal-vevent #dtend').val(moment(tempVEvent.dtend).format());
+    }
+    if (tempVEvent.description) {
+        $('#modal-vevent #description').val(tempVEvent.description);
+    }
+    if (tempVEvent.organizer) {
+        $('#modal-vevent #organizer').val(tempVEvent.organizer);
+    } else {
+        $('#modal-vevent #organizer').val(tempVEvent.srcAccountName);
+    }
+};
+
+PCalendar.editVEventBtnHandler = function(calEvent) {
+    $('#b-add-vevent-ok').click(function(){
+        console.log('Add event');
+        let tempVEvent = PCalendar.prepareVEvent('PUT', calEvent.vEvent);
+        PCalendar.updateVEventAPI('PUT', tempVEvent)
+            .done(function(data){
+                PCalendar.updateEvent(data);
                 $('#modal-vevent').modal('hide');
             })
             .fail(function(error){
@@ -1067,37 +1161,19 @@ PCalendar.prepareVEvent = function(method, tempVEvent) {
     
     if (method == 'POST') {
         // do something
+        $.extend(true, tempData, requiredParams, optionalParams);
     } else {
         // PUT
+        $.extend(true, tempData, requiredParams, optionalParams, { __id: tempVEvent.__id});
     }
 
-    $.extend(true, tempData, requiredParams, optionalParams);
-
     return tempData;
-};
-
-PCalendar.displayEditVEventDialog = function(accountInfo) {
-    $("body #modalDialogContainer").load(
-        "../html/templates/_vevent_template.html",
-        function(responseText, textStatus, jqXHR) {
-            $('body #modal-vevent').localize();
-
-            let srcTypeDefault = accountInfo.srcType;
-            $('#modal-vevent input[name=srcType][value=' + srcTypeDefault + ']').prop('checked', true);
-            let srcAccountNameDefault = accountInfo.srcAccountName;
-            $('#modal-vevent #srcAccountName').val(srcAccountNameDefault);
-
-            PCalendar.addVEventBtnHandler();
-
-            $('#modal-vevent').modal('show');
-        }
-    );    
 };
 
 PCalendar.displayVEventDialog = function(calEvent, jsEvent, view) {
     let eventId = calEvent.id;
     $('.popover').popover('hide');
-    if (window.confirm('Remove Event: ' + calEvent.title)) {
+    if (window.confirm('Remove Event: ' + PCalendar.displayCalendarTitle(calEvent.title))) {
         PCalendar.deleteVEventAPI({__id: eventId})
             .done(function(){
                 $('#calendar').fullCalendar('removeEvents', eventId);
