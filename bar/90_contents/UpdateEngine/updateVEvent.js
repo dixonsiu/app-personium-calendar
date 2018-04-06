@@ -50,19 +50,23 @@ function(request){
     var info = personalBoxAccessor.getString(pathDavName);
     var accInfo = JSON.parse(info);
 
-    if (!(checkParams(request, params))){
-      return createResponse(400, {"error": "missing required parameter. " + JSON.stringify(params)})
+    var check = checkParams(request, params);
+    if (check){
+      return createResponse(400, {"error": "missing required(" + check + ") parameter." })
     }
 
     if (request.method === "PUT" || request.method === "DELETE") {
       try {
         vEvent = personalEntityAccessor.retrieve(params.__id);
       } catch (e) {
-        return createResponse(e.code, {"error": e.message})
+        return createResponse(e.code, {"error": "no such __id"})
       }
       accessInfo = getAccessInfo(accInfo, vEvent);
     } else { // POST
       accessInfo = getAccessInfo(accInfo, params);
+      if(!accessInfo.srcAccountName){
+        return createResponse(400, {"error": "no such srcType or srcAccountName" })
+      }
     }
 
 
@@ -589,24 +593,45 @@ function getAccessToken(bodyData) {
 }
 
 function checkParams(request, params){
-  try {
-    if(request.method == "POST"){
-      if(!params.srcType || !params.srcAccountName || !params.dtstart || !params.dtend || !params.organizer){
-        return false;
-      }
-    } else if (request.method == "PUT"){
-      if(!params.__id || !params.dtstart || !params.dtend || !params.organizer){
-        return false;
-      }
-
-    } else {
-      // delete
-      if(!params.__id){
-        return false;
-      }
+  if(request.method == "POST"){
+    if(!params.srcType){
+      return "srcType";
     }
-  } catch(e){
-    return false;
+    if (!params.srcAccountName){
+      return "srcAccountName";
+    } 
+    if(!params.dtstart){
+      return "dtstart";
+    } 
+    if(!params.dtend){
+      return "dtend";
+    } 
+    return null;
+  } else if (request.method == "PUT"){
+    if(!params.__id){
+      return "__id";
+    }
+    if(!params.dtstart){
+      return "dtstart";
+    }
+    if(!params.dtend){
+      return "dtend";
+    }
+    if(!("summary" in params)){
+      return "summary";
+    }
+    if(!("location" in params)){
+      return "location";
+    }
+    if(!("attendees" in params)){
+      return "attendees";
+    }
+    return null;
+  } else {
+    // delete
+    if(!params.__id){
+      return "__id";
+    }
+    return null;
   }
-  return true;
 }
