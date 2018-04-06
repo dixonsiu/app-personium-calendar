@@ -8,7 +8,7 @@
 
 function(request){
 
-    // GET 以外は405
+    // only GET
     if(request.method !== "GET") {
       return {
         status : 405,
@@ -506,7 +506,7 @@ function(request){
             var nextStatus = false;
             if (deltaToken) {
                 if(deltaToken.indexOf("deltaToken") > -1) {
-                    // save deltToken
+                    // save deltToken(sync finish)
                     for (var i = 0; i < accessInfo.length; i++) {
                         if(accessInfo[i].srcType == accessTokenSet.srcType && accessInfo[i].srcAccountName == accessTokenSet.srcAccountName){
                             accessInfo[i].deltaToken = deltaToken;
@@ -518,7 +518,7 @@ function(request){
                         nextStatus = true;
                     }
                 } else {
-                    // 部分一致のときの処理（続きがある）
+                    // next sync
                     accessTokenSet.skipToken = deltaToken;
                     personalBoxAccessor.put(pathDavTokenName, "application/json", JSON.stringify(accessTokenSet));
                 }
@@ -540,7 +540,7 @@ function(request){
             return createResponse(400, {"error": "Required srcType is not supported."})
         }
 
-    } else { // diffSync 差分同期
+    } else { // diffSync
       var pathDavTokenName = pathDavToken + diffSync + ".json";
       var tokenSet = personalBoxAccessor.getString(pathDavTokenName);
       var accessTokenSet = JSON.parse(tokenSet);
@@ -572,7 +572,7 @@ function(request){
           var exist = personalEntityAccessor.query().filter(existFilter).run();
 
           if (exist.d.results.length == 0) {
-            //recur のチェック
+            // check recur
             var existRecur = null;
             try {
               existRecur = personalEntityAccessor.retrieve(exData.__id);
@@ -647,7 +647,6 @@ function(request){
           }
           personalBoxAccessor.put(pathDavTokenName, "application/json", JSON.stringify(accessTokenSet));
         } else {
-          //checkList に残っているsrcIdのエントリーを削除
           for(var i = 0; i < accessTokenSet.checkList.length; i++) {
             var checkFilter = "srcId eq '" + accessTokenSet.checkList[i] + "'";
             var deleteIndex = personalEntityAccessor.query().filter(checkFilter).run();
@@ -866,11 +865,11 @@ function(request){
       var nextStatus = false;
       if (deltaToken) {
         if(deltaToken.indexOf("deltatoken") > -1) {
-          // 部分一致     まだデータがある場合は"deltatoken" (tokenの"t"が小文字、終了時は"deltaToken")
+          // first step sync return "deltatoken".
           accessTokenSet.skipToken = deltaToken;
           personalBoxAccessor.put(pathDavTokenName, "application/json", JSON.stringify(accessTokenSet));
-        } else {  // 終了時は deltaToken
-          // save deltToken
+        } else {  // sync finished "deltaToken". "Token"/"token", upper/lower case different mean.
+          // save deltaToken
           for (var i = 0; i < accessInfo.length; i++) {
             if(accessInfo[i].srcType == accessTokenSet.srcType && accessInfo[i].srcAccountName == accessTokenSet.srcAccountName){
               accessInfo[i].deltaToken = deltaToken;
@@ -910,7 +909,7 @@ function(request){
     };
   }
 
-  // resを定義
+  // res
   return {
     status: 400,
     headers: {"Content-Type":"application/json"},
@@ -1223,7 +1222,6 @@ function updateOffice365Events(items, personalEntityAccessor, accessTokenSet) {
                     }
                 }
             }
-            //checkList に残っている__idのエントリーを削除
             for(var i = 0; i < checkList.length; i++) {
               personalEntityAccessor.del(checkList[i]);
             }
