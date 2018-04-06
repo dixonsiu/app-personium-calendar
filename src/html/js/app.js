@@ -513,27 +513,28 @@ PCalendar.renderEvent = function(item) {
         description: item.description,
         vEvent: item
     };
-    //$.extend(true, event, item);
     $('#calendar').fullCalendar('renderEvent', event, true);
 };
 
 PCalendar.updateEvent = function(item) {
     let startMoment = moment(item.dtstart);
     let endMoment = moment(item.dtend);
-    let event =
+    let eventObj = $('#calendar').fullCalendar('clientEvents', item.__id)[0]; // currently only the first event
+    $.extend(
+        true,
+        eventObj,
     {
-        id: item.__id,
         title: item.summary,
         allDay: PCalendar.isAllDay(startMoment, endMoment),
         start: startMoment.format(),
         end: endMoment.format(),
-        editable: true,
         color: PCalendar.getEventColor(item.srcType),
         description: item.description,
         vEvent: item
-    };
-    //$.extend(true, event, item);
-    $('#calendar').fullCalendar('updateEvent', event);
+        }
+    );
+    // https://fullcalendar.io/docs/updateEvent
+    $('#calendar').fullCalendar('updateEvent', eventObj);
 };
 
 PCalendar.isAllDay = function(start, end) {
