@@ -449,6 +449,7 @@ renderFullCalendar = function() {
         eventLimit: true, // allow "more" link when too many events
         events: [],
         eventClick: function(calEvent, jsEvent, view) {
+            $('.popover').popover('hide');
             return PCalendar.displayEditVEventDialog(calEvent, jsEvent, view);
         },
         eventRender: function(eventObj, $el) {
@@ -1035,7 +1036,9 @@ PCalendar.addVEventBtnHandler = function(accountList) {
         $('#srcAccountName').val(srcAccountName);
     });
 
-    $('#b-add-vevent-ok').click(function(){
+    $('#b-delete-vevent-ok').hide();
+
+    $('#b-save-vevent-ok').click(function(){
         console.log('Add event');
         let tempVEvent = PCalendar.prepareVEvent('POST');
         PCalendar.updateVEventAPI('POST', tempVEvent)
@@ -1106,7 +1109,7 @@ PCalendar.setEditVEventInfo = function(calEvent) {
 };
 
 PCalendar.editVEventBtnHandler = function(calEvent) {
-    $('#b-add-vevent-ok').click(function(){
+    $('#b-save-vevent-ok').click(function(){
         console.log('Add event');
         let tempVEvent = PCalendar.prepareVEvent('PUT', calEvent.vEvent);
         PCalendar.updateVEventAPI('PUT', tempVEvent)
@@ -1127,6 +1130,41 @@ PCalendar.editVEventBtnHandler = function(calEvent) {
                 );
             });
     });
+
+    $('#b-delete-vevent-ok').click(function() {
+        PCalendar.displayVEventDialog(calEvent);
+    });
+        
+};
+
+PCalendar.displayVEventDialog = function(calEvent) {
+    let eventId = calEvent.id;
+    if (window.confirm('Remove Event: ' + PCalendar.displayCalendarTitle(calEvent.title))) {
+        $('#modal-vevent').modal('hide');
+        $('#dialogOverlay').show();
+        PCalendar.deleteVEventAPI({__id: eventId})
+            .done(function(){
+                $('#calendar').fullCalendar('removeEvents', eventId);
+                
+            })
+            .fail(function(error){
+                console.log(error.responseJSON.error);
+                $('#modal-vevent').modal('hide');
+                Common.openWarningDialog(
+                    'warningDialog.title',
+                    error.responseJSON.error,
+                    function(){
+                        $('#modal-common').modal('hide');
+                        $('#modal-vevent').modal('show');
+                    }
+                );
+            }).done(function(){
+                $('#dialogOverlay').hide();
+            });  
+    } else {
+        console.log("Cancelled");
+    };
+    return false;
 };
 
 /*
@@ -1168,28 +1206,6 @@ PCalendar.prepareVEvent = function(method, tempVEvent) {
     }
 
     return tempData;
-};
-
-PCalendar.displayVEventDialog = function(calEvent, jsEvent, view) {
-    let eventId = calEvent.id;
-    $('.popover').popover('hide');
-    if (window.confirm('Remove Event: ' + PCalendar.displayCalendarTitle(calEvent.title))) {
-        PCalendar.deleteVEventAPI({__id: eventId})
-            .done(function(){
-                $('#calendar').fullCalendar('removeEvents', eventId);
-            })
-            .fail(function(error){
-                console.log(error.responseJSON.error);
-                Common.openWarningDialog(
-                    'warningDialog.title',
-                    error.responseJSON.error,
-                    function(){ $('#modal-common').modal('hide')}
-                );
-            });  
-    } else {
-        console.log("Cancelled");
-    };
-    return false;
 };
 
 /*

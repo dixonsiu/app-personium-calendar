@@ -3,6 +3,7 @@
     "Calendars": {
         "label": "Calendar",
         "VEvent": {
+            "label": "Event",
             "summary": "Title",
             "dtstart": "Start",
             "dtend": "End",
@@ -12,7 +13,7 @@
             "description": "Description",
             "btn": {
                 "add": "Add",
-                "modify": "Edit",
+                "save": "Save",
                 "delete": "Delete"
             }
         },
