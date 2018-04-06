@@ -3,6 +3,7 @@
     "Calendars": {
         "label": "カレンダー",
         "VEvent": {
+            "label": "イベント",
             "summary": "件名",
             "dtstart": "開始時刻",
             "dtend": "終了時刻",
@@ -12,10 +13,11 @@
             "description": "内容",
             "btn": {
                 "add": "追加",
-                "modify": "編集",
+                "save": "保存",
                 "delete": "削除"
             }
         },
+        "No_title": "(タイトルなし)",
         "msg": {
             "info": {
             }

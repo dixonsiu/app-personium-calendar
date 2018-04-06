@@ -449,21 +449,30 @@ renderFullCalendar = function() {
         eventLimit: true, // allow "more" link when too many events
         events: [],
         eventClick: function(calEvent, jsEvent, view) {
-            return PCalendar.displayVEventDialog(calEvent, jsEvent, view);
+            $('.popover').popover('hide');
+            return PCalendar.displayEditVEventDialog(calEvent, jsEvent, view);
         },
         eventRender: function(eventObj, $el) {
             // https://www.w3schools.com/bootstrap/bootstrap_ref_js_popover.asp
             $el.popover({
-                title: eventObj.title,
+                title: PCalendar.displayCalendarTitle(eventObj.title),
                 html: true,
                 content: eventObj.description ? '<div style="word-break: break-all">'+eventObj.description+'</div>':'',
                 trigger: 'hover',
-                placement: 'top',
+                delay: {
+                    show: 500,
+                    hide: 100
+                },
+                placement: 'auto',
                 container: 'body'
             });
         }
     });
 };
+
+PCalendar.displayCalendarTitle = function(str) {
+    return str || i18next.t('glossary:Calendars.No_title');
+}
 
 getListOfVEvents = function() {
     let urlOData = Common.getBoxUrl() + 'OData/vevent';
@@ -506,6 +515,25 @@ PCalendar.renderEvent = function(item) {
     };
     //$.extend(true, event, item);
     $('#calendar').fullCalendar('renderEvent', event, true);
+};
+
+PCalendar.updateEvent = function(item) {
+    let startMoment = moment(item.dtstart);
+    let endMoment = moment(item.dtend);
+    let event =
+    {
+        id: item.__id,
+        title: item.summary,
+        allDay: PCalendar.isAllDay(startMoment, endMoment),
+        start: startMoment.format(),
+        end: endMoment.format(),
+        editable: true,
+        color: PCalendar.getEventColor(item.srcType),
+        description: item.description,
+        vEvent: item
+    };
+    //$.extend(true, event, item);
+    $('#calendar').fullCalendar('updateEvent', event);
 };
 
 PCalendar.isAllDay = function(start, end) {
@@ -966,50 +994,128 @@ deleteAccessInfoAPI = function(accountInfo) {
  * Example:  [{"srcType":"Google","srcAccountName":"john.doe@gmail.com"}]
  */
 PCalendar.displayAddVEventDialog = function(accountList) {
-    $('#modal-vevent').remove();
+    $("body #modalDialogContainer").load(
+        "../html/templates/_vevent_template.html",
+        function(responseText, textStatus, jqXHR) {
+            $('body #modal-vevent').localize();
 
-    // $("body").load("../html/templates/_vevnet_template.html")
+            PCalendar.setAccountInfo(accountList[0]);
 
-    let html = [
-        '<div id="modal-vevent" class="modal fade" role="dialog">',
-            '<div class="modal-dialog">',
-                '<div class="modal-content">',
-                    '<div class="modal-header login-header">',
-                        '<button type="button" class="close" data-dismiss="modal">x</button>',
-                        '<h4 class="modal-title" data-i18n="Event">Event Dialog</h4>',
-                    '</div>',
-                    '<div class="modal-body">',
-                        srcTypeField(),
-                        srcAccountNameField(),
-                        dtstartField(),
-                        dtendField(),
-                        summaryField(),
-                        descriptionField(),
-                        locationField(),
-                        organizerField(),
-                        attendeesField(),
-                    '</div>',
-                    '<div class="modal-footer">',
-                        '<button type="button" class="btn btn-default" data-dismiss="modal" data-i18n="Cancel">Cancel</button>',
-                        '<button type="button" class="btn btn-primary" id="b-add-vevent-ok" >OK</button>',
-                    '</div>',
-                '</div>',
-            '</div>',
-        '</div>'
-    ].join('');
-    $(document.body).append(html).localize();
+            $('#dtstart').val(moment().format());
+            $('#dtend').val(moment().add(1, 'hours').format());
 
-    let srcTypeDefault = accountList[0].srcType;
+            PCalendar.addVEventBtnHandler(accountList);
+
+            $('#modal-vevent').modal('show');
+        }
+    );    
+};
+
+PCalendar.setAccountInfo = function(accountInfo) {
+    let srcTypeDefault = accountInfo.srcType;
     $('#modal-vevent input[name=srcType][value=' + srcTypeDefault + ']').prop('checked', true);
-    let srcAccountNameDefault = accountList[0].srcAccountName;
+    let srcAccountNameDefault = accountInfo.srcAccountName;
     $('#modal-vevent #srcAccountName').val(srcAccountNameDefault);
+};
 
-    $('#b-add-vevent-ok').click(function(){
+PCalendar.addVEventBtnHandler = function(accountList) {
+    let listEWS = _.where(accountList, { srcType: 'EWS'});
+    let listGoogle = _.where(accountList, { srcType: 'Google'});
+    let listOffice365 = _.where(accountList, { srcType: 'Office365'});
+
+    $('#srcTypeEWS').prop('disabled', (listEWS.length == 0));
+    $('#srcTypeGOOGLE').prop('disabled', (listGoogle.length == 0));
+    $('#srcTypeOffice365').prop('disabled', (listOffice365.length == 0));
+
+    $('#modal-vevent').on('change', 'input[type=radio][name=srcType]', function(){
+        console.log('Calendar type clicked. ' + this.value);
+        let tempAccountList = accountList;
+        let srcType = this.value;
+        let tempAccount = _.where(tempAccountList, { srcType: srcType });
+        let srcAccountName = tempAccount[0].srcAccountName;
+        $('#srcAccountName').val(srcAccountName);
+    });
+
+    $('#b-delete-vevent-ok').hide();
+
+    $('#b-save-vevent-ok').click(function(){
         console.log('Add event');
         let tempVEvent = PCalendar.prepareVEvent('POST');
         PCalendar.updateVEventAPI('POST', tempVEvent)
-            .done(function(){
-                PCalendar.renderEvent(tempVEvent);
+            .done(function(data){
+                PCalendar.renderEvent(data);
+                $('#modal-vevent').modal('hide');
+            })
+            .fail(function(error){
+                console.log(error.responseJSON.error);
+                $('#modal-vevent').modal('hide');
+                Common.openWarningDialog(
+                    'warningDialog.title',
+                    error.responseJSON.error,
+                    function(){
+                        $('#modal-common').modal('hide');
+                        $('#modal-vevent').modal('show');
+                    }
+                );
+            });
+    });
+};
+
+PCalendar.displayEditVEventDialog = function(calEvent, jsEvent, view) {
+    $("body #modalDialogContainer").load(
+        "../html/templates/_vevent_template.html",
+        function(responseText, textStatus, jqXHR) {
+            $('body #modal-vevent').localize();
+
+            PCalendar.setEditVEventInfo(calEvent);
+
+            PCalendar.editVEventBtnHandler(calEvent);
+
+            $('#modal-vevent').modal('show');
+        }
+    );    
+};
+PCalendar.setEditVEventInfo = function(calEvent) {
+    let tempVEvent = calEvent.vEvent;
+    $('#modal-vevent input:radio[name=srcType]')
+        .val([tempVEvent.srcType])
+        .prop('disabled', true);
+    $('#modal-vevent #srcAccountName')
+        .val(tempVEvent.srcAccountName)
+        .prop("readonly", true);
+    if (tempVEvent.attendees) {
+        $('#modal-vevent #attendees').val(tempVEvent.attendees);
+    }
+    if (tempVEvent.summary) {
+        $('#modal-vevent #summary').val(tempVEvent.summary);
+    }
+    if (tempVEvent.location) {
+        $('#modal-vevent #location').val(tempVEvent.location);
+    }
+    if (tempVEvent.dtstart) {
+        $('#modal-vevent #dtstart').val(moment(tempVEvent.dtstart).format());
+    }
+    if (tempVEvent.dtend) {
+        $('#modal-vevent #dtend').val(moment(tempVEvent.dtend).format());
+    }
+    if (tempVEvent.description) {
+        $('#modal-vevent #description').val(tempVEvent.description);
+    }
+    if (tempVEvent.organizer) {
+        $('#modal-vevent #organizer').val(tempVEvent.organizer);
+    } else {
+        $('#modal-vevent #organizer').val(tempVEvent.srcAccountName);
+    }
+};
+
+PCalendar.editVEventBtnHandler = function(calEvent) {
+    $('#b-save-vevent-ok').click(function(){
+        console.log('Add event');
+        let tempVEvent = PCalendar.prepareVEvent('PUT', calEvent.vEvent);
+        PCalendar.updateVEventAPI('PUT', tempVEvent)
+            .done(function(data){
+                PCalendar.updateEvent(data);
+                $('#modal-vevent').modal('hide');
             })
             .fail(function(error){
                 console.log(error.responseJSON.error);
@@ -1025,153 +1131,35 @@ PCalendar.displayAddVEventDialog = function(accountList) {
             });
     });
 
-    $('#modal-vevent').modal('show');
+    $('#b-delete-vevent-ok').click(function() {
+        PCalendar.displayVEventDialog(calEvent);
+    });
+        
 };
 
-srcTypeField = function() {
-    return [
-        '<div class="row">',
-            '<div class="col-sm-2 col-md-2">',
-                '<span data-i18n="glossary:Account.type"></span>',
-            '</div>',
-            '<div class="col-sm-10 col-md-10">',
-                '<div class="row">',
-                    '<div class="col-sm-4 col-md-4">',
-                        '<input type="radio" id="srcTypeEWS" name="srcType" value="EWS" checked>',
-                        '<label for="srcTypeEWS" data-i18n="glossary:Account.types.EWS"></label>',
-                    '</div>',
-                    '<div class="col-sm-4 col-md-4">',
-                        '<input type="radio" id="srcTypeGOOGLE" name="srcType" value="Google">',
-                        '<label for="srcTypeGOOGLE" data-i18n="glossary:Account.types.Google"></label>',
-                    '</div>',
-                    '<div class="col-sm-4 col-md-4">',
-                        '<input type="radio" id="srcTypeOffice365" name="srcType" value="Office365">',
-                        '<label for="srcTypeOffice365" data-i18n="glossary:Account.types.Office365"></label>',
-                    '</div>',
-                '</div>',
-            '</div>',
-        '</div>'
-    ].join('');
-};
-
-srcAccountNameField = function() {
-    return [
-        '<div class="row">',
-            '<div class="col-sm-2 col-md-2">',
-                '<span data-i18n="glossary:Account.srcAccountName"></span>',
-            '</div>',
-            '<div class="col-sm-10 col-md-10">',
-                '<input type="text" id="srcAccountName" name="srcAccountName" value="">',
-            '</div>',
-        '</div>'
-    ].join('');
-};
-
-dtstartField = function() {
-    return [
-        '<div class="row">',
-            '<div class="col-sm-2 col-md-2">',
-                '<span data-i18n="glossary:Calendars.VEvent.dtstart"></span>',
-            '</div>',
-            '<div class="col-sm-10 col-md-10">',
-                '<input type="text" id="dtstart" name="dtstart" value="">',
-            '</div>',
-        '</div>'
-    ].join('');
-};
-
-dtendField = function() {
-    return [
-        '<div class="row">',
-            '<div class="col-sm-2 col-md-2">',
-                '<span data-i18n="glossary:Calendars.VEvent.dtend"></span>',
-            '</div>',
-            '<div class="col-sm-10 col-md-10">',
-                '<input type="text" id="dtend" name="dtend" value="">',
-            '</div>',
-        '</div>'
-    ].join('');
-};
-
-summaryField = function() {
-    return [
-        '<div class="row">',
-            '<div class="col-sm-2 col-md-2">',
-                '<span data-i18n="glossary:Calendars.VEvent.summary"></span>',
-            '</div>',
-            '<div class="col-sm-10 col-md-10">',
-                '<input type="text" id="summary" name="summary" value="">',
-            '</div>',
-        '</div>'
-    ].join('');
-};
-
-descriptionField = function() {
-    return [
-        '<div class="row">',
-            '<div class="col-sm-2 col-md-2">',
-                '<span data-i18n="glossary:Calendars.VEvent.description"></span>',
-            '</div>',
-            '<div class="col-sm-10 col-md-10">',
-                '<textarea class="form-control" rows="5" id="description" name="description"></textarea>',
-            '</div>',
-        '</div>'
-    ].join('');
-};
-
-locationField = function() {
-    return [
-        '<div class="row">',
-            '<div class="col-sm-2 col-md-2">',
-                '<span data-i18n="glossary:Calendars.VEvent.location"></span>',
-            '</div>',
-            '<div class="col-sm-10 col-md-10">',
-                '<input type="text" id="location" name="location" value="">',
-            '</div>',
-        '</div>'
-    ].join('');
-};
-
-organizerField = function() {
-    return [
-        '<div class="row">',
-            '<div class="col-sm-2 col-md-2">',
-                '<span data-i18n="glossary:Calendars.VEvent.organizer"></span>',
-            '</div>',
-            '<div class="col-sm-10 col-md-10">',
-                '<input type="text" id="organizer" name="organizer" value="">',
-            '</div>',
-        '</div>'
-    ].join('');
-};
-
-attendeesField = function() {
-    return [
-        '<div class="row">',
-            '<div class="col-sm-2 col-md-2">',
-                '<span data-i18n="glossary:Calendars.VEvent.attendees"></span>',
-            '</div>',
-            '<div class="col-sm-10 col-md-10">',
-                '<input type="text" id="attendees" name="attendees" value="">',
-            '</div>',
-        '</div>'
-    ].join('');
-};
-
-PCalendar.displayVEventDialog = function(calEvent, jsEvent, view) {
+PCalendar.displayVEventDialog = function(calEvent) {
     let eventId = calEvent.id;
-    if (window.confirm('Remove Event: ' + calEvent.title)) {
+    if (window.confirm('Remove Event: ' + PCalendar.displayCalendarTitle(calEvent.title))) {
+        $('#modal-vevent').modal('hide');
+        $('#dialogOverlay').show();
         PCalendar.deleteVEventAPI({__id: eventId})
             .done(function(){
                 $('#calendar').fullCalendar('removeEvents', eventId);
+                
             })
             .fail(function(error){
                 console.log(error.responseJSON.error);
+                $('#modal-vevent').modal('hide');
                 Common.openWarningDialog(
                     'warningDialog.title',
                     error.responseJSON.error,
-                    function(){ $('#modal-common').modal('hide')}
+                    function(){
+                        $('#modal-common').modal('hide');
+                        $('#modal-vevent').modal('show');
+                    }
                 );
+            }).done(function(){
+                $('#dialogOverlay').hide();
             });  
     } else {
         console.log("Cancelled");
@@ -1195,15 +1183,27 @@ PCalendar.displayVEventDialog = function(calEvent, jsEvent, view) {
     };
  */
 PCalendar.prepareVEvent = function(method, tempVEvent) {
-    let tempData = {};
+    let tempData = {
+        srcType: $('#modal-vevent [name=srcType]:checked').val(),
+        srcAccountName: $('#srcAccountName').val(),
+        dtstart: $('#dtstart').val(),
+        dtend: $('#dtend').val(),
+        organizer: $('#organizer').val() || $('#srcAccountName').val(), // Usually the organizer is the account owner
+        summary: $('#summary').val(),
+        description: $('#description').val(),
+        location: $('#location').val(),
+        attendees: $('#attendees').val()
+    };
+    let requiredParams = {};
+    let optionalParams = {};
+    
     if (method == 'POST') {
         // do something
+        $.extend(true, tempData, requiredParams, optionalParams);
     } else {
         // PUT
-
+        $.extend(true, tempData, requiredParams, optionalParams, { __id: tempVEvent.__id});
     }
-
-    $.extend(true, tempData, requiredParams, optionalParams);
 
     return tempData;
 };

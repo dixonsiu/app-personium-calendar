@@ -37,7 +37,7 @@
         <i class="fa fa-bars fa-2x fa-fw"></i>
       </a>
       <h1 data-i18n="glossary:title"></h1>
-      <a id="addIcon" href="#" onclick="addVEvent();return false;">
+      <a id="addIcon" href="#" onclick="$('#calendar .fc-addVEvent-button').click();return false;">
         <i class="fa fa-plus fa-2x fa-fw"></i>
       </a>
       <a id="updateIcon" href="#" onclick="syncData();return false;">
@@ -58,11 +58,6 @@
             <a onClick="displayAccountPanel();" href="javascript:void(0)" class="allToggle" data-i18n="glossary:Account.label"></a>
           </h3></td>
         </tr>
-        <tr>
-          <td class="sidemenu-item"><h3>
-            <a onClick="cs.openSendAllowedMessage();" href="javascript:void(0)" class="allToggle" data-i18n="glossary:menu.sendReadPermissionRequest.title"></a>
-          </h3></td>
-        </tr>
       </table>
     </div>
     <div class="overlay" id="dvOverlay">
@@ -77,6 +72,7 @@
       <h1 class="row header-menu setting-header"></h1>
       <div class="row" id="settingboard" style="height:100%;"></div>    
     </div>
+    <div id="modalDialogContainer"></div>
   </div>
 </body>
 </html>
