@@ -876,7 +876,7 @@ function checkParams(request, params){
       return "location";
     }
     if(!("description" in params)){
-      return "location";
+      return "description";
     }
     if(params.attendees){
       if (!Array.isArray(params.attendees)) {
