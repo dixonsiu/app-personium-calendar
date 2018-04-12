@@ -4,18 +4,35 @@
  *           POST:   Create
  *           PUT:    Update
  *           DELETE: Delete
- *   HTTP Request Body :  JSON with following parameters
  *
- *           DELETE, UPDATE
- *              __id
- *           CREATE, UPDATE
- *              description
- *              ....
+ *   HTTP Request Body :  JSON with following parameters
+ *           DELETE
+ *            must key and value
+ *              __id : OData id
+ *           CREATE
+ *            must key and value
+ *              srcType : Google / Office365 / EWS
+ *              srcAccountName : calendar service account name
+ *              dtstart: start time
+ *              dtend: end time
+ *            Option(caution point)
+ *              attendees: array of attendees account name    // e.g. ['hoge@xxx.com', 'hogehoge@xxx.com']
+ *           UPDATE
+ *            must key and value
+ *              __id : OData id
+ *              dtstart: start time
+ *              dtend: end time
+ *            must key
+ *              summary:
+ *              location:
+ *              description:
+ *              attendees: array of attendees account name    // e.g. ['hoge@xxx.com', 'hogehoge@xxx.com']
+ *
  */
 
 function(request){
 
-  // POST, PUT, DELETE 以外は405
+  // It return 405 except for POST, PUT, DELETE.
   if(request.method !== "POST" && request.method !== "PUT" && request.method !== "DELETE") {
     return createResponse(405, {"error": "method not allowed"})
   }
@@ -35,6 +52,10 @@ function(request){
   var pathDavName = "AccessInfo/AccessInfo.json";
 
   var calendarUrl = "https://www.googleapis.com/calendar/v3/calendars/";
+  var outlookUrl = "https://outlook.office.com/api/v2.0/me/events";
+  //var graphUrl = "https://graph.microsoft.com/v1.0/me/events";
+  // In the future, office365Url changes from outlookUrl to graphUrl after Data Synchronization adds.
+  var office365Url = outlookUrl;
 
   var params = _p.util.queryParse(bodyAsString);
   var returnParam = null;
@@ -68,7 +89,6 @@ function(request){
         return createResponse(400, {"error": "no such srcType or srcAccountName" })
       }
     }
-
 
     if (request.method === "PUT") {
 
@@ -131,7 +151,7 @@ function(request){
             if (response == null || response.status == 401) {
               return createResponse(400, {"error": "refresh token is wrong"})
             }
-          
+
             // save accessToken
             for (var i = 0; i < accInfo.length; i++){
               if(accInfo[i].srcType == accessInfo.srcType && accInfo[i].srcAccountName == accessInfo.srcAccountName){
@@ -159,8 +179,71 @@ function(request){
         personalEntityAccessor.update(exData.__id, exData, "*");
         returnParam = personalEntityAccessor.retrieve(exData.__id);
 
-      } else { // e.g. Google
-        // srcType is not EWS.
+      } else if(vEvent.srcType == "Office365"){
+        var accessToken = null;
+        var refreshToken = null;
+        var calendarId = null;
+        // get setting data
+        accessToken = accessInfo.accessToken;
+        refreshToken = accessInfo.refreshToken;
+        calendarId = accessInfo.calendarId;
+
+        if (params.srcId == null || params.srcId == "") {
+          params.srcId = vEvent.srcId;
+        }
+
+        try{
+          var httpClient = new _p.extension.HttpClient();
+          var body = "";
+          var headers = {'Authorization': 'Bearer ' + accessToken,
+                         'Prefer': 'outlook.body-content-type="text"'};
+          var contentType = "application/json";
+          var url = office365Url + "/" + params.__id;
+
+          // params to Json
+          body = toOffice365Event(params);
+
+          var response = { status: "", headers : {}, body :"" };
+          response = httpClient.patch(url, headers, contentType, body);
+
+          if(null == response || response.status == 401){
+            // access token expire
+            var tempData = {"refresh_token": refreshToken , "srcType": "Office365"}
+            accessToken = getAccessToken(tempData);
+            // retry
+            headers = {'Authorization': 'Bearer ' + accessToken};
+            response = httpClient.patch(url, headers, contentType, body);
+            if (response == null || response.status == 401) {
+              return createResponse(400, {"error": "refresh token is wrong"})
+            }
+
+            // save accessToken
+            for (var i = 0; i < accInfo.length; i++){
+              if(accInfo[i].srcType == accessInfo.srcType && accInfo[i].srcAccountName == accessInfo.srcAccountName){
+                accInfo[i].accessToken = accessToken;
+              }
+            }
+            personalBoxAccessor.put(pathDavName, "application/json", JSON.stringify(accInfo));
+          }
+        }catch(e){
+          return createResponse(400, {"srcType": "Office365"})
+        }
+
+        if (null == response || response.status != 200){
+          return createResponse(400, {"error": response.body})
+        }
+
+        var item = JSON.parse(response.body);
+
+        var exData = parseOffice365Event(item);
+        exData.__id = vEvent.__id;
+        exData.srcType = "Office365";
+        exData.srcUrl = "";
+        exData.srcAccountName = accessInfo.srcAccountName;
+
+        personalEntityAccessor.update(exData.__id, exData, "*");
+        returnParam = personalEntityAccessor.retrieve(exData.__id);
+      } else { // e.g. Yahoo!
         // not supported now!
         return createResponse(400, {"error": "Required srcType is not supported."})
       }
@@ -233,8 +316,58 @@ function(request){
             return createResponse(500, {"error": "Not delete vEvent of Google server."})
           }
         }
-      } else { // e.g. Google
-        // srcType is not EWS.
+      } else if(vEvent.srcType == "Office365"){
+        var accessToken = null;
+        var calendarId = null;
+        var refreshToken = null;
+        var NO_CONTENT = 204;
+        // get setting data
+        accessToken = accessInfo.accessToken;
+        refreshToken = accessInfo.refreshToken;
+        calendarId = accessInfo.calendarId;
+
+        try{
+          var httpClient = new _p.extension.HttpClient();
+          var headers = {'Authorization': 'Bearer ' + accessToken,
+                         'Prefer': 'outlook.body-content-type="text"'};
+          var response = { status: "", headers : {}, body :"" };
+          var url = office365Url + "/" + vEvent.__id;
+
+          // delete execute
+          response = httpClient.delete(url, headers);
+          if(null == response || response.status == 401){
+            // access token expire
+            var tempData = {"refresh_token": refreshToken , "srcType": "Office365"}
+            accessToken = getAccessToken(tempData);
+            // retry
+            headers = {'Authorization': 'Bearer ' + accessToken};
+            response = httpClient.delete(url, headers);
+            if (response == null || response.status == 401) {
+              return createResponse(400, {"error": "refresh token is wrong"})
+            }
+
+            // save accessToken
+            for (var i = 0; i < accInfo.length; i++){
+              if(accInfo[i].srcType == accessInfo.srcType && accInfo[i].srcAccountName == accessInfo.srcAccountName){
+                accInfo[i].accessToken = accessToken;
+              }
+            }
+            personalBoxAccessor.put(pathDavName, "application/json", JSON.stringify(accInfo));
+          }
+        }catch(e){
+          return createResponse(400, {"srcType": "Office365"})
+        }
+
+        if(response){
+          var status = JSON.parse(response.status);
+          if(NO_CONTENT == status || 404 == status || 410 == status){
+            // success delete or already remove event on google calendar
+            personalEntityAccessor.del(vEvent.__id);
+          } else {
+            return createResponse(500, {"error": "Not delete vEvent of Office365 server."})
+          }
+        }
+      } else { // e.g. Yahoo!
         // not supported now!
         return createResponse(400, {"error": "Required srcType is not supported."})
       }
@@ -314,7 +447,7 @@ function(request){
 
           // post execute
           var response = { status: "", headers : {}, body :"" };
-          response = httpClient.postParam(URL, headers, contentType, body);
+          response = httpClient.post(URL, headers, contentType, body);
 
           if(null == response || response.status == 401){
             // access token expire
@@ -322,11 +455,11 @@ function(request){
             accessToken = getAccessToken(tempData);
             // retry
             headers = {'Authorization': 'Bearer ' + accessToken};
-            response = httpClient.postParam(URL, headers, contentType, body);
+            response = httpClient.post(URL, headers, contentType, body);
             if (response == null || response.status == 401) {
               return createResponse(400, {"error": "refresh token is wrong"})
             }
-            
+
             // save accessToken
             for (var i = 0; i < accInfo.length; i++){
               if(accInfo[i].srcType == accessInfo.srcType && accInfo[i].srcAccountName == accessInfo.srcAccountName){
@@ -366,34 +499,80 @@ function(request){
             return createResponse(500, {"error": e.message})
           }
         }
+      } else if(params.srcType == "Office365"){
+        var accessToken = null;
+        var calendarId = null;
+        var refreshToken = null;
+        // get setting data
+        accessToken = accessInfo.accessToken;
+        refreshToken = accessInfo.refreshToken;
+        calendarId = accessInfo.calendarId;
 
-        if (exist) {
-          var addNum = "1";
-          var loopStatus = true;
-          do {
-            if (exist.srcId == exData.srcId) {
-              return createResponse(400, {"error": "A strange condition occurred."})
-            } else {
-              exData.__id = exist.__id + "_recur_" + addNum;
-              try {
-                var exist2 = personalEntityAccessor.retrieve(exData.__id);
-              } catch (e) {
-                if (e.code == 404) {
-                  personalEntityAccessor.create(exData);
-                  loopStatus = false;
-                } else {
-                  return createResponse(500, {"error": e.message})
-                }
-              }
-              if (loopStatus) {
-                var addNumNext = Number(addNum) + Number(1);
-                addNum = String(addNumNext);
+        try {
+          var URL = office365Url;
+          var body = "";
+          var headers = {'Authorization': 'Bearer ' + accessToken,
+                         'Prefer': 'outlook.body-content-type="text"'};
+          var contentType = "application/json";
+          var httpClient = new _p.extension.HttpClient();
+
+          // params to json
+          body = toOffice365Event(params);
+          // post execute
+          var response = { status: "", headers : {}, body :"" };
+          response = httpClient.post(URL, headers, contentType, body);
+
+          if(null == response || response.status == 401){
+            // access token expire
+            var tempData = {"refresh_token": refreshToken , "srcType": "Office365"}
+            accessToken = getAccessToken(tempData);
+            // retry
+            headers = {'Authorization': 'Bearer ' + accessToken};
+            response = httpClient.post(URL, headers, contentType, body);
+            if (response == null || response.status == 401) {
+              return createResponse(400, {"error": "refresh token is wrong"})
+            }
+
+            // save accessToken
+            for (var i = 0; i < accInfo.length; i++){
+              if(accInfo[i].srcType == accessInfo.srcType && accInfo[i].srcAccountName == accessInfo.srcAccountName){
+                accInfo[i].accessToken = accessToken;
               }
             }
-          } while (loopStatus);
+            personalBoxAccessor.put(pathDavName, "application/json", JSON.stringify(accInfo));
+          }
+        }catch(e){
+          return createResponse(400, {"srcType": "Office365"})
         }
-      } else { // e.g. Google
-        // srcType is not EWS.
+
+        if (null == response || response.status != 201){
+          return createResponse(400, {"error": response.body})
+        }
+
+        // register
+        // parse calendar -> json
+        var item = JSON.parse(response.body);
+        var exData = {};
+
+        // parse
+        exData = parseOffice365Event(item);
+
+        exData.srcType = "Office365";
+        exData.srcUrl = "";
+        exData.srcAccountName = accessInfo.srcAccountName;
+        var exist = null;
+
+        try {
+          exist = personalEntityAccessor.retrieve(exData.__id);
+        } catch (e) {
+          if (e.code == 404) {
+            personalEntityAccessor.create(exData);
+            returnParam = personalEntityAccessor.retrieve(exData.__id);
+          } else {
+            return createResponse(500, {"error": e.message})
+          }
+        }
+      } else { // e.g. Yahoo!
         // not supported now!
         return createResponse(400, {"error": "Required srcType is not supported."})
       }
@@ -406,9 +585,8 @@ function(request){
 
   if (request.method == "POST" || request.method == "PUT"){
     return createResponse(200, returnParam)
-  
+
   } else{
-    // resを定義
     return createResponse(204, [])
   }
 }
@@ -526,6 +704,47 @@ function toGoogleEvent(params){
   return JSON.stringify(result);
 }
 
+function toOffice365Event(params){
+
+  var result = {};
+  result.Start = {};
+  result.End = {};
+  //result.updated = {};
+  result.Organizer = {};
+  result.Body = {};
+  result.Location = {};
+
+  // require dataTime:yyyy-MM-ddTHH:mm:ss.SSSZ
+  var date = {};
+  if (params.timezone){
+    result.Start = {"DateTime": params.dtstart, "TimeZone": params.timezone};
+    result.End = {"DateTime": params.dtend, "TimeZone": params.timezone};
+  } else {
+    result.Start = {"DateTime": params.dtstart, "TimeZone": ""};
+    result.End = {"DateTime": params.dtend, "TimeZone": ""};
+  }
+
+  // result.updated = params.Updated;
+  result.Subject = params.summary;
+  result.Body = {"Content": params.description};
+  result.Location = {"DisplayName": params.location};
+
+  if(params.organizer){
+    var EmailAddress = {"EmailAddress":{"Address": params.organizer, "Name": params.organizer}};
+    result.Organizer = EmailAddress;
+  }
+  if(params.attendees){
+    var list = [];
+    for(var j = 0; j < params.attendees.length; j++){
+      var attn = {"EmailAddress": {"Address": params.attendees[j], "Name":params.attendees[j]}};
+      list.push(attn);
+    }
+    result.Attendees = list;
+  }
+
+  return JSON.stringify(result);
+}
+
 function getDateTime(obj){
   if(obj.dateTime){
     return obj.dateTime;
@@ -584,12 +803,40 @@ function getAccessToken(bodyData) {
         headers : {"Content-Type":"application/json"},
         body : ['{"error": {"status":' + response.body + ', "message": "API call failed."}}']
       };
-    } 
+    }
   } catch (e) {
     return createResponse(400, e.message)
   }
   var res = JSON.parse(response.body);
   return res.access_token;
+}
+
+function parseOffice365Event(item) {
+
+    var result = {};
+    result.__id = item.Id;
+    result.srcId = item.Id;
+
+    var uxtDtstart = Date.parse(new Date(item['Start'].DateTime.slice(0, 23)+"Z"));
+    result.dtstart = "/Date(" + uxtDtstart + ")/";
+    var uxtDtend = Date.parse(new Date(item['End'].DateTime.slice(0, 23)+"Z"));
+    result.dtend = "/Date(" + uxtDtend + ")/";
+    var uxtUpdated = Date.parse(new Date(item.LastModifiedDateTime.slice(0, 23)+"Z"));
+    result.srcUpdated = "/Date(" + uxtUpdated + ")/";
+
+    result.summary = item.Subject;
+    result.description = item.Body.Content;
+    result.location = item.Location.DisplayName;
+    result.organizer = item['Organizer']['EmailAddress'].Address;
+
+    if (item.Attendees.length > 0) {
+        var list = [];
+        for(var j = 0; j < item.Attendees.length; j++){
+            list.push(item.Attendees[j]['EmailAddress'].Address);
+        }
+        result.attendees = list;
+    }
+    return result;
 }
 
 function checkParams(request, params){
@@ -599,13 +846,18 @@ function checkParams(request, params){
     }
     if (!params.srcAccountName){
       return "srcAccountName";
-    } 
+    }
     if(!params.dtstart){
       return "dtstart";
-    } 
+    }
     if(!params.dtend){
       return "dtend";
-    } 
+    }
+    if(params.attendees){
+      if (!Array.isArray(params.attendees)) {
+        return "array of attendees";
+      }
+    }
     return null;
   } else if (request.method == "PUT"){
     if(!params.__id){
@@ -623,8 +875,13 @@ function checkParams(request, params){
     if(!("location" in params)){
       return "location";
     }
-    if(!("attendees" in params)){
-      return "attendees";
+    if(!("description" in params)){
+      return "description";
+    }
+    if(params.attendees){
+      if (!Array.isArray(params.attendees)) {
+        return "array of attendees";
+      }
     }
     return null;
   } else {
