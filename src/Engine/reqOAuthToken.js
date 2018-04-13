@@ -95,7 +95,8 @@ function getRedirectURL(oAuthInfo, params) {
         "client_id=" + clientId,
         "redirect_uri=" + redirectUri,
         "scope=" + scope,
-        "state=" + state
+        "state=" + state,
+        "prompt=consent"
     ].join("&");
 
     if (params.srcType == "Google") {
