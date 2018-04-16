@@ -95,12 +95,11 @@ function getRedirectURL(oAuthInfo, params) {
         "client_id=" + clientId,
         "redirect_uri=" + redirectUri,
         "scope=" + scope,
-        "state=" + state,
-        "prompt=consent"
+        "state=" + state
     ].join("&");
 
     if (params.srcType == "Google") {
-        paramsStr = paramsStr + "&access_type=offline";
+        paramsStr = paramsStr + "&access_type=offline&prompt=consent";
     }
 
     var redirectUrl = [
