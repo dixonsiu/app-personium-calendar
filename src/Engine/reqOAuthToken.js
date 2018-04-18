@@ -99,7 +99,7 @@ function getRedirectURL(oAuthInfo, params) {
     ].join("&");
 
     if (params.srcType == "Google") {
-        paramsStr = paramsStr + "&access_type=offline";
+        paramsStr = paramsStr + "&access_type=offline&prompt=consent";
     }
 
     var redirectUrl = [
