@@ -1,6 +1,7 @@
 const APP_URL = "https://demo.personium.io/app-personium-calendar/";
 const APP_BOX_NAME = 'app-personium-calendar';
 PCalendar = {};
+dispYMDate = moment().format("YYYYMM");
 
 getEngineEndPoint = function() {
     return Common.getAppCellUrl() + "__/html/Engine/getAppAuthToken";
@@ -22,7 +23,7 @@ additionalCallback = function() {
 
     renderFullCalendar();
 
-    getListOfVEvents();
+    getListOfVEvents(dispYMDate);
 
     syncData();
 
@@ -447,7 +448,14 @@ renderFullCalendar = function() {
         navLinks: true, // can click day/week names to navigate views
         editable: true,
         eventLimit: true, // allow "more" link when too many events
-        events: [],
+        events: function(start, end, timezone, callback) {
+                    let aveDate = Math.floor((start + end)/2);
+                    dispYMDate = moment("/Date("+aveDate+")/").format("YYYYMM");
+                    getListOfVEvents(dispYMDate);
+
+                    var events = [];
+                    callback(events);
+                },
         eventClick: function(calEvent, jsEvent, view) {
             $('.popover').popover('hide');
             return PCalendar.displayEditVEventDialog(calEvent, jsEvent, view);
@@ -474,12 +482,15 @@ PCalendar.displayCalendarTitle = function(str) {
     return str || i18next.t('glossary:Calendars.No_title');
 }
 
-getListOfVEvents = function() {
+getListOfVEvents = function(ym) {
+    let sDate = moment(ym + "01").format("YYYY-MM-DDTHH:mm:ss");
+    let eDate = moment(sDate).add(1, "months").add(-1, "second").format("YYYY-MM-DDTHH:mm:ss");
     let urlOData = Common.getBoxUrl() + 'OData/vevent';
     let filterStr = $.param({
-        "$top": 300,
-        "$filter": "dtstart ge datetimeoffset'2018-01-01T00:00:00+09:00'",
-        "$orderby": "dtstart asc"
+        "$top": 1000,
+        "$filter": "dtstart ge datetimeoffset'"+sDate+"+09:00' and dtstart le datetimeoffset'"+eDate+"+09:00'",
+        //"$filter": "dtstart ge datetimeoffset'2017-01-01T00:00:00+09:00'",
+        "$orderby": "dtstart desc"
     });
     let queryUrl = urlOData + '?' + filterStr;
     let access_token = Common.getToken();
@@ -487,7 +498,12 @@ getListOfVEvents = function() {
         .done(function(data) {
             _.each(data.d.results, function(item) { 
                 // do something
-                PCalendar.renderEvent(item);
+                let events = $('#calendar').fullCalendar('clientEvents', item.__id)[0];
+                if (events) {
+                    PCalendar.updateEvent(item);
+                } else {
+                    PCalendar.renderEvent(item);
+                }
             });
         })
         .always(function(){
@@ -598,7 +614,7 @@ syncData = function() {
                 }
 
                 if (data.syncCompleted) {
-                    reRenderCalendar();
+                    reRenderCalendar(dispYMDate);
                     Common.stopAnimation();
                 } else {
                     // continue
@@ -996,7 +1012,7 @@ deleteAccessInfoAPI = function(accountInfo) {
  */
 PCalendar.displayAddVEventDialog = function(accountList) {
     $("body #modalDialogContainer").load(
-        "../html/templates/_vevent_template.html",
+        "./templates/_vevent_template.html",
         function(responseText, textStatus, jqXHR) {
             $('body #modal-vevent').localize();
 
@@ -1064,7 +1080,7 @@ PCalendar.addVEventBtnHandler = function(accountList) {
 
 PCalendar.displayEditVEventDialog = function(calEvent, jsEvent, view) {
     $("body #modalDialogContainer").load(
-        "../html/templates/_vevent_template.html",
+        "./templates/_vevent_template.html",
         function(responseText, textStatus, jqXHR) {
             $('body #modal-vevent').localize();
 
@@ -1247,6 +1263,5 @@ hideSpinner = function(cssSelector) {
 
 reRenderCalendar = function() {
     showSpinner('body');
-    $('#calendar').fullCalendar('removeEvents');
-    getListOfVEvents();
+    getListOfVEvents(dispYMDate);
 };
