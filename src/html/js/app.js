@@ -1,7 +1,7 @@
 const APP_URL = "https://demo.personium.io/app-personium-calendar/";
 const APP_BOX_NAME = 'app-personium-calendar';
 PCalendar = {};
-dispYMDate = moment().format("YYYYMM");
+dispDateObj = moment();
 
 getEngineEndPoint = function() {
     return Common.getAppCellUrl() + "__/html/Engine/getAppAuthToken";
@@ -23,7 +23,7 @@ additionalCallback = function() {
 
     renderFullCalendar();
 
-    getListOfVEvents(dispYMDate);
+    getListOfVEvents(dispDateObj);
 
     syncData();
 
@@ -450,8 +450,8 @@ renderFullCalendar = function() {
         eventLimit: true, // allow "more" link when too many events
         events: function(start, end, timezone, callback) {
                     let aveDate = Math.floor((start + end)/2);
-                    dispYMDate = moment("/Date("+aveDate+")/").format("YYYYMM");
-                    getListOfVEvents(dispYMDate);
+                    dispDateObj = moment("/Date("+aveDate+")/");
+                    getListOfVEvents(dispDateObj);
 
                     var events = [];
                     callback(events);
@@ -482,13 +482,13 @@ PCalendar.displayCalendarTitle = function(str) {
     return str || i18next.t('glossary:Calendars.No_title');
 }
 
-getListOfVEvents = function(ym) {
-    let sDate = moment(ym + "01").format("YYYY-MM-DDTHH:mm:ss");
-    let eDate = moment(sDate).add(1, "months").add(-1, "second").format("YYYY-MM-DDTHH:mm:ss");
+getListOfVEvents = function(mobj) {
+    let sDate = mobj.startOf('month').toISOString();
+    let eDate = mobj.endOf('month').toISOString();
     let urlOData = Common.getBoxUrl() + 'OData/vevent';
     let filterStr = $.param({
         "$top": 1000,
-        "$filter": "dtstart ge datetimeoffset'"+sDate+"+09:00' and dtstart le datetimeoffset'"+eDate+"+09:00'",
+        "$filter": "dtstart ge datetimeoffset'"+sDate+"' and dtstart le datetimeoffset'"+eDate+"'",
         //"$filter": "dtstart ge datetimeoffset'2017-01-01T00:00:00+09:00'",
         "$orderby": "dtstart desc"
     });
@@ -614,7 +614,7 @@ syncData = function() {
                 }
 
                 if (data.syncCompleted) {
-                    reRenderCalendar(dispYMDate);
+                    reRenderCalendar(dispDateObj);
                     Common.stopAnimation();
                 } else {
                     // continue
@@ -1263,5 +1263,5 @@ hideSpinner = function(cssSelector) {
 
 reRenderCalendar = function() {
     showSpinner('body');
-    getListOfVEvents(dispYMDate);
+    getListOfVEvents(dispDateObj);
 };
