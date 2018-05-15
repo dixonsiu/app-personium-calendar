@@ -41,7 +41,7 @@ function(request){
     bodyAsString = request.input.readAll();
   } else {
     bodyAsString = request.queryString;
-  }
+    }
   if (bodyAsString === "") {
     return createResponse(400, {"error": "required parameter not exist."})
   }
@@ -621,7 +621,7 @@ exchangeDataEwsToJcal = function(inData) {
 }
 
 function toUTC(str){
-  var newdate = new Date(str);
+  var newdate = moment.tz(str, "Asia/Tokyo");
   return newdate.valueOf();
 }
 
@@ -636,12 +636,14 @@ function parseGoogleEvent(item){
   if (item.start){
     eventDate = getDateTime(item.start);
     newdate = toUTC(eventDate);
+    result.start = item.start.date || item.start.dateTime;
     result.dtstart = "/Date(" + newdate + ")/";
   }
 
   if (item.end){
     eventDate = getDateTime(item.end);
     newdate = toUTC(eventDate);
+    result.end = item.end.date || item.end.dateTime;
     result.dtend = "/Date(" + newdate + ")/";
   }
 
@@ -679,10 +681,27 @@ function toGoogleEvent(params){
   result.organizer = {};
 
   // require dataTime:yyyy-MM-ddTHH:mm:ss.SSSZ
-  var date = {"dateTime": params.dtstart}
+  var date;
+  if (params.start.indexOf("T") > 0) {
+    date = {
+      "dateTime": params.dtstart
+    };
+  } else {
+    date = {
+      "date": params.start
+    };
+  }
   result.start = date;
 
-  var date = {"dateTime": params.dtend}
+  if (params.end.indexOf("T") > 0) {
+    date = {
+      "dateTime": params.dtend
+    };
+  } else {
+    date = {
+      "date": params.end
+    };
+  }
   result.end = date;
 
   // result.updated = params.Updated;
@@ -892,3 +911,6 @@ function checkParams(request, params){
     return null;
   }
 }
+
+var moment = require("moment").moment;
+moment = require("moment_timezone_with_data").mtz;

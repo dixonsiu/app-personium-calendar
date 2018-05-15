@@ -505,9 +505,9 @@ PCalendar.renderEvent = function(item) {
     {
         id: item.__id,
         title: item.summary,
-        allDay: PCalendar.isAllDay(startMoment, endMoment),
-        start: startMoment.format(),
-        end: endMoment.format(),
+        //allDay: PCalendar.isAllDay(startMoment, endMoment),
+        start: item.start,
+        end: item.end,
         editable: true,
         color: PCalendar.getEventColor(item.srcType),
         description: item.description,
@@ -525,9 +525,9 @@ PCalendar.updateEvent = function(item) {
         eventObj,
     {
         title: item.summary,
-        allDay: PCalendar.isAllDay(startMoment, endMoment),
-        start: startMoment.format(),
-        end: endMoment.format(),
+            //allDay: PCalendar.isAllDay(startMoment, endMoment),
+            start: item.start,
+            end: item.end,
         color: PCalendar.getEventColor(item.srcType),
         description: item.description,
         vEvent: item
@@ -1094,10 +1094,12 @@ PCalendar.setEditVEventInfo = function(calEvent) {
         $('#modal-vevent #location').val(tempVEvent.location);
     }
     if (tempVEvent.dtstart) {
-        $('#modal-vevent #dtstart').val(moment(tempVEvent.dtstart).format());
+        //$('#modal-vevent #dtstart').val(moment(tempVEvent.dtstart).format());
+        $('#modal-vevent #dtstart').val(tempVEvent.start);
     }
     if (tempVEvent.dtend) {
-        $('#modal-vevent #dtend').val(moment(tempVEvent.dtend).format());
+        //$('#modal-vevent #dtend').val(moment(tempVEvent.dtend).format());
+        $('#modal-vevent #dtend').val(tempVEvent.end);
     }
     if (tempVEvent.description) {
         $('#modal-vevent #description').val(tempVEvent.description);
@@ -1187,8 +1189,10 @@ PCalendar.prepareVEvent = function(method, tempVEvent) {
     let tempData = {
         srcType: $('#modal-vevent [name=srcType]:checked').val(),
         srcAccountName: $('#srcAccountName').val(),
-        dtstart: $('#dtstart').val(),
-        dtend: $('#dtend').val(),
+        start: $('#dtstart').val(),
+        end: $('#dtend').val(),
+        dtstart: moment($('#dtstart').val()).toISOString(),
+        dtend: moment($('#dtend').val()).toISOString(),
         organizer: $('#organizer').val() || $('#srcAccountName').val(), // Usually the organizer is the account owner
         summary: $('#summary').val(),
         description: $('#description').val(),

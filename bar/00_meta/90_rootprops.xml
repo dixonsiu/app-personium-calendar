@@ -165,6 +165,22 @@
         </propstat>
     </response>
     <response>
+        <href>dcbox:/SyncEngine/__src/moment.js</href>
+        <propstat>
+            <prop>
+                <getcontenttype>text/javascript</getcontenttype>
+            </prop>
+        </propstat>
+    </response>
+    <response>
+        <href>dcbox:/SyncEngine/__src/moment_timezone_with_data.js</href>
+        <propstat>
+            <prop>
+                <getcontenttype>text/javascript</getcontenttype>
+            </prop>
+        </propstat>
+    </response>
+    <response>
         <href>dcbox:/SyncEngine/__src/sync.js</href>
         <propstat>
             <prop>
@@ -215,6 +231,22 @@
                 <resourcetype>
                     <collection/>
                 </resourcetype>
+            </prop>
+        </propstat>
+    </response>
+    <response>
+        <href>dcbox:/UpdateEngine/__src/moment.js</href>
+        <propstat>
+            <prop>
+                <getcontenttype>text/javascript</getcontenttype>
+            </prop>
+        </propstat>
+    </response>
+    <response>
+        <href>dcbox:/UpdateEngine/__src/moment_timezone_with_data.js</href>
+        <propstat>
+            <prop>
+                <getcontenttype>text/javascript</getcontenttype>
             </prop>
         </propstat>
     </response>
