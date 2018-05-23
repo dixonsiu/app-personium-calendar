@@ -1,7 +1,12 @@
 const APP_URL = "https://demo.personium.io/app-personium-calendar/";
 const APP_BOX_NAME = 'app-personium-calendar';
 PCalendar = {};
-dispDateObj = moment();
+sDateObj = moment().startOf('month');
+eDateObj = moment().endOf('month');
+dispListName = "";
+scheduleDispNum = 10;
+scheduleSkipPrev = 0;
+scheduleSkipNext = 0;
 
 getEngineEndPoint = function() {
     return Common.getAppCellUrl() + "__/html/Engine/getAppAuthToken";
@@ -22,8 +27,6 @@ additionalCallback = function() {
     createTitleHeader(true, true);
 
     renderFullCalendar();
-
-    getListOfVEvents(dispDateObj);
 
     syncData();
 
@@ -248,10 +251,10 @@ displayAccountPanel = function() {
     getAccountList().done(function(data) {
         dispAccountList(data);
     }).fail(function(error) {
-        console.log(error.responseJSON.error);
+        console.log(error.responseJSON);
         Common.openWarningDialog(
             'warningDialog.title',
-            error.responseJSON.error,
+            error.responseJSON.error || error.responseJSON.message.value,
             function(){ $('#modal-common').modal('hide')}
         );
     }).always(function(){
@@ -414,86 +417,111 @@ createDeleteBtn = function() {
 
 renderFullCalendar = function() {
     $('#calendar').fullCalendar({
-        customButtons: {
-            addVEvent: {
-                text: i18next.t('glossary:Calendars.VEvent.btn.add'),
-                click: function() {
-                    getAccountList().done(function(data) {
-                        PCalendar.displayAddVEventDialog(data);
-                    }).fail(function(error) {
-                        console.log(error.responseJSON.error);
-                        Common.openWarningDialog(
-                            'warningDialog.title',
-                            error.responseJSON.error,
-                            function(){ $('#modal-common').modal('hide')}
-                        );
-                    });
-                }
-            }
-        },
         header: {
             left: 'prev,next today',
             center: 'title',
-            right: 'addVEvent listDay,listWeek,agendaDay,month'
+            right: 'schedule,agendaDay,month'
         },
 
         // customize the button names,
         // otherwise they'd all just say "list"
-        views: {
-            listDay: { buttonText: 'list day' },
-            listWeek: { buttonText: 'list week' }
+        buttonText: {
+            today: "今日"
         },
-        defaultView: 'listDay',
+        allDayText: "終日",
+        views: {
+            schedule: { 
+                buttonText: 'スケジュール',
+                type: 'list',
+                visibleRange: {
+                    start: moment(moment().unix()).format("YYYY-MM-DD"),
+                    end: moment().add(21, "year").startOf("year").format("YYYY-MM-DD")
+                }
+                ,titleFormat: "[" + moment().locale("ja").format("LL") + "]"
+                ,listDayFormat: "MM月DD日[(]ddd[)]"
+            },
+            agendaDay: { buttonText: '日' },
+            month: { 
+                buttonText: '月',
+                titleFormat: "YYYY年MM月"
+            }
+        },
+        height: "parent",
+        locale: 'ja',
+        defaultView: 'schedule',
         defaultDate: moment().format(),
+        timeFormat: 'H:mm' ,
         navLinks: true, // can click day/week names to navigate views
         editable: true,
         eventLimit: true, // allow "more" link when too many events
-        events: function(start, end, timezone, callback) {
-                    let aveDate = Math.floor((start + end)/2);
-                    dispDateObj = moment("/Date("+aveDate+")/");
-                    getListOfVEvents(dispDateObj);
+        viewRender: function(currentView) {
+                    dispListName = currentView.name;
+                    if (currentView.name != "schedule") {
+                        sDateObj = moment(currentView.start.valueOf());
+                        eDateObj = moment(currentView.end.valueOf());
+                        getListOfVEvents();
+                    } else {
+                        scheduleSkipPrev = 0;
+                        scheduleSkipNext = 0;
+                        $(".fc-scroller").on("scroll", function() {
+                            // 表示領域の下端の位置
+                            var bottom = this.scrollTop + this.clientHeight;
+                            // 末尾の要素の上端の位置
+                            var top = $(".fc-list-heading").filter(":last")[0].offsetTop - this.offsetTop;
+                            if( top < bottom )
+                            {
+                                getListOfVEventsSchedule(true);
+                                let eventArray = $('#calendar').fullCalendar('clientEvents');
+                            } else if (this.scrollTop == 0) {
+                                let firstDate = $(".fc-list-heading").filter(":first").data("date");
+                                getListOfVEventsSchedule(false, firstDate);
+                            }
+                        })
 
-                    var events = [];
-                    callback(events);
+                        $('#calendar').fullCalendar('removeEvents');
+                        $(".fc-prev-button").addClass('fc-state-disabled');
+                        $(".fc-next-button").addClass('fc-state-disabled');
+                        getListOfVEventsScheduleInit();
+                    }
                 },
         eventClick: function(calEvent, jsEvent, view) {
-            $('.popover').popover('hide');
             return PCalendar.displayEditVEventDialog(calEvent, jsEvent, view);
-        },
-        eventRender: function(eventObj, $el) {
-            // https://www.w3schools.com/bootstrap/bootstrap_ref_js_popover.asp
-            $el.popover({
-                title: PCalendar.displayCalendarTitle(eventObj.title),
-                html: true,
-                content: eventObj.description ? '<div style="word-break: break-all">'+eventObj.description+'</div>':'',
-                trigger: 'hover',
-                delay: {
-                    show: 500,
-                    hide: 100
-                },
-                placement: 'auto',
-                container: 'body'
-            });
         }
     });
 };
+
+addButtonClick = function() {
+    getAccountList().done(function(data) {
+        PCalendar.displayAddVEventDialog(data);
+    }).fail(function(error) {
+        console.log(error.responseJSON);
+        Common.openWarningDialog(
+            'warningDialog.title',
+            error.responseJSON.error || error.responseJSON.message.value,
+            function(){ $('#modal-common').modal('hide')}
+        );
+    });
+}
 
 PCalendar.displayCalendarTitle = function(str) {
     return str || i18next.t('glossary:Calendars.No_title');
 }
 
-getListOfVEvents = function(mobj) {
-    let sDate = mobj.startOf('month').toISOString();
-    let eDate = mobj.endOf('month').toISOString();
+getListOfVEvents = function() {
+    let sDate = sDateObj.toISOString();
+    let eDate = eDateObj.toISOString();
     let urlOData = Common.getBoxUrl() + 'OData/vevent';
     let filterStr = $.param({
         "$top": 1000,
-        "$filter": "dtstart ge datetimeoffset'"+sDate+"' and dtstart le datetimeoffset'"+eDate+"'",
+        "$filter": "dtend ge datetimeoffset'"+sDate+"' and dtstart le datetimeoffset'"+eDate+"'",
         //"$filter": "dtstart ge datetimeoffset'2017-01-01T00:00:00+09:00'",
         "$orderby": "dtstart desc"
     });
     let queryUrl = urlOData + '?' + filterStr;
     let access_token = Common.getToken();
+    let listOfEvents = [];
+    $('#calendar').fullCalendar('removeEvents');
+    
     Common.getListOfOData(queryUrl, access_token)
         .done(function(data) {
             _.each(data.d.results, function(item) { 
@@ -502,12 +530,154 @@ getListOfVEvents = function(mobj) {
                 if (events) {
                     PCalendar.updateEvent(item);
                 } else {
-                    PCalendar.renderEvent(item);
+                    //PCalendar.renderEvent(item);
+                    listOfEvents.push(PCalendar.prepareEvent(item));
                 }
             });
         })
         .always(function(){
             hideSpinner('body');
+            $('#calendar').fullCalendar('renderEvents', listOfEvents, true);
+        });
+};
+
+getListOfVEventsScheduleInit = function() {
+    let toDay = moment().startOf("day").toISOString();
+    let urlOData = Common.getBoxUrl() + 'OData/vevent';
+    let filterStr = $.param({
+        "$top": scheduleDispNum*2,
+        "$filter": "dtend gt datetimeoffset'"+toDay+"'",
+        "$orderby": "dtstart asc"
+    });
+    let queryUrl = urlOData + '?' + filterStr;
+    let access_token = Common.getToken();
+    let listOfEvents = [];
+
+    Common.getListOfOData(queryUrl, access_token)
+        .done(function(data) {
+            if (data.d.results.length > 0) {
+                // 未来30件を取得し、先頭の日付をスクロール初期値に設定する
+                let currentDate = ""
+                scheduleSkipNext = 2;
+                _.each(data.d.results, function(item) {
+                    if (currentDate == "") {
+                        currentDate = item.start;
+                        if (currentDate < toDay) {
+                            currentDate = moment().startOf("day").format("YYYY-MM-DD");
+                        }
+                    }
+
+                    // do something
+                    listOfEvents.push(PCalendar.prepareEvent(item));
+                });
+                filterStr = $.param({
+                    "$top": scheduleDispNum,
+                    "$filter": "dtend le datetimeoffset'"+toDay+"'",
+                    "$orderby": "dtend desc"
+                });
+                queryUrl = urlOData + '?' + filterStr;
+                access_token = Common.getToken();
+                Common.getListOfOData(queryUrl, access_token)
+                    .done(function(data) {
+                        if (data.d.results.length > 0) {
+                            // 過去30件を取得し、スクロールはcurrentdate
+                            scheduleSkipPrev = 1;
+                            _.each(data.d.results, function(item) {
+                                // do something
+                                listOfEvents.push(PCalendar.prepareEvent(item));
+                            });
+                        }
+                    }).always(function(){
+                        hideSpinner('body');
+                        $('#calendar').fullCalendar('renderEvents', listOfEvents, true);
+
+                        let scrollTop = $('.fc-list-heading[data-date="'+currentDate+'"]')[0].offsetTop;
+                        $(".fc-scroller")[0].scrollTop = scrollTop;
+                    });
+            } else {
+                // 過去60件を表示し、スクロールは一番下
+                filterStr = $.param({
+                    "$top": scheduleDispNum*2,
+                    "$filter": "dtend le datetimeoffset'"+toDay+"'",
+                    "$orderby": "dtend desc"
+                });
+                queryUrl = urlOData + '?' + filterStr;
+                access_token = Common.getToken();
+                listOfEvents = [];
+                Common.getListOfOData(queryUrl, access_token)
+                    .done(function(data) {
+                        scheduleSkipPrev = 2;
+                        _.each(data.d.results, function(item) {
+                            // do something
+                            listOfEvents.push(PCalendar.prepareEvent(item));
+                        });
+                    }).always(function(){
+                        hideSpinner('body');
+                        $('#calendar').fullCalendar('renderEvents', listOfEvents, true);
+
+                        $(".fc-scroller")[0].scrollTop = $(".fc-scroller")[0].scrollHeight;
+                    });
+            }
+        });
+}
+getListOfVEventsSchedule = function(upperFlg, searchDate) {
+    let toDay = moment().startOf("day").toISOString();
+    let urlOData = Common.getBoxUrl() + 'OData/vevent';
+    let filterStr;
+    if (upperFlg) {
+        filterStr = $.param({
+            "$top": scheduleDispNum,
+            "$skip": scheduleDispNum*scheduleSkipNext,
+            "$filter": "dtend ge datetimeoffset'"+toDay+"'",
+            //"$filter": "dtstart ge datetimeoffset'2017-01-01T00:00:00+09:00'",
+            "$orderby": "dtstart asc"
+        });
+    } else {
+        filterStr = $.param({
+            "$top": scheduleDispNum,
+            "$skip": scheduleDispNum*scheduleSkipPrev,
+            "$filter": "dtend le datetimeoffset'"+toDay+"'",
+            //"$filter": "dtstart ge datetimeoffset'2017-01-01T00:00:00+09:00'",
+            "$orderby": "dtend desc"
+        });
+    }
+    
+    let queryUrl = urlOData + '?' + filterStr;
+    let access_token = Common.getToken();
+    let listOfEvents = [];
+    
+    let delCnt = 0;
+    Common.getListOfOData(queryUrl, access_token)
+        .done(function(data) {
+            let eachFlg = false;
+            _.each(data.d.results, function(item) {
+                // do something
+                let events = $('#calendar').fullCalendar('clientEvents', item.__id)[0];
+                if (events) {
+                    PCalendar.updateEvent(item);
+                } else {
+                    //PCalendar.renderEvent(item);
+                    listOfEvents.push(PCalendar.prepareEvent(item));
+                    if (!eachFlg) {
+                        if (upperFlg) {
+                            scheduleSkipNext++;
+                            //scheduleSkipPrev--;
+                        } else {
+                            scheduleSkipPrev++;
+                            //scheduleSkipNext--;
+                        }
+                        eachFlg = true;
+                    }
+                }
+            });
+        })
+        .always(function(){
+            hideSpinner('body');
+            $('#calendar').fullCalendar('renderEvents', listOfEvents, true);
+            if (searchDate) {
+                let scrollTop = $('.fc-list-heading[data-date="'+searchDate+'"]')[0].offsetTop;;
+                $(".fc-scroller")[0].scrollTop = scrollTop;
+            }
         });
 };
 
@@ -521,15 +691,33 @@ PCalendar.renderEvent = function(item) {
     {
         id: item.__id,
         title: item.summary,
-        allDay: PCalendar.isAllDay(startMoment, endMoment),
-        start: startMoment.format(),
-        end: endMoment.format(),
+        //allDay: PCalendar.isAllDay(startMoment, endMoment),
+        start: item.start,
+        end: item.end,
         editable: true,
         color: PCalendar.getEventColor(item.srcType),
         description: item.description,
         vEvent: item
     };
     $('#calendar').fullCalendar('renderEvent', event, true);
+};
+
+PCalendar.prepareEvent = function(item) {
+    let startMoment = moment(item.dtstart);
+    let endMoment = moment(item.dtend);
+    let event =
+    {
+        id: item.__id,
+        title: item.summary,
+        //allDay: PCalendar.isAllDay(startMoment, endMoment),
+        start: item.start,
+        end: item.end,
+        editable: true,
+        color: PCalendar.getEventColor(item.srcType),
+        description: item.description,
+        vEvent: item
+    };
+    return event;
 };
 
 PCalendar.updateEvent = function(item) {
@@ -541,9 +729,9 @@ PCalendar.updateEvent = function(item) {
         eventObj,
     {
         title: item.summary,
-        allDay: PCalendar.isAllDay(startMoment, endMoment),
-        start: startMoment.format(),
-        end: endMoment.format(),
+            //allDay: PCalendar.isAllDay(startMoment, endMoment),
+            start: item.start,
+            end: item.end,
         color: PCalendar.getEventColor(item.srcType),
         description: item.description,
         vEvent: item
@@ -614,7 +802,7 @@ syncData = function() {
                 }
 
                 if (data.syncCompleted) {
-                    reRenderCalendar(dispDateObj);
+                    reRenderCalendar();
                     Common.stopAnimation();
                 } else {
                     // continue
@@ -626,7 +814,7 @@ syncData = function() {
         .fail(function(jqXHR, textStatus, errorThrown){
             Common.stopAnimation();
 
-            console.log(jqXHR.responseJSON.error);
+            console.log(jqXHR.responseJSON);
             if ((jqXHR.status == '400') && (jqXHR.responseJSON.srcType)) {
                 let srcType = jqXHR.responseJSON.srcType;
                 let accountInfo;
@@ -647,7 +835,7 @@ syncData = function() {
             } else {
                 Common.openWarningDialog(
                     'warningDialog.title',
-                    jqXHR.responseJSON.error,
+                    jqXHR.responseJSON.error || jqXHR.responseJSON.message.value,
                     function(){ $('#modal-common').modal('hide')}
                 );
             }
@@ -751,10 +939,10 @@ registerAccount = function() {
                 syncFullData();
             })
             .fail(function(error){
-                console.log(error.responseJSON.error);
+                console.log(error.responseJSON);
                 Common.openWarningDialog(
                     'warningDialog.title',
-                    error.responseJSON.error,
+                    error.responseJSON.error || error.responseJSON.message.value,
                     function(){ $('#modal-common').modal('hide')}
                 );
                 $('#dialogOverlay').hide();
@@ -823,10 +1011,10 @@ syncFullData = function() {
                 getAccountList().done(function(data) {
                     dispAccountList(data);
                 }).fail(function(error) {
-                    console.log(error.responseJSON.error);
+                    console.log(error.responseJSON);
                     Common.openWarningDialog(
                         'warningDialog.title',
-                        error.responseJSON.error,
+                        error.responseJSON.error || error.responseJSON.message.value,
                         function(){ $('#modal-common').modal('hide')}
                     );
                 }).always(function(){
@@ -837,10 +1025,10 @@ syncFullData = function() {
             }
         })
         .fail(function(error){
-            console.log(error.responseJSON.error);
+            console.log(error.responseJSON);
             Common.openWarningDialog(
                 'warningDialog.title',
-                error.responseJSON.error,
+                error.responseJSON.error || error.responseJSON.message.value,
                 function(){ $('#modal-common').modal('hide')}
             );
             $('#dialogOverlay').hide();
@@ -940,19 +1128,19 @@ modifyAccount = function() {
             getAccountList().done(function(data) {
                 dispAccountList(data);
             }).fail(function(error) {
-                console.log(error.responseJSON.error);
+                console.log(error.responseJSON);
                 Common.openWarningDialog(
                     'warningDialog.title',
-                    error.responseJSON.error,
+                    error.responseJSON.error || error.responseJSON.message.value,
                     function(){ $('#modal-common').modal('hide')}
                 );
             });
         })
         .fail(function(error){
-            console.log(error.responseJSON.error);
+            console.log(error.responseJSON);
             Common.openWarningDialog(
                 'warningDialog.title',
-                error.responseJSON.error,
+                error.responseJSON.error || error.responseJSON.message.value,
                 function(){ $('#modal-common').modal('hide')}
             );
             $('#dialogOverlay').hide();
@@ -976,19 +1164,19 @@ deleteAccessInfo = function(aDom) {
             getAccountList().done(function(data) {
                 dispAccountList(data);
             }).fail(function(error) {
-                console.log(error.responseJSON.error);
+                console.log(error.responseJSON);
                 Common.openWarningDialog(
                     'warningDialog.title',
-                    error.responseJSON.error,
+                    error.responseJSON.error || error.responseJSON.message.value,
                     function(){ $('#modal-common').modal('hide')}
                 );
             });
         })
         .fail(function(error){
-            console.log(error.responseJSON.error);
+            console.log(error.responseJSON);
             Common.openWarningDialog(
                 'warningDialog.title',
-                error.responseJSON.error,
+                error.responseJSON.error || error.responseJSON.message.value,
                 function(){ $('#modal-common').modal('hide')}
             );
         });
@@ -1064,11 +1252,11 @@ PCalendar.addVEventBtnHandler = function(accountList) {
                 $('#modal-vevent').modal('hide');
             })
             .fail(function(error){
-                console.log(error.responseJSON.error);
+                console.log(error.responseJSON);
                 $('#modal-vevent').modal('hide');
                 Common.openWarningDialog(
                     'warningDialog.title',
-                    error.responseJSON.error,
+                    error.responseJSON.error || error.responseJSON.message.value,
                     function(){
                         $('#modal-common').modal('hide');
                         $('#modal-vevent').modal('show');
@@ -1110,10 +1298,12 @@ PCalendar.setEditVEventInfo = function(calEvent) {
         $('#modal-vevent #location').val(tempVEvent.location);
     }
     if (tempVEvent.dtstart) {
-        $('#modal-vevent #dtstart').val(moment(tempVEvent.dtstart).format());
+        //$('#modal-vevent #dtstart').val(moment(tempVEvent.dtstart).format());
+        $('#modal-vevent #dtstart').val(tempVEvent.start);
     }
     if (tempVEvent.dtend) {
-        $('#modal-vevent #dtend').val(moment(tempVEvent.dtend).format());
+        //$('#modal-vevent #dtend').val(moment(tempVEvent.dtend).format());
+        $('#modal-vevent #dtend').val(tempVEvent.end);
     }
     if (tempVEvent.description) {
         $('#modal-vevent #description').val(tempVEvent.description);
@@ -1135,11 +1325,11 @@ PCalendar.editVEventBtnHandler = function(calEvent) {
                 $('#modal-vevent').modal('hide');
             })
             .fail(function(error){
-                console.log(error.responseJSON.error);
+                console.log(error.responseJSON);
                 $('#modal-vevent').modal('hide');
                 Common.openWarningDialog(
                     'warningDialog.title',
-                    error.responseJSON.error,
+                    error.responseJSON.error || error.responseJSON.message.value,
                     function(){
                         $('#modal-common').modal('hide');
                         $('#modal-vevent').modal('show');
@@ -1165,11 +1355,11 @@ PCalendar.displayVEventDialog = function(calEvent) {
                 
             })
             .fail(function(error){
-                console.log(error.responseJSON.error);
+                console.log(error.responseJSON);
                 $('#modal-vevent').modal('hide');
                 Common.openWarningDialog(
                     'warningDialog.title',
-                    error.responseJSON.error,
+                    error.responseJSON.error || error.responseJSON.message.value,
                     function(){
                         $('#modal-common').modal('hide');
                         $('#modal-vevent').modal('show');
@@ -1203,8 +1393,10 @@ PCalendar.prepareVEvent = function(method, tempVEvent) {
     let tempData = {
         srcType: $('#modal-vevent [name=srcType]:checked').val(),
         srcAccountName: $('#srcAccountName').val(),
-        dtstart: $('#dtstart').val(),
-        dtend: $('#dtend').val(),
+        start: $('#dtstart').val(),
+        end: $('#dtend').val(),
+        dtstart: moment($('#dtstart').val()).toISOString(),
+        dtend: moment($('#dtend').val()).toISOString(),
         organizer: $('#organizer').val() || $('#srcAccountName').val(), // Usually the organizer is the account owner
         summary: $('#summary').val(),
         description: $('#description').val(),
@@ -1263,5 +1455,9 @@ hideSpinner = function(cssSelector) {
 
 reRenderCalendar = function() {
     showSpinner('body');
-    getListOfVEvents(dispDateObj);
+    if (dispListName != "schedule") {
+        getListOfVEvents();
+    } else {
+        getListOfVEventsScheduleInit();
+    }
 };
