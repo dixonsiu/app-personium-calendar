@@ -553,6 +553,7 @@ getListOfVEventsScheduleInit = function() {
     let access_token = Common.getToken();
     let listOfEvents = [];
 
+    $('#calendar').fullCalendar('removeEvents');
     Common.getListOfOData(queryUrl, access_token)
         .done(function(data) {
             if (data.d.results.length > 0) {
