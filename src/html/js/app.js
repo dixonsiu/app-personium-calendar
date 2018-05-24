@@ -562,7 +562,7 @@ getListOfVEventsScheduleInit = function() {
                 scheduleSkipNext = 2;
                 _.each(data.d.results, function(item) {
                     if (currentDate == "") {
-                        currentDate = item.start;
+                        currentDate = moment(item.start).startOf("day").format("YYYY-MM-DD");
                         if (currentDate < toDay) {
                             currentDate = moment().startOf("day").format("YYYY-MM-DD");
                         }
