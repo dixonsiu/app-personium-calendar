@@ -538,6 +538,7 @@ getListOfVEvents = function() {
         .always(function(){
             hideSpinner('body');
             $('#calendar').fullCalendar('renderEvents', listOfEvents, true);
+            $('#calendar').fullCalendar('refetchEvents');
         });
 };
 
