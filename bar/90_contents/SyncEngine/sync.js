@@ -957,7 +957,7 @@ function createResponse(tempCode, tempBody) {
 }
 
 function toUTC(str){
-  var newdate = new Date(str);
+  var newdate = moment.tz(str, "Asia/Tokyo");
   return newdate.valueOf();
 }
 
@@ -974,12 +974,14 @@ function parseGoogleEvents(items){
       if (items[i].start){
         eventDate = getDateTime(items[i].start);
         newdate = toUTC(eventDate);
+        result.start = items[i].start.date || items[i].start.dateTime;
         result.dtstart = "/Date(" + newdate + ")/";
       }
 
       if (items[i].end){
         eventDate = getDateTime(items[i].end);
         newdate = toUTC(eventDate);
+        result.end = items[i].end.date || items[i].end.dateTime;
         result.dtend = "/Date(" + newdate + ")/";
       }
 
@@ -1007,6 +1009,7 @@ function parseGoogleEvents(items){
         result.attendees = list;
       }
     }
+    result.raw = JSON.stringify(items[i]);
     results.push(result);
   }
 
@@ -1230,3 +1233,6 @@ function updateOffice365Events(items, personalEntityAccessor, accessTokenSet) {
         }
     }
 }
+
+var moment = require("moment").moment;
+moment = require("moment_timezone_with_data").mtz;

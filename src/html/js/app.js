@@ -248,10 +248,10 @@ displayAccountPanel = function() {
     getAccountList().done(function(data) {
         dispAccountList(data);
     }).fail(function(error) {
-        console.log(error.responseJSON.error);
+        console.log(error.responseJSON);
         Common.openWarningDialog(
             'warningDialog.title',
-            error.responseJSON.error,
+            error.responseJSON.error || error.responseJSON.message.value,
             function(){ $('#modal-common').modal('hide')}
         );
     }).always(function(){
@@ -421,10 +421,10 @@ renderFullCalendar = function() {
                     getAccountList().done(function(data) {
                         PCalendar.displayAddVEventDialog(data);
                     }).fail(function(error) {
-                        console.log(error.responseJSON.error);
+                        console.log(error.responseJSON);
                         Common.openWarningDialog(
                             'warningDialog.title',
-                            error.responseJSON.error,
+                            error.responseJSON.error || error.responseJSON.message.value,
                             function(){ $('#modal-common').modal('hide')}
                         );
                     });
@@ -443,7 +443,7 @@ renderFullCalendar = function() {
             listDay: { buttonText: 'list day' },
             listWeek: { buttonText: 'list week' }
         },
-        defaultView: 'listDay',
+        defaultView: 'listWeek',
         defaultDate: moment().format(),
         navLinks: true, // can click day/week names to navigate views
         editable: true,
@@ -457,23 +457,7 @@ renderFullCalendar = function() {
                     callback(events);
                 },
         eventClick: function(calEvent, jsEvent, view) {
-            $('.popover').popover('hide');
             return PCalendar.displayEditVEventDialog(calEvent, jsEvent, view);
-        },
-        eventRender: function(eventObj, $el) {
-            // https://www.w3schools.com/bootstrap/bootstrap_ref_js_popover.asp
-            $el.popover({
-                title: PCalendar.displayCalendarTitle(eventObj.title),
-                html: true,
-                content: eventObj.description ? '<div style="word-break: break-all">'+eventObj.description+'</div>':'',
-                trigger: 'hover',
-                delay: {
-                    show: 500,
-                    hide: 100
-                },
-                placement: 'auto',
-                container: 'body'
-            });
         }
     });
 };
@@ -521,9 +505,9 @@ PCalendar.renderEvent = function(item) {
     {
         id: item.__id,
         title: item.summary,
-        allDay: PCalendar.isAllDay(startMoment, endMoment),
-        start: startMoment.format(),
-        end: endMoment.format(),
+        //allDay: PCalendar.isAllDay(startMoment, endMoment),
+        start: item.start,
+        end: item.end,
         editable: true,
         color: PCalendar.getEventColor(item.srcType),
         description: item.description,
@@ -541,9 +525,9 @@ PCalendar.updateEvent = function(item) {
         eventObj,
     {
         title: item.summary,
-        allDay: PCalendar.isAllDay(startMoment, endMoment),
-        start: startMoment.format(),
-        end: endMoment.format(),
+            //allDay: PCalendar.isAllDay(startMoment, endMoment),
+            start: item.start,
+            end: item.end,
         color: PCalendar.getEventColor(item.srcType),
         description: item.description,
         vEvent: item
@@ -626,7 +610,7 @@ syncData = function() {
         .fail(function(jqXHR, textStatus, errorThrown){
             Common.stopAnimation();
 
-            console.log(jqXHR.responseJSON.error);
+            console.log(jqXHR.responseJSON);
             if ((jqXHR.status == '400') && (jqXHR.responseJSON.srcType)) {
                 let srcType = jqXHR.responseJSON.srcType;
                 let accountInfo;
@@ -647,7 +631,7 @@ syncData = function() {
             } else {
                 Common.openWarningDialog(
                     'warningDialog.title',
-                    jqXHR.responseJSON.error,
+                    jqXHR.responseJSON.error || jqXHR.responseJSON.message.value,
                     function(){ $('#modal-common').modal('hide')}
                 );
             }
@@ -751,10 +735,10 @@ registerAccount = function() {
                 syncFullData();
             })
             .fail(function(error){
-                console.log(error.responseJSON.error);
+                console.log(error.responseJSON);
                 Common.openWarningDialog(
                     'warningDialog.title',
-                    error.responseJSON.error,
+                    error.responseJSON.error || error.responseJSON.message.value,
                     function(){ $('#modal-common').modal('hide')}
                 );
                 $('#dialogOverlay').hide();
@@ -823,10 +807,10 @@ syncFullData = function() {
                 getAccountList().done(function(data) {
                     dispAccountList(data);
                 }).fail(function(error) {
-                    console.log(error.responseJSON.error);
+                    console.log(error.responseJSON);
                     Common.openWarningDialog(
                         'warningDialog.title',
-                        error.responseJSON.error,
+                        error.responseJSON.error || error.responseJSON.message.value,
                         function(){ $('#modal-common').modal('hide')}
                     );
                 }).always(function(){
@@ -837,10 +821,10 @@ syncFullData = function() {
             }
         })
         .fail(function(error){
-            console.log(error.responseJSON.error);
+            console.log(error.responseJSON);
             Common.openWarningDialog(
                 'warningDialog.title',
-                error.responseJSON.error,
+                error.responseJSON.error || error.responseJSON.message.value,
                 function(){ $('#modal-common').modal('hide')}
             );
             $('#dialogOverlay').hide();
@@ -940,19 +924,19 @@ modifyAccount = function() {
             getAccountList().done(function(data) {
                 dispAccountList(data);
             }).fail(function(error) {
-                console.log(error.responseJSON.error);
+                console.log(error.responseJSON);
                 Common.openWarningDialog(
                     'warningDialog.title',
-                    error.responseJSON.error,
+                    error.responseJSON.error || error.responseJSON.message.value,
                     function(){ $('#modal-common').modal('hide')}
                 );
             });
         })
         .fail(function(error){
-            console.log(error.responseJSON.error);
+            console.log(error.responseJSON);
             Common.openWarningDialog(
                 'warningDialog.title',
-                error.responseJSON.error,
+                error.responseJSON.error || error.responseJSON.message.value,
                 function(){ $('#modal-common').modal('hide')}
             );
             $('#dialogOverlay').hide();
@@ -976,19 +960,19 @@ deleteAccessInfo = function(aDom) {
             getAccountList().done(function(data) {
                 dispAccountList(data);
             }).fail(function(error) {
-                console.log(error.responseJSON.error);
+                console.log(error.responseJSON);
                 Common.openWarningDialog(
                     'warningDialog.title',
-                    error.responseJSON.error,
+                    error.responseJSON.error || error.responseJSON.message.value,
                     function(){ $('#modal-common').modal('hide')}
                 );
             });
         })
         .fail(function(error){
-            console.log(error.responseJSON.error);
+            console.log(error.responseJSON);
             Common.openWarningDialog(
                 'warningDialog.title',
-                error.responseJSON.error,
+                error.responseJSON.error || error.responseJSON.message.value,
                 function(){ $('#modal-common').modal('hide')}
             );
         });
@@ -1064,11 +1048,11 @@ PCalendar.addVEventBtnHandler = function(accountList) {
                 $('#modal-vevent').modal('hide');
             })
             .fail(function(error){
-                console.log(error.responseJSON.error);
+                console.log(error.responseJSON);
                 $('#modal-vevent').modal('hide');
                 Common.openWarningDialog(
                     'warningDialog.title',
-                    error.responseJSON.error,
+                    error.responseJSON.error || error.responseJSON.message.value,
                     function(){
                         $('#modal-common').modal('hide');
                         $('#modal-vevent').modal('show');
@@ -1110,10 +1094,12 @@ PCalendar.setEditVEventInfo = function(calEvent) {
         $('#modal-vevent #location').val(tempVEvent.location);
     }
     if (tempVEvent.dtstart) {
-        $('#modal-vevent #dtstart').val(moment(tempVEvent.dtstart).format());
+        //$('#modal-vevent #dtstart').val(moment(tempVEvent.dtstart).format());
+        $('#modal-vevent #dtstart').val(tempVEvent.start);
     }
     if (tempVEvent.dtend) {
-        $('#modal-vevent #dtend').val(moment(tempVEvent.dtend).format());
+        //$('#modal-vevent #dtend').val(moment(tempVEvent.dtend).format());
+        $('#modal-vevent #dtend').val(tempVEvent.end);
     }
     if (tempVEvent.description) {
         $('#modal-vevent #description').val(tempVEvent.description);
@@ -1135,11 +1121,11 @@ PCalendar.editVEventBtnHandler = function(calEvent) {
                 $('#modal-vevent').modal('hide');
             })
             .fail(function(error){
-                console.log(error.responseJSON.error);
+                console.log(error.responseJSON);
                 $('#modal-vevent').modal('hide');
                 Common.openWarningDialog(
                     'warningDialog.title',
-                    error.responseJSON.error,
+                    error.responseJSON.error || error.responseJSON.message.value,
                     function(){
                         $('#modal-common').modal('hide');
                         $('#modal-vevent').modal('show');
@@ -1165,11 +1151,11 @@ PCalendar.displayVEventDialog = function(calEvent) {
                 
             })
             .fail(function(error){
-                console.log(error.responseJSON.error);
+                console.log(error.responseJSON);
                 $('#modal-vevent').modal('hide');
                 Common.openWarningDialog(
                     'warningDialog.title',
-                    error.responseJSON.error,
+                    error.responseJSON.error || error.responseJSON.message.value,
                     function(){
                         $('#modal-common').modal('hide');
                         $('#modal-vevent').modal('show');
@@ -1203,8 +1189,10 @@ PCalendar.prepareVEvent = function(method, tempVEvent) {
     let tempData = {
         srcType: $('#modal-vevent [name=srcType]:checked').val(),
         srcAccountName: $('#srcAccountName').val(),
-        dtstart: $('#dtstart').val(),
-        dtend: $('#dtend').val(),
+        start: $('#dtstart').val(),
+        end: $('#dtend').val(),
+        dtstart: moment($('#dtstart').val()).toISOString(),
+        dtend: moment($('#dtend').val()).toISOString(),
         organizer: $('#organizer').val() || $('#srcAccountName').val(), // Usually the organizer is the account owner
         summary: $('#summary').val(),
         description: $('#description').val(),
