@@ -18,6 +18,13 @@
             }
         },
         "No_title": "(No title)",
+        "Today": "Today",
+        "All_day": "All-day",
+        "Schedule": "Schedule",
+        "Schedule_listDayFormat": "MMMM Do[(]ddd[)]",
+        "Month": "Month",
+        "Day": "Day",
+        "Month_titleFormat": "MMMM YYYY",
         "msg": {
             "info": {
             }

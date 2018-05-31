@@ -425,28 +425,28 @@ renderFullCalendar = function() {
         // customize the button names,
         // otherwise they'd all just say "list"
         buttonText: {
-            today: "今日"
+            today: i18next.t('glossary:Calendars.Today')
         },
-        allDayText: "終日",
+        allDayText: i18next.t('glossary:Calendars.All_day'),
         views: {
             schedule: { 
-                buttonText: 'スケジュール',
+                buttonText: i18next.t('glossary:Calendars.Schedule'),
                 type: 'list',
                 visibleRange: {
                     start: moment(moment().unix()).format("YYYY-MM-DD"),
                     end: moment().add(21, "year").startOf("year").format("YYYY-MM-DD")
                 }
-                ,titleFormat: "[" + moment().locale("ja").format("LL") + "]"
-                ,listDayFormat: "MM月DD日[(]ddd[)]"
+                ,titleFormat: "[" + moment().locale(i18next.language).format("LL") + "]"
+                ,listDayFormat: i18next.t('glossary:Calendars.Schedule_listDayFormat')
             },
-            agendaDay: { buttonText: '日' },
+            agendaDay: { buttonText: i18next.t('glossary:Calendars.Day') },
             month: { 
-                buttonText: '月',
-                titleFormat: "YYYY年MM月"
+                buttonText: i18next.t('glossary:Calendars.Month'),
+                titleFormat: i18next.t('glossary:Calendars.Month_titleFormat')
             }
         },
         height: "parent",
-        locale: 'ja',
+        locale: i18next.language,
         defaultView: 'schedule',
         defaultDate: moment().format(),
         timeFormat: 'H:mm' ,
@@ -463,9 +463,9 @@ renderFullCalendar = function() {
                         scheduleSkipPrev = 0;
                         scheduleSkipNext = 0;
                         $(".fc-scroller").on("scroll", function() {
-                            // 表示領域の下端の位置
+                            // The position of the lower end of the display area
                             var bottom = this.scrollTop + this.clientHeight;
-                            // 末尾の要素の上端の位置
+                            // The position of the top of the last element
                             var top = $(".fc-list-heading").filter(":last")[0].offsetTop - this.offsetTop;
                             if( top < bottom )
                             {
@@ -557,7 +557,7 @@ getListOfVEventsScheduleInit = function() {
     Common.getListOfOData(queryUrl, access_token)
         .done(function(data) {
             if (data.d.results.length > 0) {
-                // 未来30件を取得し、先頭の日付をスクロール初期値に設定する
+                // Acquire the future 30 events and set the first date as the scroll initial value
                 let currentDate = ""
                 scheduleSkipNext = 2;
                 _.each(data.d.results, function(item) {
@@ -581,7 +581,7 @@ getListOfVEventsScheduleInit = function() {
                 Common.getListOfOData(queryUrl, access_token)
                     .done(function(data) {
                         if (data.d.results.length > 0) {
-                            // 過去30件を取得し、スクロールはcurrentdate
+                            // Acquire the past 30 events, scroll is currentdate
                             scheduleSkipPrev = 1;
                             _.each(data.d.results, function(item) {
                                 // do something
@@ -596,7 +596,7 @@ getListOfVEventsScheduleInit = function() {
                         $(".fc-scroller")[0].scrollTop = scrollTop;
                     });
             } else {
-                // 過去60件を表示し、スクロールは一番下
+                // Display the past 60 events, scroll is the bottom
                 filterStr = $.param({
                     "$top": scheduleDispNum*2,
                     "$filter": "dtend le datetimeoffset'"+toDay+"'",
