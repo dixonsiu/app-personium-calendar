@@ -35,16 +35,15 @@ additionalCallback = function() {
         switch(srcType) {
         case 'Google':
         case 'Office365':
-            $('#pwCalendarAccount')
+            $('#idCalendarAccount, #pwCalendarAccount')
                 .val('')
                 .prop('disabled', true);
             break;
         default:
-            $('#pwCalendarAccount')
+            $('#idCalendarAccount, #pwCalendarAccount')
                 .val('')
                 .prop('disabled', false);
         }
-        $('#idCalendarAccount').val('');
     });
 };
 
@@ -929,11 +928,10 @@ registerAccount = function() {
     $('#dialogOverlay').show();
 
     let srcType = $('[name=srcType]:checked').val();
-    let srcAccountName = $('#idCalendarAccount').val();
     switch(srcType) {
     case 'Google':
     case 'Office365':
-        PCalendar.prepareOAuth2Account(srcType, srcAccountName);
+        PCalendar.prepareOAuth2Account(srcType);
         break;
     default:
         setAccessInfoAPI('POST')
@@ -954,8 +952,8 @@ registerAccount = function() {
     return false;
 };
 
-PCalendar.prepareOAuth2Account = function(srcType, srcAccountName) {
-    let pData = setAccountData(srcType, srcAccountName);
+PCalendar.prepareOAuth2Account = function(srcType) {
+    let pData = setAccountData(srcType);
     let paramStr = $.param({
         srcType: srcType,
         state: 'hoge',
@@ -964,11 +962,10 @@ PCalendar.prepareOAuth2Account = function(srcType, srcAccountName) {
     window.location.href = 'https://demo.personium.io/app-personium-calendar/__/Engine/reqOAuthToken?' + paramStr;
 };
 
-setAccountData = function(srcType, srcAccountName) {
+setAccountData = function(srcType) {
     let pData;
     pData = {
-        srcType: srcType,
-        srcAccountName: srcAccountName
+        srcType: srcType
     };
     // Save data for later use
     sessionStorage.setItem('pData', JSON.stringify(pData));

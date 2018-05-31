@@ -50,6 +50,7 @@ function(request){
         delete ret["ext_expires_in"];
         if (request.method === "GET") {
             ret.srcType = tokenParams.srcType;
+            ret.srcAccountName = getSrcAccountName(oAuthInfo, ret);
             return {
                 status : 200,
                 headers: {"Content-Type":"text/html"},
@@ -145,6 +146,27 @@ function toAccessToken(oAuthInfo, params) {
     return result;
 };
 
+function getSrcAccountName(oAuthInfo, srcAccInfo) {
+    /*
+     * https://sites.google.com/site/oauthgoog/Home/emaildisplayscope
+     */
+    var srcType = srcAccInfo.srcType;
+    var access_token = srcAccInfo.access_token;
+    var src = _.findWhere(oAuthInfo, {srcType: srcType});
+    if (_.isEmpty(src)) {
+        // raise exception
+    }
+    var endpoint = src.userinfoEmailEp;
+    var httpClient = new _p.extension.HttpClient();
+    var headers = {
+        'Authorization':'Bearer ' + access_token,
+        'Accept':'application/json'
+    };
+    var response = httpClient.get(endpoint, headers);
+    var httpCode = parseInt(response.status);
+    return JSON.parse(response.body).data.email;
+}
+
 function createResponse(tempCode, tempBody) {
     var isString = typeof tempBody == "string";
     var tempHeaders = isString ? {"Content-Type":"text/plain"} : {"Content-Type":"application/json"};
@@ -172,3 +194,5 @@ function createHTML(params, ret) {
     ].join("");
     return html;
 };
+
+var _ = require("underscore")._;
