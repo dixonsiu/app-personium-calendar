@@ -44,9 +44,11 @@ function(request){
     }
 
     return {
-        status : 200,
-        headers: {"Content-Type":"text/html"},
-        body : [create301HTML(redirectUrl)]
+        status : 303,
+        headers: {
+            "Location": redirectUrl
+        },
+        body : []
     };
 };
 
@@ -94,19 +96,6 @@ function getRedirectURL(oAuthInfo, params) {
     ].join("");
 
     return redirectUrl;
-};
-
-function create301HTML(url) {
-    var html = [
-        '<html>',
-            '<head>',
-                '<meta http-equiv="refresh" ',
-                'content="0;URL=\'' + url + '\'" />',
-            '</head>',
-            '<body></body>',
-        '</html>'
-    ].join("");
-    return html;
 };
 
 function createResponse(tempCode, tempBody) {
