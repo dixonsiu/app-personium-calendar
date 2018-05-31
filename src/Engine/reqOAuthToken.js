@@ -34,7 +34,6 @@ function(request){
     }
 
     var params = _p.util.queryParse(queryValue);
-    var pathDavName = "OAuth2/OAuth2Info.json";
 
     // Get App Token
     var appCellAdminInfo = {
@@ -44,7 +43,7 @@ function(request){
     };
     try {
         var mainBox = _p.as(appCellAdminInfo).cell().box();
-        var info = mainBox.getString("OAuth2/OAuth2Info.json");
+        var info = mainBox.getString("Engine/__src/OAuth2Info.json");
     } catch (e) {
         return createResponse(500, e);
     };
