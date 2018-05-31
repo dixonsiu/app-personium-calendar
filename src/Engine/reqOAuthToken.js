@@ -35,21 +35,7 @@ function(request){
 
     var params = _p.util.queryParse(queryValue);
 
-    // Get App Token
-    var appCellAdminInfo = {
-        "cellUrl": "https://demo.personium.io/app-personium-calendar/",
-        "userId": "***",
-        "password": "***"
-    };
-    try {
-        var mainBox = _p.as(appCellAdminInfo).cell().box();
-        var info = mainBox.getString("Engine/__src/OAuth2Info.json");
-    } catch (e) {
-        return createResponse(500, e);
-    };
-
-    var oAuthInfo = [];
-    oAuthInfo = JSON.parse(info);
+    var oAuthInfo = require("OAuth2Info").oauth2Info;
 
     var redirectUrl = getRedirectURL(oAuthInfo, params);
 
