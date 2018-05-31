@@ -1,0 +1,24 @@
+exports.oauth2Info = (function() {
+    var oauth2Info = [
+        {
+            "srcType": "Office365",
+            "client_id": "***",
+            "client_secret": "***",
+            "authorizationEp": "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
+            "tokenEp": "https://login.microsoftonline.com/common/oauth2/v2.0/token",
+            "resourceEp": "https://outlook.office.com/api",
+            "scope": "offline_access https://outlook.office.com/Calendars.ReadWrite"
+        },
+        {
+            "srcType": "Google",
+            "client_id": "***",
+            "client_secret": "***",
+            "authorizationEp": "https://accounts.google.com/o/oauth2/v2/auth",
+            "tokenEp": "https://www.googleapis.com/oauth2/v4/token",
+            "resouceEp": "https://www.googleapis.com/calendar/v3/calendars",
+            "scope": "https://www.googleapis.com/auth/calendar"
+        }
+    ];
+    
+    return oauth2Info;
+}());

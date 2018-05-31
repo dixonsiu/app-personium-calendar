@@ -34,23 +34,8 @@ function(request){
     }
 
     var params = _p.util.queryParse(queryValue);
-    var pathDavName = "OAuth2/OAuth2Info.json";
 
-    // Get App Token
-    var appCellAdminInfo = {
-        "cellUrl": "https://demo.personium.io/app-personium-calendar/",
-        "userId": "***",
-        "password": "***"
-    };
-    try {
-        var mainBox = _p.as(appCellAdminInfo).cell().box();
-        var info = mainBox.getString("OAuth2/OAuth2Info.json");
-    } catch (e) {
-        return createResponse(500, e);
-    };
-
-    var oAuthInfo = [];
-    oAuthInfo = JSON.parse(info);
+    var oAuthInfo = require("OAuth2Info").oauth2Info;
 
     var redirectUrl = getRedirectURL(oAuthInfo, params);
 
@@ -59,9 +44,11 @@ function(request){
     }
 
     return {
-        status : 200,
-        headers: {"Content-Type":"text/html"},
-        body : [create301HTML(redirectUrl)]
+        status : 303,
+        headers: {
+            "Location": redirectUrl
+        },
+        body : []
     };
 };
 
@@ -109,19 +96,6 @@ function getRedirectURL(oAuthInfo, params) {
     ].join("");
 
     return redirectUrl;
-};
-
-function create301HTML(url) {
-    var html = [
-        '<html>',
-            '<head>',
-                '<meta http-equiv="refresh" ',
-                'content="0;URL=\'' + url + '\'" />',
-            '</head>',
-            '<body></body>',
-        '</html>'
-    ].join("");
-    return html;
 };
 
 function createResponse(tempCode, tempBody) {

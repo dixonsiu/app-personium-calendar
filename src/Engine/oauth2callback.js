@@ -16,25 +16,8 @@ function(request){
     if (bodyAsString === "") {
         return createResponse(400, {"error":"required parameter not exist."});
     }
-
-    //var params = _p.util.queryParse(bodyAsString);
-    var pathDavName = "OAuth2/OAuth2Info.json";
-
-    // Get App Token
-    var appCellAdminInfo = {
-        "cellUrl": "https://demo.personium.io/app-personium-calendar/",
-        "userId": "***",
-        "password": "***"
-    };
-    try {
-        var mainBox = _p.as(appCellAdminInfo).cell().box();
-        var info = mainBox.getString("OAuth2/OAuth2Info.json");
-    } catch (e) {
-        return createResponse(500, e);
-    };
-
-    var oAuthInfo = [];
-    oAuthInfo = JSON.parse(info);
+    
+    var oAuthInfo = require("OAuth2Info").oauth2Info;
 
     var tokenParams = {};
     if(request.method === "PUT") {  // for get access_token again
