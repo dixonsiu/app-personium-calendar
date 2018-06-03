@@ -164,7 +164,14 @@ function getSrcAccountName(oAuthInfo, srcAccInfo) {
     };
     var response = httpClient.get(endpoint, headers);
     var httpCode = parseInt(response.status);
-    return JSON.parse(response.body).data.email;
+    var data = JSON.parse(response.body);
+    var email;
+    if (srcType === "Office365") {
+        email = data.EmailAddress;
+    } else {
+        email = data.data.email;
+    }
+    return email;
 }
 
 function createResponse(tempCode, tempBody) {
