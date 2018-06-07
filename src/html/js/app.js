@@ -1,5 +1,14 @@
 const APP_URL = "https://demo.personium.io/app-personium-calendar/";
 const APP_BOX_NAME = 'app-personium-calendar';
+const DAY_WEEK = {
+    SUN : 0,
+    MON : 1,
+    TUE: 2,
+    WED: 3,
+    THU: 4,
+    FRI: 5,
+    SAT: 6
+}
 PCalendar = {};
 sDateObj = moment().startOf('month');
 eDateObj = moment().endOf('month');
@@ -460,17 +469,27 @@ renderFullCalendar = function() {
         viewRender: function(currentView) {
                     dispListName = currentView.name;
                     if (currentView.name != "schedule") {
+                        $(".fc-view-container").show();
+                        $("#schedule").hide();
                         sDateObj = moment(currentView.start.valueOf());
                         eDateObj = moment(currentView.end.valueOf());
                         getListOfVEvents();
                     } else {
-                        scheduleSkipPrev = 0;
-                        scheduleSkipNext = 0;
-                        $(".fc-scroller").on("scroll", function() {
-                            // The position of the lower end of the display area
+                        $(".fc-view-container").hide();
+                        $("#schedule").empty();
+                        $("#schedule").show();
+
+                        sDateObj = moment().add(-1, "month").startOf("month");
+                        eDateObj = moment().add(1, "month").endOf("month");
+                        dispScheduleHeaders(moment(sDateObj), moment(eDateObj));
+                        getListOfVEventsSchedule(moment(sDateObj), moment(eDateObj));
+
+/*
+                        $("#schedule").on("scroll", function() {
+                            // 表示領域の下端の位置
                             var bottom = this.scrollTop + this.clientHeight;
-                            // The position of the top of the last element
-                            var top = $(".fc-list-heading").filter(":last")[0].offsetTop - this.offsetTop;
+                            // 末尾の要素の上端の位置
+                            var top = $("#schedule").filter(":last")[0].offsetTop - this.offsetTop;
                             if( top < bottom )
                             {
                                 getListOfVEventsSchedule(true);
@@ -485,6 +504,7 @@ renderFullCalendar = function() {
                         $(".fc-prev-button").addClass('fc-state-disabled');
                         $(".fc-next-button").addClass('fc-state-disabled');
                         getListOfVEventsScheduleInit();
+*/
                     }
                 },
         eventClick: function(calEvent, jsEvent, view) {
@@ -545,6 +565,38 @@ getListOfVEvents = function() {
         });
 };
 
+dispScheduleHeaders = function(startObj, endObj, prevFlag) {
+    var diff = endObj.diff(startObj);
+    var duration = moment.duration(diff);
+    var dayCnt = Math.floor(duration.asDays());
+    for (var i = 0; i <= dayCnt; i++) {
+        let html = "";
+        if (startObj.date() == 1) {
+            // 月ヘッダーを表示
+            //html = "<div style='height: 50px;margin-bottom: 10px;background-image: url(\"https://demo.personium.io/ksakamoto/__/IMG_0066.jpg\")'>" + startObj.format("YYYY年MM月") + "</div>";
+            html = "<div style='height: 200px;margin-bottom: 30px;background-image: url(\"https://demo.personium.io/ksakamoto/__/IMG_0066.jpg\")'><font size='5'>" + startObj.format("YYYY年MM月") + "</font></div>";
+            $("#schedule").append(html);
+        }
+        if (startObj.day() == DAY_WEEK.SUN) {
+            // 週ヘッダーを表示
+            let stDay = startObj.format("M月D日");
+            let edDayMoment = moment([startObj.year(), startObj.month(), startObj.date()]).add(6, "day");
+            let edFormat = "D日";
+            if (startObj.month() != edDayMoment.month()) {
+                edFormat = "M月" + edFormat;
+            }
+            let edDay = edDayMoment.format(edFormat);
+            html = "<div style='margin-bottom: 15px;margin-top:15px;margin-left: 50px;'><font size='5'>" + stDay + "～" + edDay + "</font></div>";
+            //html = "<div>" + stDay + "～" + edDay + "</div>";
+            $("#schedule").append(html);
+        }
+        var day = startObj.format("YYYY-MM-DD");
+        html = "<div style='margin-bottom: 10px;' data-id='" + day + "'></div>";
+        //html = "<div data-id='" + day + "'></div>";
+        $("#schedule").append(html);
+        startObj.add(1, "day");
+    }
+}
 getListOfVEventsScheduleInit = function() {
     let toDay = moment().startOf("day").toISOString();
     let urlOData = Common.getBoxUrl() + 'OData/vevent';
@@ -625,27 +677,16 @@ getListOfVEventsScheduleInit = function() {
             }
         });
 }
-getListOfVEventsSchedule = function(upperFlg, searchDate) {
-    let toDay = moment().startOf("day").toISOString();
+getListOfVEventsSchedule = function(startObj, endObj) {
+    let fromDay = startObj.toISOString();
+    let toDay = endObj.toISOString();
     let urlOData = Common.getBoxUrl() + 'OData/vevent';
-    let filterStr;
-    if (upperFlg) {
-        filterStr = $.param({
-            "$top": scheduleDispNum,
-            "$skip": scheduleDispNum*scheduleSkipNext,
-            "$filter": "dtend ge datetimeoffset'"+toDay+"'",
-            //"$filter": "dtstart ge datetimeoffset'2017-01-01T00:00:00+09:00'",
-            "$orderby": "dtstart asc"
-        });
-    } else {
-        filterStr = $.param({
-            "$top": scheduleDispNum,
-            "$skip": scheduleDispNum*scheduleSkipPrev,
-            "$filter": "dtend le datetimeoffset'"+toDay+"'",
-            //"$filter": "dtstart ge datetimeoffset'2017-01-01T00:00:00+09:00'",
-            "$orderby": "dtend desc"
-        });
-    }
+    let filterStr = $.param({
+        "$top": "1000",
+        "$filter": "dtend ge datetimeoffset'"+fromDay+"' and dtstart le datetimeoffset'"+toDay+"'",
+        //"$filter": "dtstart ge datetimeoffset'2017-01-01T00:00:00+09:00'",
+        "$orderby": "dtstart asc, dtend asc"
+    });
     
     let queryUrl = urlOData + '?' + filterStr;
     let access_token = Common.getToken();
@@ -656,6 +697,9 @@ getListOfVEventsSchedule = function(upperFlg, searchDate) {
         .done(function(data) {
             let eachFlg = false;
             _.each(data.d.results, function(item) {
+                scheduleRenderEvent(item);
+
+/*
                 // do something
                 let events = $('#calendar').fullCalendar('clientEvents', item.__id)[0];
                 if (events) {
@@ -674,17 +718,117 @@ getListOfVEventsSchedule = function(upperFlg, searchDate) {
                         eachFlg = true;
                     }
                 }
+*/
             });
         })
         .always(function(){
             hideSpinner('body');
+            $('[data-id="'+moment().format("YYYY-MM-DD")+'"]')[0].scrollIntoView(true)
+/*
             $('#calendar').fullCalendar('renderEvents', listOfEvents, true);
             if (searchDate) {
-                let scrollTop = $('.fc-list-heading[data-date="'+searchDate+'"]')[0].offsetTop;;
+                let scrollTop = $('.fc-list-heading[data-date="'+searchDate+'"]')[0].offsetTop;
                 $(".fc-scroller")[0].scrollTop = scrollTop;
             }
+*/
         });
 };
+scheduleRenderEvent = function(item) {
+    let startObj = moment(item.dtstart);
+    let endObj = moment(item.dtend);
+    var diff = endObj.diff(startObj);
+    var duration = moment.duration(diff);
+    var dayCnt = Math.floor(duration.asDays());
+    let startDay = startObj.format("YYYY-MM-DD");
+    let endDay = endObj.format("YYYY-MM-DD");
+
+    // allDayイベントかどうか(allDayが機能するまでの暫定処理)
+    let allEdDay = moment(endObj).add(-1, "second").format("YYYY-MM-DD");
+　　　　if (startDay == allEdDay) {
+        item.allDay = true;
+    }
+
+    if (startDay == endDay || item.allDay) {
+        // 当日イベント
+        let day = startObj.format("YYYY-MM-DD");
+        if ($("#"+day).length == 0) {
+            let table = [
+                "<table>",
+                    "<tr>",
+                        "<td rowspan='2' width='50px' valign='top'>",
+                            "<font size='5'>",
+                                startObj.format("D"),
+                            "</font>日",
+                        "</td>",
+                    "</tr>",
+                    "<tr>",
+                        "<td id='"+day+"' style='padding-top: 10px;'>",
+                        "</td>",
+                    "</tr>",
+                "</table>"
+            ].join("");
+            $("[data-id='"+day+"']").append(table);
+        }
+
+        let startTime = startObj.format("H:mm");
+        let endTime = endObj.format("H:mm");
+        let summary = PCalendar.displayCalendarTitle(item.summary);
+        let dateRange = startTime + "～" + endTime;
+        if (item.allDay) {
+            dateRange = "終日";
+        }
+        let html = "<div><font size='3'>" + dateRange + ":" + summary + "</font></div>";
+        $("#"+day).append(html);
+    } else {
+        // 連日イベント
+        for (var i = 0; i <= dayCnt; i++) {
+            var day = startObj.format("YYYY-MM-DD");
+            if ($("#"+day).length == 0) {
+                let table = [
+                    "<table>",
+                        "<tr>",
+                            "<td rowspan='2' width='50px' valign='top'>",
+                                "<font size='5'>",
+                                    startObj.format("D"),
+                                "</font>日",
+                            "</td>",
+                        "</tr>",
+                        "<tr>",
+                            "<td id='"+day+"' style='padding-top: 10px;'>",
+                            "</td>",
+                        "</tr>",
+                    "</table>"
+                ].join("");
+                $("[data-id='"+day+"']").append(table);
+            }
+
+            if ($("[data-id='" + day + "']").length > 0) {
+                if (startDay == day) {
+                    // 開始日
+                    let startTime = startObj.format("H:mm");
+                    let summary = PCalendar.displayCalendarTitle(item.summary);
+                    let dateRange = startTime + "～0:00";
+                    let html = "<div><font size='3'>" + dateRange + ":" + summary + "</font></div>";
+                    $("#"+day).append(html);
+                } else if (endDay == day) {
+                    // 終了日
+                    let endTime = endObj.format("H:mm");
+                    let summary = PCalendar.displayCalendarTitle(item.summary);
+                    let dateRange = "0:00～" + endTime;
+                    let html = "<div><font size='3'>" + dateRange + ":" + summary + "</font></div>";
+                    $("#"+day).append(html);
+                } else {
+                    // 終日
+                    let summary = PCalendar.displayCalendarTitle(item.summary);
+                    let dateRange = "終日";
+                    let html = "<div><font size='3'>" + dateRange + ":" + summary + "</font></div>";
+                    $("#"+day).append(html);
+                }
+            }
+            startObj.add(1, "day");
+        }
+    }
+}
 
 /*
  * Create event (https://fullcalendar.io/docs/event-object)
