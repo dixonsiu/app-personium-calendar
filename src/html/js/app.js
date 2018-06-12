@@ -1443,11 +1443,11 @@ PCalendar.setEditVEventInfo = function(calEvent) {
     }
     if (tempVEvent.dtstart) {
         //$('#modal-vevent #dtstart').val(moment(tempVEvent.dtstart).format());
-        $('#modal-vevent #dtstart').val(tempVEvent.start);
+        $('#modal-vevent #dtstart').val(calEvent.start.format());
     }
     if (tempVEvent.dtend) {
         //$('#modal-vevent #dtend').val(moment(tempVEvent.dtend).format());
-        $('#modal-vevent #dtend').val(tempVEvent.end);
+        $('#modal-vevent #dtend').val(calEvent.end.format());
     }
     if (tempVEvent.description) {
         $('#modal-vevent #description').val(tempVEvent.description);
