@@ -460,6 +460,7 @@ renderFullCalendar = function() {
         },
         height: "parent",
         locale: i18next.language,
+        timezone: 'Asia/Tokyo',
         defaultView: 'schedule',
         defaultDate: moment().format(),
         timeFormat: 'H:mm' ,
@@ -509,13 +510,23 @@ renderFullCalendar = function() {
                 },
         eventClick: function(calEvent, jsEvent, view) {
             return PCalendar.displayEditVEventDialog(calEvent, jsEvent, view);
+        },
+        dayClick: function(date, jsEvent, view) {
+            let dateWTime = moment(date.format() + "T" + moment().format('HH:mm:00'));
+            displayAddEventDialog(dateWTime);
         }
     });
 };
 
+// Use today's date
 addButtonClick = function() {
+    displayAddEventDialog(moment());
+};
+
+// Use date clicked by the user
+displayAddEventDialog = function(date) {
     getAccountList().done(function(data) {
-        PCalendar.displayAddVEventDialog(data);
+        PCalendar.displayAddVEventDialog(data, date);
     }).fail(function(error) {
         console.log(error.responseJSON);
         Common.openWarningDialog(
@@ -524,11 +535,11 @@ addButtonClick = function() {
             function(){ $('#modal-common').modal('hide')}
         );
     });
-}
+};
 
 PCalendar.displayCalendarTitle = function(str) {
     return str || i18next.t('glossary:Calendars.No_title');
-}
+};
 
 getListOfVEvents = function() {
     let sDate = sDateObj.toISOString();
@@ -543,6 +554,8 @@ getListOfVEvents = function() {
     let queryUrl = urlOData + '?' + filterStr;
     let access_token = Common.getToken();
     let listOfEvents = [];
+
+    // Is there a case that we don't want to remove all events?
     $('#calendar').fullCalendar('removeEvents');
     
     Common.getListOfOData(queryUrl, access_token)
@@ -553,8 +566,7 @@ getListOfVEvents = function() {
                 if (events) {
                     PCalendar.updateEvent(item);
                 } else {
-                    //PCalendar.renderEvent(item);
-                    listOfEvents.push(PCalendar.prepareEvent(item));
+                    listOfEvents.push(PCalendar.convertVEvent2FCalEvent(item));
                 }
             });
         })
@@ -572,13 +584,13 @@ dispScheduleHeaders = function(startObj, endObj, prevFlag) {
     for (var i = 0; i <= dayCnt; i++) {
         let html = "";
         if (startObj.date() == 1) {
-            // 月ヘッダーを表示
+            // display month header
             //html = "<div style='height: 50px;margin-bottom: 10px;background-image: url(\"https://demo.personium.io/ksakamoto/__/IMG_0066.jpg\")'>" + startObj.format("YYYY年MM月") + "</div>";
             html = "<div style='height: 200px;margin-bottom: 30px;background-image: url(\"https://demo.personium.io/ksakamoto/__/IMG_0066.jpg\")'><font size='5'>" + startObj.format("YYYY年MM月") + "</font></div>";
             $("#schedule").append(html);
         }
         if (startObj.day() == DAY_WEEK.SUN) {
-            // 週ヘッダーを表示
+            // display week header
             let stDay = startObj.format("M月D日");
             let edDayMoment = moment([startObj.year(), startObj.month(), startObj.date()]).add(6, "day");
             let edFormat = "D日";
@@ -586,8 +598,8 @@ dispScheduleHeaders = function(startObj, endObj, prevFlag) {
                 edFormat = "M月" + edFormat;
             }
             let edDay = edDayMoment.format(edFormat);
-            html = "<div style='margin-bottom: 15px;margin-top:15px;margin-left: 50px;'><font size='5'>" + stDay + "～" + edDay + "</font></div>";
-            //html = "<div>" + stDay + "～" + edDay + "</div>";
+            html = "<div style='margin-bottom: 15px;margin-top:15px;margin-left: 50px;'><font size='5'>" + stDay + "~" + edDay + "</font></div>";
+            //html = "<div>" + stDay + "~" + edDay + "</div>";
             $("#schedule").append(html);
         }
         var day = startObj.format("YYYY-MM-DD");
@@ -742,14 +754,14 @@ scheduleRenderEvent = function(item) {
     let startDay = startObj.format("YYYY-MM-DD");
     let endDay = endObj.format("YYYY-MM-DD");
 
-    // allDayイベントかどうか(allDayが機能するまでの暫定処理)
+    // hotfix for all day event determination
     let allEdDay = moment(endObj).add(-1, "second").format("YYYY-MM-DD");
-　　　　if (startDay == allEdDay) {
+    if (startDay == allEdDay) {
         item.allDay = true;
     }
 
     if (startDay == endDay || item.allDay) {
-        // 当日イベント
+        // same date
         let day = startObj.format("YYYY-MM-DD");
         if ($("#"+day).length == 0) {
             let table = [
@@ -758,7 +770,7 @@ scheduleRenderEvent = function(item) {
                         "<td rowspan='2' width='50px' valign='top'>",
                             "<font size='5'>",
                                 startObj.format("D"),
-                            "</font>日",
+                            "</font>day",
                         "</td>",
                     "</tr>",
                     "<tr>",
@@ -773,14 +785,14 @@ scheduleRenderEvent = function(item) {
         let startTime = startObj.format("H:mm");
         let endTime = endObj.format("H:mm");
         let summary = PCalendar.displayCalendarTitle(item.summary);
-        let dateRange = startTime + "～" + endTime;
+        let dateRange = startTime + "~" + endTime;
         if (item.allDay) {
-            dateRange = "終日";
+            dateRange = i18next.t('glossary:Calendars.All_day');
         }
         let html = "<div><font size='3'>" + dateRange + ":" + summary + "</font></div>";
         $("#"+day).append(html);
     } else {
-        // 連日イベント
+        // Multiple days event
         for (var i = 0; i <= dayCnt; i++) {
             var day = startObj.format("YYYY-MM-DD");
             if ($("#"+day).length == 0) {
@@ -790,7 +802,7 @@ scheduleRenderEvent = function(item) {
                             "<td rowspan='2' width='50px' valign='top'>",
                                 "<font size='5'>",
                                     startObj.format("D"),
-                                "</font>日",
+                                "</font>day",
                             "</td>",
                         "</tr>",
                         "<tr>",
@@ -804,23 +816,23 @@ scheduleRenderEvent = function(item) {
 
             if ($("[data-id='" + day + "']").length > 0) {
                 if (startDay == day) {
-                    // 開始日
+                    // Start date
                     let startTime = startObj.format("H:mm");
                     let summary = PCalendar.displayCalendarTitle(item.summary);
-                    let dateRange = startTime + "～0:00";
+                    let dateRange = startTime + "~0:00";
                     let html = "<div><font size='3'>" + dateRange + ":" + summary + "</font></div>";
                     $("#"+day).append(html);
                 } else if (endDay == day) {
-                    // 終了日
+                    // End date
                     let endTime = endObj.format("H:mm");
                     let summary = PCalendar.displayCalendarTitle(item.summary);
-                    let dateRange = "0:00～" + endTime;
+                    let dateRange = "0:00~" + endTime;
                     let html = "<div><font size='3'>" + dateRange + ":" + summary + "</font></div>";
                     $("#"+day).append(html);
                 } else {
-                    // 終日
+                    // All day
                     let summary = PCalendar.displayCalendarTitle(item.summary);
-                    let dateRange = "終日";
+                    let dateRange = i18next.t('glossary:Calendars.All_day');
                     let html = "<div><font size='3'>" + dateRange + ":" + summary + "</font></div>";
                     $("#"+day).append(html);
                 }
@@ -834,68 +846,51 @@ scheduleRenderEvent = function(item) {
  * Create event (https://fullcalendar.io/docs/event-object)
  */
 PCalendar.renderEvent = function(item) {
-    let startMoment = moment(item.dtstart);
-    let endMoment = moment(item.dtend);
-    let event =
-    {
-        id: item.__id,
-        title: item.summary,
-        //allDay: PCalendar.isAllDay(startMoment, endMoment),
-        start: item.start,
-        end: item.end,
-        editable: true,
-        color: PCalendar.getEventColor(item.srcType),
-        description: item.description,
-        vEvent: item
-    };
+    let event = PCalendar.convertVEvent2FCalEvent(item);
     $('#calendar').fullCalendar('renderEvent', event, true);
 };
 
 PCalendar.prepareEvent = function(item) {
-    let startMoment = moment(item.dtstart);
-    let endMoment = moment(item.dtend);
-    let event =
-    {
-        id: item.__id,
-        title: item.summary,
-        //allDay: PCalendar.isAllDay(startMoment, endMoment),
-        start: item.start,
-        end: item.end,
-        editable: true,
-        color: PCalendar.getEventColor(item.srcType),
-        description: item.description,
-        vEvent: item
-    };
-    return event;
+    return PCalendar.convertVEvent2FCalEvent(item);
 };
 
 PCalendar.updateEvent = function(item) {
-    let startMoment = moment(item.dtstart);
-    let endMoment = moment(item.dtend);
-    let eventObj = $('#calendar').fullCalendar('clientEvents', item.__id)[0]; // currently only the first event
-    $.extend(
-        true,
-        eventObj,
-    {
-        title: item.summary,
-            //allDay: PCalendar.isAllDay(startMoment, endMoment),
-            start: item.start,
-            end: item.end,
-        color: PCalendar.getEventColor(item.srcType),
-        description: item.description,
-        vEvent: item
-        }
-    );
+    let currentFCalEvent = $('#calendar').fullCalendar('clientEvents', item.__id)[0]; // currently only the first event
+    let updatedFCalEvent = PCalendar.convertVEvent2FCalEvent(item);
+    $.extend(true, currentFCalEvent, updatedFCalEvent);
     // https://fullcalendar.io/docs/updateEvent
-    $('#calendar').fullCalendar('updateEvent', eventObj);
+    $('#calendar').fullCalendar('updateEvent', currentFCalEvent);
 };
 
-PCalendar.isAllDay = function(start, end) {
-    if ("00:00:00" != start.format("HH:mm:ss")) {
-        return false;
+PCalendar.convertVEvent2FCalEvent = function(item) {
+    let startMoment = moment(item.dtstart);
+    let endMoment = moment(item.dtend);
+    let event = {};
+    // https://fullcalendar.io/docs/event-object
+    let stdFCalFields = {
+        id: item.__id,
+        title: item.summary,
+        start: item.start || startMoment,
+        end: item.end || endMoment,
+        editable: true,
+        color: PCalendar.getEventColor(item.srcType)
+    };
+    let extraFields =
+    {
+        description: item.description,
+        vEvent: item
+    };
+    $.extend(true, event, stdFCalFields, extraFields);
+    
+    if (item.srcType == "Office365") {
+        event.start = startMoment;
+        event.end = endMoment;
     }
-
-    return (end.diff(start, 'days') == 1);
+    if (item.allDay) {
+        event.allDay = true;
+    }
+    
+    return event;
 };
 
 PCalendar.getEventColor = function(srcType) {
@@ -1345,7 +1340,9 @@ deleteAccessInfoAPI = function(accountInfo) {
  * accountList
  * Example:  [{"srcType":"Google","srcAccountName":"john.doe@gmail.com"}]
  */
-PCalendar.displayAddVEventDialog = function(accountList) {
+PCalendar.displayAddVEventDialog = function(accountList, date) {
+    let startDatetime = date.second(0).format();
+    let endDatetime = date.add(1, 'hours').format();
     $("body #modalDialogContainer").load(
         "./templates/_vevent_template.html",
         function(responseText, textStatus, jqXHR) {
@@ -1353,8 +1350,8 @@ PCalendar.displayAddVEventDialog = function(accountList) {
 
             PCalendar.setAccountInfo(accountList[0]);
 
-            $('#dtstart').val(moment().format());
-            $('#dtend').val(moment().add(1, 'hours').format());
+            $('#dtstart').val(startDatetime);
+            $('#dtend').val(endDatetime);
 
             PCalendar.addVEventBtnHandler(accountList);
 

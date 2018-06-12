@@ -181,6 +181,14 @@
         </propstat>
     </response>
     <response>
+        <href>dcbox:/SyncEngine/__src/personium_cal.js</href>
+        <propstat>
+            <prop>
+                <getcontenttype>text/javascript</getcontenttype>
+            </prop>
+        </propstat>
+    </response>
+    <response>
         <href>dcbox:/SyncEngine/__src/sync.js</href>
         <propstat>
             <prop>

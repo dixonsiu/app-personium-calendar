@@ -956,11 +956,6 @@ function createResponse(tempCode, tempBody) {
     };
 }
 
-function toUTC(str){
-  var newdate = moment.tz(str, "Asia/Tokyo");
-  return newdate.valueOf();
-}
-
 function parseGoogleEvents(items){
   var results = [];
   for(var i = 0; i < items.length; i++){
@@ -972,22 +967,20 @@ function parseGoogleEvents(items){
       var eventDate = null;
       var newdate = null;
       if (items[i].start){
-        eventDate = getDateTime(items[i].start);
-        newdate = toUTC(eventDate);
-        result.start = items[i].start.date || items[i].start.dateTime;
-        result.dtstart = "/Date(" + newdate + ")/";
+        result.start = items[i].start.date;
+        newdate = items[i].start.date||items[i].start.dateTime;
+        result.dtstart = pCal.toPersoniumDatetimeFormat(newdate);
       }
 
       if (items[i].end){
-        eventDate = getDateTime(items[i].end);
-        newdate = toUTC(eventDate);
-        result.end = items[i].end.date || items[i].end.dateTime;
-        result.dtend = "/Date(" + newdate + ")/";
+        result.end = items[i].end.date;
+        newdate = items[i].end.date||items[i].end.dateTime;
+        result.dtend = pCal.toPersoniumDatetimeFormat(newdate);
       }
 
       if (items[i].updated){
-        newdate = Date.parse(new Date(items[i].updated));
-        result.srcUpdated = "/Date(" + newdate + ")/";
+        newdate = items[i].updated;
+        result.srcUpdated = pCal.toPersoniumDatetimeFormat(newdate);
       }
     }catch(e){
       continue;
@@ -1074,6 +1067,10 @@ function parseOffice365Events(items, check) {
 
     for(var i = 0; i < items.length; i++) {
         var result = {};
+        
+        result.raw = JSON.stringify(items[i]);
+        
+        result.allDay = items[i].IsAllDay;
 
         if (items[i].SeriesMasterId) {
             //for Recurrence child
@@ -1124,10 +1121,10 @@ function parseOffice365Events(items, check) {
                 }
             }
         } else {
-            var uxtDtstart = Date.parse(new Date(items[i]['Start'].DateTime.slice(0, 23)+"Z"));
-            result.dtstart = "/Date(" + uxtDtstart + ")/";
-            var uxtDtend = Date.parse(new Date(items[i]['End'].DateTime.slice(0, 23)+"Z"));
-            result.dtend = "/Date(" + uxtDtend + ")/";
+            result.start = items[i]['Start'].DateTime;
+            result.dtstart = pCal.toPersoniumDatetimeFormatTZ(items[i]['Start'].DateTime, items[i]['Start'].TimeZone);
+            result.end = items[i]['End'].DateTime;
+            result.dtend = pCal.toPersoniumDatetimeFormatTZ(items[i]['End'].DateTime, items[i]['End'].TimeZone);
             var uxtUpdated = Date.parse(new Date(items[i].LastModifiedDateTime.slice(0, 23)+"Z"));
             result.srcUpdated = "/Date(" + uxtUpdated + ")/";
 
@@ -1234,5 +1231,4 @@ function updateOffice365Events(items, personalEntityAccessor, accessTokenSet) {
     }
 }
 
-var moment = require("moment").moment;
-moment = require("moment_timezone_with_data").mtz;
+var pCal = require("personium_cal").personiumCal;
