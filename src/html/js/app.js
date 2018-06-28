@@ -461,7 +461,7 @@ renderFullCalendar = function() {
         height: "parent",
         locale: i18next.language,
         timezone: 'Asia/Tokyo',
-        defaultView: 'schedule',
+        defaultView: 'month',//'schedule',
         defaultDate: moment().format(),
         timeFormat: 'H:mm' ,
         navLinks: true, // can click day/week names to navigate views
@@ -484,28 +484,6 @@ renderFullCalendar = function() {
                         eDateObj = moment().add(1, "month").endOf("month");
                         dispScheduleHeaders(moment(sDateObj), moment(eDateObj));
                         getListOfVEventsSchedule(moment(sDateObj), moment(eDateObj));
-
-/*
-                        $("#schedule").on("scroll", function() {
-                            // 表示領域の下端の位置
-                            var bottom = this.scrollTop + this.clientHeight;
-                            // 末尾の要素の上端の位置
-                            var top = $("#schedule").filter(":last")[0].offsetTop - this.offsetTop;
-                            if( top < bottom )
-                            {
-                                getListOfVEventsSchedule(true);
-                                let eventArray = $('#calendar').fullCalendar('clientEvents');
-                            } else if (this.scrollTop == 0) {
-                                let firstDate = $(".fc-list-heading").filter(":first").data("date");
-                                getListOfVEventsSchedule(false, firstDate);
-                            }
-                        })
-
-                        $('#calendar').fullCalendar('removeEvents');
-                        $(".fc-prev-button").addClass('fc-state-disabled');
-                        $(".fc-next-button").addClass('fc-state-disabled');
-                        getListOfVEventsScheduleInit();
-*/
                     }
                 },
         eventClick: function(calEvent, jsEvent, view) {
@@ -609,86 +587,6 @@ dispScheduleHeaders = function(startObj, endObj, prevFlag) {
         startObj.add(1, "day");
     }
 }
-getListOfVEventsScheduleInit = function() {
-    let toDay = moment().startOf("day").toISOString();
-    let urlOData = Common.getBoxUrl() + 'OData/vevent';
-    let filterStr = $.param({
-        "$top": scheduleDispNum*2,
-        "$filter": "dtend gt datetimeoffset'"+toDay+"'",
-        "$orderby": "dtstart asc"
-    });
-    let queryUrl = urlOData + '?' + filterStr;
-    let access_token = Common.getToken();
-    let listOfEvents = [];
-
-    $('#calendar').fullCalendar('removeEvents');
-    Common.getListOfOData(queryUrl, access_token)
-        .done(function(data) {
-            if (data.d.results.length > 0) {
-                // Acquire the future 30 events and set the first date as the scroll initial value
-                let currentDate = ""
-                scheduleSkipNext = 2;
-                _.each(data.d.results, function(item) {
-                    if (currentDate == "") {
-                        currentDate = moment(item.start).startOf("day").format("YYYY-MM-DD");
-                        if (currentDate < toDay) {
-                            currentDate = moment().startOf("day").format("YYYY-MM-DD");
-                        }
-                    }
-
-                    // do something
-                    listOfEvents.push(PCalendar.prepareEvent(item));
-                });
-                filterStr = $.param({
-                    "$top": scheduleDispNum,
-                    "$filter": "dtend le datetimeoffset'"+toDay+"'",
-                    "$orderby": "dtend desc"
-                });
-                queryUrl = urlOData + '?' + filterStr;
-                access_token = Common.getToken();
-                Common.getListOfOData(queryUrl, access_token)
-                    .done(function(data) {
-                        if (data.d.results.length > 0) {
-                            // Acquire the past 30 events, scroll is currentdate
-                            scheduleSkipPrev = 1;
-                            _.each(data.d.results, function(item) {
-                                // do something
-                                listOfEvents.push(PCalendar.prepareEvent(item));
-                            });
-                        }
-                    }).always(function(){
-                        hideSpinner('body');
-                        $('#calendar').fullCalendar('renderEvents', listOfEvents, true);
-
-                        let scrollTop = $('.fc-list-heading[data-date="'+currentDate+'"]')[0].offsetTop;
-                        $(".fc-scroller")[0].scrollTop = scrollTop;
-                    });
-            } else {
-                // Display the past 60 events, scroll is the bottom
-                filterStr = $.param({
-                    "$top": scheduleDispNum*2,
-                    "$filter": "dtend le datetimeoffset'"+toDay+"'",
-                    "$orderby": "dtend desc"
-                });
-                queryUrl = urlOData + '?' + filterStr;
-                access_token = Common.getToken();
-                listOfEvents = [];
-                Common.getListOfOData(queryUrl, access_token)
-                    .done(function(data) {
-                        scheduleSkipPrev = 2;
-                        _.each(data.d.results, function(item) {
-                            // do something
-                            listOfEvents.push(PCalendar.prepareEvent(item));
-                        });
-                    }).always(function(){
-                        hideSpinner('body');
-                        $('#calendar').fullCalendar('renderEvents', listOfEvents, true);
-
-                        $(".fc-scroller")[0].scrollTop = $(".fc-scroller")[0].scrollHeight;
-                    });
-            }
-        });
-}
 getListOfVEventsSchedule = function(startObj, endObj) {
     let fromDay = startObj.toISOString();
     let toDay = endObj.toISOString();
@@ -746,53 +644,20 @@ getListOfVEventsSchedule = function(startObj, endObj) {
         });
 };
 scheduleRenderEvent = function(item) {
-    let startObj = moment(item.dtstart);
-    let endObj = moment(item.dtend);
-    var diff = endObj.diff(startObj);
+    let event = PCalendar.convertVEvent2FCalEvent(item);
+    let startObj = moment(event.start);
+    let endObj = moment(event.end);
+    let diffStartObj = moment(event.start).startOf("day");
+    let diffEndObj = moment(event.end).startOf("day");
+    var diff = diffEndObj.diff(diffStartObj);
     var duration = moment.duration(diff);
     var dayCnt = Math.floor(duration.asDays());
     let startDay = startObj.format("YYYY-MM-DD");
     let endDay = endObj.format("YYYY-MM-DD");
 
-    // hotfix for all day event determination
-    let allEdDay = moment(endObj).add(-1, "second").format("YYYY-MM-DD");
-    if (startDay == allEdDay) {
-        item.allDay = true;
+    if (event.allDay) {
+        dayCnt--;
     }
-
-    if (startDay == endDay || item.allDay) {
-        // same date
-        let day = startObj.format("YYYY-MM-DD");
-        if ($("#"+day).length == 0) {
-            let table = [
-                "<table>",
-                    "<tr>",
-                        "<td rowspan='2' width='50px' valign='top'>",
-                            "<font size='5'>",
-                                startObj.format("D"),
-                            "</font>day",
-                        "</td>",
-                    "</tr>",
-                    "<tr>",
-                        "<td id='"+day+"' style='padding-top: 10px;'>",
-                        "</td>",
-                    "</tr>",
-                "</table>"
-            ].join("");
-            $("[data-id='"+day+"']").append(table);
-        }
-
-        let startTime = startObj.format("H:mm");
-        let endTime = endObj.format("H:mm");
-        let summary = PCalendar.displayCalendarTitle(item.summary);
-        let dateRange = startTime + "~" + endTime;
-        if (item.allDay) {
-            dateRange = i18next.t('glossary:Calendars.All_day');
-        }
-        let html = "<div><font size='3'>" + dateRange + ":" + summary + "</font></div>";
-        $("#"+day).append(html);
-    } else {
-        // Multiple days event
         for (var i = 0; i <= dayCnt; i++) {
             var day = startObj.format("YYYY-MM-DD");
             if ($("#"+day).length == 0) {
@@ -817,22 +682,34 @@ scheduleRenderEvent = function(item) {
             if ($("[data-id='" + day + "']").length > 0) {
                 if (startDay == day) {
                     // Start date
-                    let startTime = startObj.format("H:mm");
-                    let summary = PCalendar.displayCalendarTitle(item.summary);
-                    let dateRange = startTime + "~0:00";
+                let startTime = startObj.format("HH:mm");
+                let summary = PCalendar.displayCalendarTitle(event.title);
+                let dateRange = startTime + "~00:00";
+                if (event.allDay) {
+                    dateRange = i18next.t('glossary:Calendars.All_day');
+                } else if (startDay == endDay) {
+                    let endTime = endObj.format("HH:mm");
+                    dateRange = startTime + "~" + endTime;
+                }
                     let html = "<div><font size='3'>" + dateRange + ":" + summary + "</font></div>";
                     $("#"+day).append(html);
                 } else if (endDay == day) {
                     // End date
-                    let endTime = endObj.format("H:mm");
-                    let summary = PCalendar.displayCalendarTitle(item.summary);
-                    let dateRange = "0:00~" + endTime;
+                let endTime = endObj.format("HH:mm");
+                let summary = PCalendar.displayCalendarTitle(event.title);
+                let dateRange = "00:00~" + endTime;
+                if (event.allDay) {
+                    dateRange = i18next.t('glossary:Calendars.All_day');
+                }
                     let html = "<div><font size='3'>" + dateRange + ":" + summary + "</font></div>";
                     $("#"+day).append(html);
                 } else {
                     // All day
-                    let summary = PCalendar.displayCalendarTitle(item.summary);
+                let summary = PCalendar.displayCalendarTitle(event.title);
                     let dateRange = i18next.t('glossary:Calendars.All_day');
+                if (event.allDay) {
+                    dateRange = i18next.t('glossary:Calendars.All_day');
+                }
                     let html = "<div><font size='3'>" + dateRange + ":" + summary + "</font></div>";
                     $("#"+day).append(html);
                 }
@@ -840,7 +717,6 @@ scheduleRenderEvent = function(item) {
             startObj.add(1, "day");
         }
     }
-}
 
 /*
  * Create event (https://fullcalendar.io/docs/event-object)
@@ -886,9 +762,8 @@ PCalendar.convertVEvent2FCalEvent = function(item) {
         event.start = startMoment;
         event.end = endMoment;
     }
-    if (item.allDay) {
-        event.allDay = true;
-    }
+
+    event.allDay = item.allDay;
     
     return event;
 };
@@ -1429,11 +1304,14 @@ PCalendar.setEditVEventInfo = function(calEvent) {
     $('#modal-vevent input:radio[name=srcType]')
         .val([tempVEvent.srcType])
         .prop('disabled', true);
+    if (tempVEvent.url) {
+        $('#modal-vevent #url').attr('href', tempVEvent.url);
+    }
     $('#modal-vevent #srcAccountName')
         .val(tempVEvent.srcAccountName)
         .prop("readonly", true);
     if (tempVEvent.attendees) {
-        $('#modal-vevent #attendees').val(tempVEvent.attendees);
+        $('#modal-vevent #attendees').text(tempVEvent.attendees);
     }
     if (tempVEvent.summary) {
         $('#modal-vevent #summary').val(tempVEvent.summary);
@@ -1544,8 +1422,7 @@ PCalendar.prepareVEvent = function(method, tempVEvent) {
         organizer: $('#organizer').val() || $('#srcAccountName').val(), // Usually the organizer is the account owner
         summary: $('#summary').val(),
         description: $('#description').val(),
-        location: $('#location').val(),
-        attendees: $('#attendees').val()
+        location: $('#location').val()
     };
     let requiredParams = {};
     let optionalParams = {};
@@ -1602,6 +1479,10 @@ reRenderCalendar = function() {
     if (dispListName != "schedule") {
         getListOfVEvents();
     } else {
-        getListOfVEventsScheduleInit();
+        $("#schedule").empty();
+        sDateObj = moment().add(-1, "month").startOf("month");
+        eDateObj = moment().add(1, "month").endOf("month");
+        dispScheduleHeaders(moment(sDateObj), moment(eDateObj));
+        getListOfVEventsSchedule(moment(sDateObj), moment(eDateObj));
     }
 };

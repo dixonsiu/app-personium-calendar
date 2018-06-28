@@ -18,6 +18,7 @@
         <Property Name='end' Type='Edm.String' Nullable='true' />
         <Property Name='dtend' Type='Edm.DateTime' Nullable='true' />
         <Property Name='allDay' Type='Edm.Boolean' Nullable='true' DefaultValue='false' />
+        <Property Name='url' Type='Edm.String' Nullable='true' />
         <Property Name='summary' Type='Edm.String' Nullable='true' />
         <Property Name='description' Type='Edm.String' Nullable='true' />
         <Property Name='location' Type='Edm.String' Nullable='true' />

@@ -136,10 +136,10 @@ function(request){
           var url = calendarUrl + calendarId + "/events" + "/" + params.__id;
 
           // params to Json
-          body = toGoogleEvent(params);
+          body = pCal.toGoogleEvent(params);
 
           var response = { status: "", headers : {}, body :"" };
-          response = httpClient.put(url, headers, contentType, body);
+          response = httpClient.patch(url, headers, contentType, body);
 
           if(null == response || response.status == 401){
             // access token expire
@@ -147,7 +147,7 @@ function(request){
             accessToken = getAccessToken(tempData);
             // retry
             headers = {'Authorization': 'Bearer ' + accessToken};
-            response = httpClient.put(url, headers, contentType, body);
+            response = httpClient.patch(url, headers, contentType, body);
             if (response == null || response.status == 401) {
               return createResponse(400, {"error": "refresh token is wrong"})
             }
@@ -170,7 +170,7 @@ function(request){
 
         var item = JSON.parse(response.body);
 
-        var exData = parseGoogleEvent(item);
+        var exData = pCal.parseGoogleEvent(item);
         exData.__id = vEvent.__id;
         exData.srcType = "Google";
         exData.srcUrl = "";
@@ -443,7 +443,7 @@ function(request){
           var httpClient = new _p.extension.HttpClient();
 
           // params to json
-          body = toGoogleEvent(params);
+          body = pCal.toGoogleEvent(params);
 
           // post execute
           var response = { status: "", headers : {}, body :"" };
@@ -482,7 +482,7 @@ function(request){
         var exData = {};
 
         // parse
-        exData = parseGoogleEvent(item);
+        exData = pCal.parseGoogleEvent(item);
 
         exData.srcType = "Google";
         exData.srcUrl = "";
@@ -620,109 +620,6 @@ exchangeDataEwsToJcal = function(inData) {
   };
 }
 
-function toUTC(str){
-  var newdate = moment.tz(str, "Asia/Tokyo");
-  return newdate.valueOf();
-}
-
-function parseGoogleEvent(item){
-
-  var result = {};
-  result.__id = item.id;
-  result.srcId = item.id;
-  var eventDate = null;
-  var newdate = null;
-
-  if (item.start){
-    eventDate = getDateTime(item.start);
-    newdate = toUTC(eventDate);
-    result.start = item.start.date || item.start.dateTime;
-    result.dtstart = "/Date(" + newdate + ")/";
-  }
-
-  if (item.end){
-    eventDate = getDateTime(item.end);
-    newdate = toUTC(eventDate);
-    result.end = item.end.date || item.end.dateTime;
-    result.dtend = "/Date(" + newdate + ")/";
-  }
-
-  if (item.update){
-    newdate = Date.parse(new Date(item.updated));
-    result.srcUpdated = "/Date(" + newdate + ")/";
-  }
-
-  result.summary = item.summary;
-  result.description = item.description;
-  result.location = item.location;
-  if (item.organizer){
-    result.organizer = item.organizer.email;
-  }
-
-  if(item.attendees){
-    var list = [];
-    for(var j = 0; j < item.attendees.length; j++){
-      list.push(item.attendees[j].email);
-    }
-    if (list){
-      result.attendees = list;
-    }
-  }
-
-  return result;
-}
-
-function toGoogleEvent(params){
-
-  var result = {};
-  result.start = {};
-  result.end = {};
-  result.updated = {};
-  result.organizer = {};
-
-  // require dataTime:yyyy-MM-ddTHH:mm:ss.SSSZ
-  var date;
-  if (params.start.indexOf("T") > 0) {
-    date = {
-      "dateTime": params.dtstart
-    };
-  } else {
-    date = {
-      "date": params.start
-    };
-  }
-  result.start = date;
-
-  if (params.end.indexOf("T") > 0) {
-    date = {
-      "dateTime": params.dtend
-    };
-  } else {
-    date = {
-      "date": params.end
-    };
-  }
-  result.end = date;
-
-  // result.updated = params.Updated;
-  result.summary = params.summary;
-  result.description = params.description;
-  result.location = params.location;
-
-  var org = {"email":params.organizer}
-  result.organizer = org;
-
-  if(params.attendees){
-    var list = [];
-    for(var j = 0; j < params.attendees.length; j++){
-      list.push({"email": params.attendees[j]});
-    }
-    result.attendees = list;
-  }
-
-  return JSON.stringify(result);
-}
-
 function toOffice365Event(params){
 
   var result = {};
@@ -762,26 +659,6 @@ function toOffice365Event(params){
   }
 
   return JSON.stringify(result);
-}
-
-function getDateTime(obj){
-  if(obj.dateTime){
-    return obj.dateTime;
-  } else if (obj.date){
-    return obj.date;
-  } else { // date format error
-    var err = [
-      "io.personium.client.DaoException: 400,",
-      JSON.stringify({
-        "code": "PR400-OD-0047",
-        "message": {
-        "lang": "en",
-        "value": "Operand or argument for date has unsupported/invalid format."
-        }
-      })
-    ].join("");
-    throw new _p.PersoniumException(err);
-  }
 }
 
 function getAccessInfo(accInfo, temp){
@@ -872,11 +749,6 @@ function checkParams(request, params){
     if(!params.dtend){
       return "dtend";
     }
-    if(params.attendees){
-      if (!Array.isArray(params.attendees)) {
-        return "array of attendees";
-      }
-    }
     return null;
   } else if (request.method == "PUT"){
     if(!params.__id){
@@ -897,11 +769,6 @@ function checkParams(request, params){
     if(!("description" in params)){
       return "description";
     }
-    if(params.attendees){
-      if (!Array.isArray(params.attendees)) {
-        return "array of attendees";
-      }
-    }
     return null;
   } else {
     // delete
@@ -912,5 +779,4 @@ function checkParams(request, params){
   }
 }
 
-var moment = require("moment").moment;
-moment = require("moment_timezone_with_data").mtz;
+var pCal = require("personium_cal").personiumCal;

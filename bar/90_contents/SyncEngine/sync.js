@@ -351,7 +351,7 @@ function(request){
             var results = [];
 
             //parse
-            results = parseGoogleEvents(items);
+            results = pCal.parseGoogleEvents(items);
 
             if (pageToken){
                 // save pageToken
@@ -737,7 +737,7 @@ function(request){
         var results = [];
 
         //parse
-        results = parseGoogleEvents(items);
+        results = pCal.parseGoogleEvents(items);
 
         if (syncToken){
           // save synctoken
@@ -954,79 +954,6 @@ function createResponse(tempCode, tempBody) {
         headers: tempHeaders,
         body: [isString ? tempBody : JSON.stringify(tempBody)]
     };
-}
-
-function parseGoogleEvents(items){
-  var results = [];
-  for(var i = 0; i < items.length; i++){
-
-    var result = {};
-    try{
-      result.__id = items[i].id;
-      result.srcId = items[i].id;
-      var eventDate = null;
-      var newdate = null;
-      if (items[i].start){
-        result.start = items[i].start.date;
-        newdate = items[i].start.date||items[i].start.dateTime;
-        result.dtstart = pCal.toPersoniumDatetimeFormat(newdate);
-      }
-
-      if (items[i].end){
-        result.end = items[i].end.date;
-        newdate = items[i].end.date||items[i].end.dateTime;
-        result.dtend = pCal.toPersoniumDatetimeFormat(newdate);
-      }
-
-      if (items[i].updated){
-        newdate = items[i].updated;
-        result.srcUpdated = pCal.toPersoniumDatetimeFormat(newdate);
-      }
-    }catch(e){
-      continue;
-    }
-
-    result.summary = items[i].summary;
-    result.description = items[i].description;
-    result.location = items[i].location;
-    if (items[i].organizer){
-      result.organizer = items[i].organizer.email;
-    }
-    result.status = items[i].status;
-    if(items[i].attendees != null){
-      var list = [];
-      for(var j = 0; j < items[i].attendees.length; j++){
-        list.push(items[i].attendees[j].email);
-      }
-      if (list){
-        result.attendees = list;
-      }
-    }
-    result.raw = JSON.stringify(items[i]);
-    results.push(result);
-  }
-
-  return results;
-}
-
-function getDateTime(obj){
-  if(obj.dateTime){
-    return obj.dateTime;
-  } else if (obj.date){
-    return obj.date;
-  } else { // date format error
-    var err = [
-      "io.personium.client.DaoException: 400,",
-      JSON.stringify({
-        "code": "PR400-OD-0047",
-        "message": {
-        "lang": "en",
-        "value": "Operand or argument for date has unsupported/invalid format."
-        }
-      })
-    ].join("");
-    throw new _p.PersoniumException(err);
-  }
 }
 
 function getAccessToken(bodyData) {
