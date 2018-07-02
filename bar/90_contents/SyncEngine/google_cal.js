@@ -2,19 +2,20 @@ exports.googleCal = (function() {
     // https://developers.google.com/calendar/v3/reference/events#resource
     var googleCal = {};
     var _ = require("underscore")._;
+    var pCal = require("personium_cal").personiumCal;
 
-    googleCal.parseGoogleEvents = function(items) {
+    googleCal.parseEvents = function(items) {
         var results = [];
         for(var i = 0; i < items.length; i++){
             var item = items[i];
-            var result = googleCal.parseGoogleEvent(item);
+            var result = googleCal.parseEvent(item);
             results.push(result);
         }
 
         return results;
     };
 
-    googleCal.parseGoogleEvent = function(item) {
+    googleCal.parseEvent = function(item) {
         var result = {};
         result.__id = item.id;
         result.srcId = item.id;
@@ -63,6 +64,45 @@ exports.googleCal = (function() {
         result.raw = JSON.stringify(item);
 
         return result;
+    };
+
+    googleCal.params2Event = function(params) {
+        var result = {};
+        result.start = {};
+        result.end = {};
+        result.updated = {};
+        result.organizer = {};
+
+        // require dataTime:yyyy-MM-ddTHH:mm:ss.SSSZ
+        var date;
+        if (params.start.indexOf("T") > 0) {
+            date = {
+                "dateTime": params.dtstart
+            };
+        } else {
+            date = {
+                "date": params.start
+            };
+        }
+        result.start = date;
+
+        if (params.end.indexOf("T") > 0) {
+            date = {
+                "dateTime": params.dtend
+            };
+        } else {
+            date = {
+                "date": params.end
+            };
+        }
+        result.end = date;
+
+        // result.updated = params.Updated;
+        result.summary = params.summary;
+        result.description = params.description;
+        result.location = params.location;
+
+        return JSON.stringify(result);
     };
 
     var _isAllDay = function(start, end) {

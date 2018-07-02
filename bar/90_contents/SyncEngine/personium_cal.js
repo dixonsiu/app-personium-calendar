@@ -3,54 +3,6 @@ exports.personiumCal = (function() {
     moment = require("moment_timezone_with_data").mtz;
     
     var personiumCal = {};
-    var googleCal = require("google_cal").googleCal;
-
-    personiumCal.parseGoogleEvents = function(items) {
-        return googleCal.parseGoogleEvents(items);
-    };
-
-    personiumCal.parseGoogleEvent = function(item) {
-        return googleCal.parseGoogleEvent(item);
-    };
-
-    personiumCal.toGoogleEvent = function(params) {
-        var result = {};
-        result.start = {};
-        result.end = {};
-        result.updated = {};
-        result.organizer = {};
-
-        // require dataTime:yyyy-MM-ddTHH:mm:ss.SSSZ
-        var date;
-        if (params.start.indexOf("T") > 0) {
-            date = {
-                "dateTime": params.dtstart
-            };
-        } else {
-            date = {
-                "date": params.start
-            };
-        }
-        result.start = date;
-
-        if (params.end.indexOf("T") > 0) {
-            date = {
-                "dateTime": params.dtend
-            };
-        } else {
-            date = {
-                "date": params.end
-            };
-        }
-        result.end = date;
-
-        // result.updated = params.Updated;
-        result.summary = params.summary;
-        result.description = params.description;
-        result.location = params.location;
-
-        return JSON.stringify(result);
-    };
 
     personiumCal.getDateTime = function(obj) {
         if(obj.dateTime){

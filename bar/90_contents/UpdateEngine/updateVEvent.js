@@ -136,7 +136,7 @@ function(request){
           var url = calendarUrl + calendarId + "/events" + "/" + params.__id;
 
           // params to Json
-          body = pCal.toGoogleEvent(params);
+          body = googleCal.params2Event(params);
 
           var response = { status: "", headers : {}, body :"" };
           response = httpClient.patch(url, headers, contentType, body);
@@ -170,7 +170,7 @@ function(request){
 
         var item = JSON.parse(response.body);
 
-        var exData = pCal.parseGoogleEvent(item);
+        var exData = googleCal.parseEvent(item);
         exData.__id = vEvent.__id;
         exData.srcType = "Google";
         exData.srcUrl = "";
@@ -443,7 +443,7 @@ function(request){
           var httpClient = new _p.extension.HttpClient();
 
           // params to json
-          body = pCal.toGoogleEvent(params);
+          body = googleCal.params2Event(params);
 
           // post execute
           var response = { status: "", headers : {}, body :"" };
@@ -482,7 +482,7 @@ function(request){
         var exData = {};
 
         // parse
-        exData = pCal.parseGoogleEvent(item);
+        exData = googleCal.parseEvent(item);
 
         exData.srcType = "Google";
         exData.srcUrl = "";
@@ -779,4 +779,5 @@ function checkParams(request, params){
   }
 }
 
-var pCal = require("personium_cal").personiumCal;
+var googleCal = require("google_cal").googleCal;
+var outlookCal = require("outlook_cal").outlookCal;

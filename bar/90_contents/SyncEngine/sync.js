@@ -351,7 +351,7 @@ function(request){
             var results = [];
 
             //parse
-            results = pCal.parseGoogleEvents(items);
+            results = googleCal.parseEvents(items);
 
             if (pageToken){
                 // save pageToken
@@ -419,6 +419,7 @@ function(request){
 
             try {
                 var httpClient = new _p.extension.HttpClient();
+                // https://msdn.microsoft.com/en-us/office/office365/api/calendar-rest-operations#get-events
                 var headers = {'Authorization': 'Bearer ' + accessTokenSet.accessToken,
                                'Prefer': 'outlook.body-content-type="text",odata.track-changes,odata.maxpagesize=' + maxSyncResults};
                 var response = { status: "", headers : {}, body :"" };
@@ -444,7 +445,7 @@ function(request){
                     var tempData = {"refresh_token": accessTokenSet.refreshToken , "srcType": "Office365"};
                     accessTokenSet.accessToken = getAccessToken(tempData);
                     // retry
-                    headers = {'Authorization': 'Bearer ' + accessTokenSet.accessToken};
+                    headers.Authorization = 'Bearer ' + accessTokenSet.accessToken;
                     response = httpClient.get(url, headers);
                     if (response == null || response.status != 200) {
                         return createResponse(400, {"error": "refresh token is wrong"})
@@ -478,7 +479,7 @@ function(request){
             var results = [];
 
             //parse
-            results = parseOffice365Events(items);
+            results = outlookCal.parseEvents(items);
 
             // data regist
             for(var i = 0; i < results[0].length; i++) {
@@ -737,7 +738,7 @@ function(request){
         var results = [];
 
         //parse
-        results = pCal.parseGoogleEvents(items);
+        results = googleCal.parseEvents(items);
 
         if (syncToken){
           // save synctoken
@@ -830,7 +831,7 @@ function(request){
           var tempData = {"refresh_token": accessTokenSet.refreshToken , "srcType": "Office365"};
           accessTokenSet.accessToken = getAccessToken(tempData);
           // retry
-          headers = {'Authorization': 'Bearer ' + accessTokenSet.accessToken};
+          headers.Authorization = 'Bearer ' + accessTokenSet.accessToken;
           response = httpClient.get(url, headers);
 
           if (null == response || response.status != 200) {
@@ -981,116 +982,6 @@ function getAccessToken(bodyData) {
   return res.access_token;
 }
 
-function parseOffice365Events(items, check) {
-    // items : value of Office365 REST API(GET)
-    // check : null or masterId
-    // if check == null; return results=[addList=[]];
-    // if check == "masterId"; return results=[addList=[], masterList=[]];
-
-    var results = [];
-    var addList = [];
-    var masterList = [];
-    var masters = [];
-
-    for(var i = 0; i < items.length; i++) {
-        var result = {};
-        
-        result.raw = JSON.stringify(items[i]);
-        
-        result.allDay = items[i].IsAllDay;
-
-        if (items[i].SeriesMasterId) {
-            //for Recurrence child
-            for (var j = 0; j < masters.length; j++) {
-                if (items[i].SeriesMasterId == masters[j].srcId) {
-                    // master copy to resutl
-                    for (key in masters[j]) {
-                        result[key] = masters[j][key];
-                    }
-                    // child copy to result
-                    for (key in items[i]) {
-                        if (key == 'Start') {
-                            var uxtDtstart = Date.parse(new Date(items[i]['Start'].DateTime.slice(0, 23)+"Z"));
-                            result.dtstart = "/Date(" + uxtDtstart + ")/";
-                        }
-                        if (key == 'End') {
-                            var uxtDtend = Date.parse(new Date(items[i]['End'].DateTime.slice(0, 23)+"Z"));
-                            result.dtend = "/Date(" + uxtDtend + ")/";
-                        }
-                        if (key == 'LastModifiedDateTime') {
-                            var uxtUpdated = Date.parse(new Date(items[i].LastModifiedDateTime.slice(0, 23)+"Z"));
-                            result.srcUpdated = "/Date(" + uxtUpdated + ")/";
-                        }
-                        if (key == 'Subject') {
-                            result.summary = items[i].Subject;
-                        }
-                        if (key == 'Body') {
-                            result.description = items[i].Body.Content;
-                        }
-                        if (key == 'Location') {
-                            result.location = items[i].Location.DisplayName;
-                        }
-                        if (key == 'Organizer') {
-                            result.organizer = items[i]['Organizer']['EmailAddress'].Address;
-                        }
-                        if (key == 'Attendees') {
-                            if (items[i].Attendees.length > 0) {
-                                var list = [];
-                                for(var k = 0; k < items[i].Attendees.length; k++){
-                                    list.push(items[i].Attendees[k]['EmailAddress'].Address);
-                                }
-                                result.attendees = list;
-                            }
-                        }
-                    }
-                    result.__id = items[i].Id;
-                    addList.push(result);
-                }
-            }
-        } else {
-            result.start = items[i]['Start'].DateTime;
-            result.dtstart = pCal.toPersoniumDatetimeFormatTZ(items[i]['Start'].DateTime, items[i]['Start'].TimeZone);
-            result.end = items[i]['End'].DateTime;
-            result.dtend = pCal.toPersoniumDatetimeFormatTZ(items[i]['End'].DateTime, items[i]['End'].TimeZone);
-            var uxtUpdated = Date.parse(new Date(items[i].LastModifiedDateTime.slice(0, 23)+"Z"));
-            result.srcUpdated = "/Date(" + uxtUpdated + ")/";
-
-            result.summary = items[i].Subject;
-            result.description = items[i].Body.Content;
-            result.location = items[i].Location.DisplayName;
-            result.organizer = items[i]['Organizer']['EmailAddress'].Address;
-
-            if (items[i].Attendees.length > 0) {
-                var list = [];
-                for(var j = 0; j < items[i].Attendees.length; j++){
-                    list.push(items[i].Attendees[j]['EmailAddress'].Address);
-                }
-                result.attendees = list;
-            }
-            result.srcId = items[i].Id;
-            if (items[i].Type == "SeriesMaster") {
-                //for Recurrence parent
-                masters.push(result);
-                if (check == "masterId") {
-                    masterList.push(items[i].Id);
-                }
-            } else {
-                //SingleInstance
-                result.__id = items[i].Id;
-                addList.push(result);
-            }
-        }
-    }
-
-    if (check == "masterId") {
-        results.push(addList);
-        results.push(masterList);
-    } else {
-        results.push(addList);
-    }
-    return results;
-}
-
 function updateOffice365Events(items, personalEntityAccessor, accessTokenSet) {
 
     if (0 < items.length) {
@@ -1113,7 +1004,7 @@ function updateOffice365Events(items, personalEntityAccessor, accessTokenSet) {
                 }
             }
 
-            var results = parseOffice365Events(updateList, "masterId");
+            var results = outlookCal.parseEvents(updateList, "masterId");
 
             // check masterId
             var checkList = [];
@@ -1158,4 +1049,5 @@ function updateOffice365Events(items, personalEntityAccessor, accessTokenSet) {
     }
 }
 
-var pCal = require("personium_cal").personiumCal;
+var googleCal = require("google_cal").googleCal;
+var outlookCal = require("outlook_cal").outlookCal;
