@@ -136,10 +136,10 @@ function(request){
           var url = calendarUrl + calendarId + "/events" + "/" + params.__id;
 
           // params to Json
-          body = toGoogleEvent(params);
+          body = googleCal.params2Event(params);
 
           var response = { status: "", headers : {}, body :"" };
-          response = httpClient.put(url, headers, contentType, body);
+          response = httpClient.patch(url, headers, contentType, body);
 
           if(null == response || response.status == 401){
             // access token expire
@@ -147,7 +147,7 @@ function(request){
             accessToken = getAccessToken(tempData);
             // retry
             headers = {'Authorization': 'Bearer ' + accessToken};
-            response = httpClient.put(url, headers, contentType, body);
+            response = httpClient.patch(url, headers, contentType, body);
             if (response == null || response.status == 401) {
               return createResponse(400, {"error": "refresh token is wrong"})
             }
@@ -170,7 +170,7 @@ function(request){
 
         var item = JSON.parse(response.body);
 
-        var exData = parseGoogleEvent(item);
+        var exData = googleCal.parseEvent(item);
         exData.__id = vEvent.__id;
         exData.srcType = "Google";
         exData.srcUrl = "";
@@ -201,7 +201,7 @@ function(request){
           var url = office365Url + "/" + params.__id;
 
           // params to Json
-          body = toOffice365Event(params);
+          body = outlookCal.params2Event(params);
 
           var response = { status: "", headers : {}, body :"" };
           response = httpClient.patch(url, headers, contentType, body);
@@ -211,7 +211,7 @@ function(request){
             var tempData = {"refresh_token": refreshToken , "srcType": "Office365"}
             accessToken = getAccessToken(tempData);
             // retry
-            headers = {'Authorization': 'Bearer ' + accessToken};
+            headers.Authorization = 'Bearer ' + accessToken;
             response = httpClient.patch(url, headers, contentType, body);
             if (response == null || response.status == 401) {
               return createResponse(400, {"error": "refresh token is wrong"})
@@ -235,7 +235,7 @@ function(request){
 
         var item = JSON.parse(response.body);
 
-        var exData = parseOffice365Event(item);
+        var exData = outlookCal.parseEvent(item);
         exData.__id = vEvent.__id;
         exData.srcType = "Office365";
         exData.srcUrl = "";
@@ -340,7 +340,7 @@ function(request){
             var tempData = {"refresh_token": refreshToken , "srcType": "Office365"}
             accessToken = getAccessToken(tempData);
             // retry
-            headers = {'Authorization': 'Bearer ' + accessToken};
+            headers.Authorization = 'Bearer ' + accessToken;
             response = httpClient.delete(url, headers);
             if (response == null || response.status == 401) {
               return createResponse(400, {"error": "refresh token is wrong"})
@@ -443,7 +443,7 @@ function(request){
           var httpClient = new _p.extension.HttpClient();
 
           // params to json
-          body = toGoogleEvent(params);
+          body = googleCal.params2Event(params);
 
           // post execute
           var response = { status: "", headers : {}, body :"" };
@@ -482,7 +482,7 @@ function(request){
         var exData = {};
 
         // parse
-        exData = parseGoogleEvent(item);
+        exData = googleCal.parseEvent(item);
 
         exData.srcType = "Google";
         exData.srcUrl = "";
@@ -517,7 +517,7 @@ function(request){
           var httpClient = new _p.extension.HttpClient();
 
           // params to json
-          body = toOffice365Event(params);
+          body = outlookCal.params2Event(params);
           // post execute
           var response = { status: "", headers : {}, body :"" };
           response = httpClient.post(URL, headers, contentType, body);
@@ -527,7 +527,7 @@ function(request){
             var tempData = {"refresh_token": refreshToken , "srcType": "Office365"}
             accessToken = getAccessToken(tempData);
             // retry
-            headers = {'Authorization': 'Bearer ' + accessToken};
+            headers.Authorization = 'Bearer ' + accessToken;
             response = httpClient.post(URL, headers, contentType, body);
             if (response == null || response.status == 401) {
               return createResponse(400, {"error": "refresh token is wrong"})
@@ -555,7 +555,7 @@ function(request){
         var exData = {};
 
         // parse
-        exData = parseOffice365Event(item);
+        exData = outlookCal.parseEvent(item);
 
         exData.srcType = "Office365";
         exData.srcUrl = "";
@@ -620,170 +620,6 @@ exchangeDataEwsToJcal = function(inData) {
   };
 }
 
-function toUTC(str){
-  var newdate = moment.tz(str, "Asia/Tokyo");
-  return newdate.valueOf();
-}
-
-function parseGoogleEvent(item){
-
-  var result = {};
-  result.__id = item.id;
-  result.srcId = item.id;
-  var eventDate = null;
-  var newdate = null;
-
-  if (item.start){
-    eventDate = getDateTime(item.start);
-    newdate = toUTC(eventDate);
-    result.start = item.start.date || item.start.dateTime;
-    result.dtstart = "/Date(" + newdate + ")/";
-  }
-
-  if (item.end){
-    eventDate = getDateTime(item.end);
-    newdate = toUTC(eventDate);
-    result.end = item.end.date || item.end.dateTime;
-    result.dtend = "/Date(" + newdate + ")/";
-  }
-
-  if (item.update){
-    newdate = Date.parse(new Date(item.updated));
-    result.srcUpdated = "/Date(" + newdate + ")/";
-  }
-
-  result.summary = item.summary;
-  result.description = item.description;
-  result.location = item.location;
-  if (item.organizer){
-    result.organizer = item.organizer.email;
-  }
-
-  if(item.attendees){
-    var list = [];
-    for(var j = 0; j < item.attendees.length; j++){
-      list.push(item.attendees[j].email);
-    }
-    if (list){
-      result.attendees = list;
-    }
-  }
-
-  return result;
-}
-
-function toGoogleEvent(params){
-
-  var result = {};
-  result.start = {};
-  result.end = {};
-  result.updated = {};
-  result.organizer = {};
-
-  // require dataTime:yyyy-MM-ddTHH:mm:ss.SSSZ
-  var date;
-  if (params.start.indexOf("T") > 0) {
-    date = {
-      "dateTime": params.dtstart
-    };
-  } else {
-    date = {
-      "date": params.start
-    };
-  }
-  result.start = date;
-
-  if (params.end.indexOf("T") > 0) {
-    date = {
-      "dateTime": params.dtend
-    };
-  } else {
-    date = {
-      "date": params.end
-    };
-  }
-  result.end = date;
-
-  // result.updated = params.Updated;
-  result.summary = params.summary;
-  result.description = params.description;
-  result.location = params.location;
-
-  var org = {"email":params.organizer}
-  result.organizer = org;
-
-  if(params.attendees){
-    var list = [];
-    for(var j = 0; j < params.attendees.length; j++){
-      list.push({"email": params.attendees[j]});
-    }
-    result.attendees = list;
-  }
-
-  return JSON.stringify(result);
-}
-
-function toOffice365Event(params){
-
-  var result = {};
-  result.Start = {};
-  result.End = {};
-  //result.updated = {};
-  result.Organizer = {};
-  result.Body = {};
-  result.Location = {};
-
-  // require dataTime:yyyy-MM-ddTHH:mm:ss.SSSZ
-  var date = {};
-  if (params.timezone){
-    result.Start = {"DateTime": params.dtstart, "TimeZone": params.timezone};
-    result.End = {"DateTime": params.dtend, "TimeZone": params.timezone};
-  } else {
-    result.Start = {"DateTime": params.dtstart, "TimeZone": ""};
-    result.End = {"DateTime": params.dtend, "TimeZone": ""};
-  }
-
-  // result.updated = params.Updated;
-  result.Subject = params.summary;
-  result.Body = {"Content": params.description};
-  result.Location = {"DisplayName": params.location};
-
-  if(params.organizer){
-    var EmailAddress = {"EmailAddress":{"Address": params.organizer, "Name": params.organizer}};
-    result.Organizer = EmailAddress;
-  }
-  if(params.attendees){
-    var list = [];
-    for(var j = 0; j < params.attendees.length; j++){
-      var attn = {"EmailAddress": {"Address": params.attendees[j], "Name":params.attendees[j]}};
-      list.push(attn);
-    }
-    result.Attendees = list;
-  }
-
-  return JSON.stringify(result);
-}
-
-function getDateTime(obj){
-  if(obj.dateTime){
-    return obj.dateTime;
-  } else if (obj.date){
-    return obj.date;
-  } else { // date format error
-    var err = [
-      "io.personium.client.DaoException: 400,",
-      JSON.stringify({
-        "code": "PR400-OD-0047",
-        "message": {
-        "lang": "en",
-        "value": "Operand or argument for date has unsupported/invalid format."
-        }
-      })
-    ].join("");
-    throw new _p.PersoniumException(err);
-  }
-}
-
 function getAccessInfo(accInfo, temp){
   var accessInfo = {};
   for (var i = 0; i < accInfo.length; i++) {
@@ -830,34 +666,6 @@ function getAccessToken(bodyData) {
   return res.access_token;
 }
 
-function parseOffice365Event(item) {
-
-    var result = {};
-    result.__id = item.Id;
-    result.srcId = item.Id;
-
-    var uxtDtstart = Date.parse(new Date(item['Start'].DateTime.slice(0, 23)+"Z"));
-    result.dtstart = "/Date(" + uxtDtstart + ")/";
-    var uxtDtend = Date.parse(new Date(item['End'].DateTime.slice(0, 23)+"Z"));
-    result.dtend = "/Date(" + uxtDtend + ")/";
-    var uxtUpdated = Date.parse(new Date(item.LastModifiedDateTime.slice(0, 23)+"Z"));
-    result.srcUpdated = "/Date(" + uxtUpdated + ")/";
-
-    result.summary = item.Subject;
-    result.description = item.Body.Content;
-    result.location = item.Location.DisplayName;
-    result.organizer = item['Organizer']['EmailAddress'].Address;
-
-    if (item.Attendees.length > 0) {
-        var list = [];
-        for(var j = 0; j < item.Attendees.length; j++){
-            list.push(item.Attendees[j]['EmailAddress'].Address);
-        }
-        result.attendees = list;
-    }
-    return result;
-}
-
 function checkParams(request, params){
   if(request.method == "POST"){
     if(!params.srcType){
@@ -871,11 +679,6 @@ function checkParams(request, params){
     }
     if(!params.dtend){
       return "dtend";
-    }
-    if(params.attendees){
-      if (!Array.isArray(params.attendees)) {
-        return "array of attendees";
-      }
     }
     return null;
   } else if (request.method == "PUT"){
@@ -897,11 +700,6 @@ function checkParams(request, params){
     if(!("description" in params)){
       return "description";
     }
-    if(params.attendees){
-      if (!Array.isArray(params.attendees)) {
-        return "array of attendees";
-      }
-    }
     return null;
   } else {
     // delete
@@ -912,5 +710,5 @@ function checkParams(request, params){
   }
 }
 
-var moment = require("moment").moment;
-moment = require("moment_timezone_with_data").mtz;
+var googleCal = require("google_cal").googleCal;
+var outlookCal = require("outlook_cal").outlookCal;

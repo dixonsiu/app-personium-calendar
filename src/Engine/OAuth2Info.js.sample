@@ -8,7 +8,7 @@ exports.oauth2Info = (function() {
             "tokenEp": "https://login.microsoftonline.com/common/oauth2/v2.0/token",
             "resourceEp": "https://outlook.office.com/api",
             "userinfoEmailEp": "https://outlook.office.com/api/v2.0/me",
-            "scope": "offline_access https://outlook.office.com/Calendars.ReadWrite User.Read "
+            "scope": "offline_access https://outlook.office.com/Calendars.ReadWrite User.Read"
         },
         {
             "srcType": "Google",

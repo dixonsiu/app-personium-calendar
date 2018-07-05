@@ -165,6 +165,14 @@
         </propstat>
     </response>
     <response>
+        <href>dcbox:/SyncEngine/__src/google_cal.js</href>
+        <propstat>
+            <prop>
+                <getcontenttype>text/javascript</getcontenttype>
+            </prop>
+        </propstat>
+    </response>
+    <response>
         <href>dcbox:/SyncEngine/__src/moment.js</href>
         <propstat>
             <prop>
@@ -181,7 +189,31 @@
         </propstat>
     </response>
     <response>
+        <href>dcbox:/SyncEngine/__src/outlook_cal.js</href>
+        <propstat>
+            <prop>
+                <getcontenttype>text/javascript</getcontenttype>
+            </prop>
+        </propstat>
+    </response>
+    <response>
+        <href>dcbox:/SyncEngine/__src/personium_cal.js</href>
+        <propstat>
+            <prop>
+                <getcontenttype>text/javascript</getcontenttype>
+            </prop>
+        </propstat>
+    </response>
+    <response>
         <href>dcbox:/SyncEngine/__src/sync.js</href>
+        <propstat>
+            <prop>
+                <getcontenttype>text/javascript</getcontenttype>
+            </prop>
+        </propstat>
+    </response>
+    <response>
+        <href>dcbox:/SyncEngine/__src/underscore.js</href>
         <propstat>
             <prop>
                 <getcontenttype>text/javascript</getcontenttype>
@@ -235,6 +267,14 @@
         </propstat>
     </response>
     <response>
+        <href>dcbox:/UpdateEngine/__src/google_cal.js</href>
+        <propstat>
+            <prop>
+                <getcontenttype>text/javascript</getcontenttype>
+            </prop>
+        </propstat>
+    </response>
+    <response>
         <href>dcbox:/UpdateEngine/__src/moment.js</href>
         <propstat>
             <prop>
@@ -244,6 +284,30 @@
     </response>
     <response>
         <href>dcbox:/UpdateEngine/__src/moment_timezone_with_data.js</href>
+        <propstat>
+            <prop>
+                <getcontenttype>text/javascript</getcontenttype>
+            </prop>
+        </propstat>
+    </response>
+    <response>
+        <href>dcbox:/UpdateEngine/__src/outlook_cal.js</href>
+        <propstat>
+            <prop>
+                <getcontenttype>text/javascript</getcontenttype>
+            </prop>
+        </propstat>
+    </response>
+    <response>
+        <href>dcbox:/UpdateEngine/__src/personium_cal.js</href>
+        <propstat>
+            <prop>
+                <getcontenttype>text/javascript</getcontenttype>
+            </prop>
+        </propstat>
+    </response>
+    <response>
+        <href>dcbox:/UpdateEngine/__src/underscore.js</href>
         <propstat>
             <prop>
                 <getcontenttype>text/javascript</getcontenttype>
