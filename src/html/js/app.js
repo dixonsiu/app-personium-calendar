@@ -1216,6 +1216,8 @@ deleteAccessInfoAPI = function(accountInfo) {
  * Example:  [{"srcType":"Google","srcAccountName":"john.doe@gmail.com"}]
  */
 PCalendar.displayAddVEventDialog = function(accountList, date) {
+    $("[data-toggle='toggle']").bootstrapToggle('destroy');
+    
     let startDatetime = date.second(0).format();
     let endDatetime = date.add(1, 'hours').format();
     $("body #modalDialogContainer").load(
@@ -1229,6 +1231,8 @@ PCalendar.displayAddVEventDialog = function(accountList, date) {
             $('#dtend').val(endDatetime);
 
             PCalendar.addVEventBtnHandler(accountList);
+            
+            $("[data-toggle='toggle']").bootstrapToggle();
 
             $('#modal-vevent').modal('show');
         }
@@ -1286,6 +1290,8 @@ PCalendar.addVEventBtnHandler = function(accountList) {
 };
 
 PCalendar.displayEditVEventDialog = function(calEvent, jsEvent, view) {
+    $("[data-toggle='toggle']").bootstrapToggle('destroy');
+    
     $("body #modalDialogContainer").load(
         "./templates/_vevent_template.html",
         function(responseText, textStatus, jqXHR) {
@@ -1294,6 +1300,8 @@ PCalendar.displayEditVEventDialog = function(calEvent, jsEvent, view) {
             PCalendar.setEditVEventInfo(calEvent);
 
             PCalendar.editVEventBtnHandler(calEvent);
+            
+            $("[data-toggle='toggle']").bootstrapToggle();
 
             $('#modal-vevent').modal('show');
         }
@@ -1319,6 +1327,7 @@ PCalendar.setEditVEventInfo = function(calEvent) {
     if (tempVEvent.location) {
         $('#modal-vevent #location').val(tempVEvent.location);
     }
+    $('#allDay').prop('checked', calEvent.allDay);
     if (tempVEvent.dtstart) {
         //$('#modal-vevent #dtstart').val(moment(tempVEvent.dtstart).format());
         $('#modal-vevent #dtstart').val(calEvent.start.format());
@@ -1415,6 +1424,7 @@ PCalendar.prepareVEvent = function(method, tempVEvent) {
     let tempData = {
         srcType: $('#modal-vevent [name=srcType]:checked').val(),
         srcAccountName: $('#srcAccountName').val(),
+        allDay: $('#allDay').prop('checked'),
         start: $('#dtstart').val(),
         end: $('#dtend').val(),
         dtstart: moment($('#dtstart').val()).toISOString(),

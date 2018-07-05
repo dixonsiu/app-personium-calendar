@@ -28,8 +28,6 @@ exports.outlookCal = (function() {
                     continue;
                 }
                 result = outlookCal.parseChildEvent(masterEvent, item);
-
-                result.__id = items.Id;
                 addList.push(result);
             } else {
                 // Parent event - SingleInstance, Exception, & SeriesMaster
@@ -42,7 +40,6 @@ exports.outlookCal = (function() {
                     }
                 } else {
                     // SingleInstance/ Exception
-                    result.__id = item.Id;
                     addList.push(result);
                 }
             }
@@ -62,6 +59,7 @@ exports.outlookCal = (function() {
      */
     outlookCal.parseEvent = function(item) {
         var result = {};
+        result.__id = item.Id;
         result.srcId = item.Id;
         result.raw = JSON.stringify(item);
         result.url = item.WebLink;
@@ -91,8 +89,9 @@ exports.outlookCal = (function() {
 
     outlookCal.parseChildEvent = function(masterEvent, item) {
         var result = _.clone(masterEvent); // shallow-copied
-
-        result.raw = JSON.stringify(item);
+        var masterItem = JSON.parse(result.raw);
+        result.__id = item.Id;
+        result.raw = JSON.stringify(_.extend(masterItem, item));
 
         // overwrite with child data if exists
         if (item.Start) {
@@ -138,39 +137,41 @@ exports.outlookCal = (function() {
 
     outlookCal.params2Event = function(params) {
         var result = {};
-        result.start = {};
-        result.end = {};
-        result.updated = {};
-        result.organizer = {};
+        result.Start = {};
+        result.End = {};
+        result.IsAllDay = false || params.allDay;
 
         // require dataTime:yyyy-MM-ddTHH:mm:ss.SSSZ
         var date;
         if (params.start.indexOf("T") > 0) {
             date = {
-                "dateTime": params.dtstart
+                "DateTime": params.dtstart,
+                "TimeZone": "UTC"
             };
         } else {
             date = {
-                "date": params.start
+                "DateTime": pCal.toDatetimeLocalMS(params.start),
+                "TimeZone": "UTC"
             };
         }
-        result.start = date;
+        result.Start = date;
 
         if (params.end.indexOf("T") > 0) {
             date = {
-                "dateTime": params.dtend
+                "DateTime": params.dtend,
+                "TimeZone": "UTC"
             };
         } else {
             date = {
-                "date": params.end
+                "DateTime": pCal.toDatetimeLocalMS(params.end),
+                "TimeZone": "UTC"
             };
         }
-        result.end = date;
+        result.End = date;
 
-        // result.updated = params.Updated;
-        result.summary = params.summary;
-        result.description = params.description;
-        result.location = params.location;
+        result.Subject = params.summary;
+        result.Body = { Content: params.description };
+        result.Location = { DisplayName: params.location };
 
         return JSON.stringify(result);
     };

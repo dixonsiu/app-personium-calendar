@@ -30,6 +30,11 @@ exports.personiumCal = (function() {
         return newdate.valueOf();
     };
     
+    
+    personiumCal.toDatetimeLocalMS = function(str) {
+        return moment(str).format("YYYY-MM-DDTHH:mm:ss.SSS");
+    }
+    
     personiumCal.toPersoniumDatetimeFormat = function(str) {
         var newdate = moment(str);
         return "/Date(" + newdate.valueOf() + ")/";

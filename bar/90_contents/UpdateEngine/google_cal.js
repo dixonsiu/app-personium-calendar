@@ -70,34 +70,35 @@ exports.googleCal = (function() {
         var result = {};
         result.start = {};
         result.end = {};
-        result.updated = {};
-        result.organizer = {};
 
         // require dataTime:yyyy-MM-ddTHH:mm:ss.SSSZ
         var date;
         if (params.start.indexOf("T") > 0) {
             date = {
+                "date": null,
                 "dateTime": params.dtstart
             };
         } else {
             date = {
-                "date": params.start
+                "date": params.start,
+                "dateTime": null
             };
         }
         result.start = date;
 
         if (params.end.indexOf("T") > 0) {
             date = {
+                "date": null,
                 "dateTime": params.dtend
             };
         } else {
             date = {
-                "date": params.end
+                "date": params.end,
+                "dateTime": null
             };
         }
         result.end = date;
 
-        // result.updated = params.Updated;
         result.summary = params.summary;
         result.description = params.description;
         result.location = params.location;
