@@ -1,14 +1,6 @@
 const APP_URL = "https://demo.personium.io/app-personium-calendar/";
 const APP_BOX_NAME = 'app-personium-calendar';
-const DAY_WEEK = {
-    SUN : 0,
-    MON : 1,
-    TUE: 2,
-    WED: 3,
-    THU: 4,
-    FRI: 5,
-    SAT: 6
-}
+const DAY_WEEK_TOP = 0;
 PCalendar = {};
 sDateObj = moment().startOf('month');
 eDateObj = moment().endOf('month');
@@ -480,10 +472,37 @@ renderFullCalendar = function() {
                         $("#schedule").empty();
                         $("#schedule").show();
 
-                        sDateObj = moment().add(-1, "month").startOf("month");
-                        eDateObj = moment().add(1, "month").endOf("month");
+                        $("#schedule").on("scroll", function() {
+                            // The position of the lower end of the display area
+                            var bottom = this.scrollTop + this.clientHeight;
+                            // The position of the top of the last element
+                            var top = $("#schedule").find(":last")[0].offsetTop - this.offsetTop;
+                            if( top <= bottom )
+                            {
+                                // Acquire data for the next month
+                                let lastMonth = $("#schedule").children(":last").data("date");
+                                let startObj = moment(lastMonth).add(1, "month").startOf("month");
+                                let endObj = moment(lastMonth).add(1, "month").endOf("month");
+                                $("#schedule").children(":first").remove();
+
+                                dispScheduleHeaders(moment(startObj), moment(endObj), false);
+                                getListOfVEventsSchedule(moment(startObj), moment(endObj));
+                            } else if (this.scrollTop == 0) {
+                                // Acquire past data
+                                let firstMonth = $("#schedule").children(":first").data("date");
+                                let startObj = moment(firstMonth).add(-1, "month").startOf("month");
+                                let endObj = moment(firstMonth).add(-1, "month").endOf("month");
+                                $("#schedule").children(":last").remove();
+
+                                dispScheduleHeaders(moment(startObj), moment(endObj), true);
+                                getListOfVEventsSchedule(moment(startObj), moment(endObj));
+                            }
+                        })
+
+                        sDateObj = moment().add(-2, "month").startOf("month");
+                        eDateObj = moment().add(2, "month").endOf("month");
                         dispScheduleHeaders(moment(sDateObj), moment(eDateObj));
-                        getListOfVEventsSchedule(moment(sDateObj), moment(eDateObj));
+                        getListOfVEventsSchedule(moment(sDateObj), moment(eDateObj), true);
                     }
                 },
         eventClick: function(calEvent, jsEvent, view) {
@@ -555,7 +574,7 @@ getListOfVEvents = function() {
         });
 };
 
-dispScheduleHeaders = function(startObj, endObj, prevFlag) {
+dispScheduleHeaders = function(startObj, endObj, firstFlg) {
     var diff = endObj.diff(startObj);
     var duration = moment.duration(diff);
     var dayCnt = Math.floor(duration.asDays());
@@ -566,8 +585,17 @@ dispScheduleHeaders = function(startObj, endObj, prevFlag) {
             //html = "<div style='height: 50px;margin-bottom: 10px;background-image: url(\"https://demo.personium.io/ksakamoto/__/IMG_0066.jpg\")'>" + startObj.format("YYYY年MM月") + "</div>";
             html = "<div style='height: 200px;margin-bottom: 30px;background-image: url(\"https://demo.personium.io/ksakamoto/__/IMG_0066.jpg\")'><font size='5'>" + startObj.format("YYYY年MM月") + "</font></div>";
             $("#schedule").append(html);
+            html = "<table id='schedule-"+startObj.format("YYYY-MM")+"' data-date='"+startObj.format("YYYY-MM")+"'><div style='height: 200px;margin-bottom: 30px;background-image: url(\"https://demo.personium.io/ksakamoto/__/IMG_0066.jpg\")'><font size='5'>" + startObj.format("YYYY年MM月") + "</font></div><div id='schedule-data-"+startObj.format("YYYY-MM")+"'></div></table>";
+            if (firstFlg) {
+                let preId = $("#schedule").children(":first").attr("id");
+                $("#schedule").prepend(html);
+                $("#" + preId)[0].scrollIntoView(true);
+            } else {
+                $("#schedule").append(html);
+            }
         }
-        if (startObj.day() == DAY_WEEK.SUN) {
+
+        if (startObj.day() == DAY_WEEK_TOP) {
             // display week header
             let stDay = startObj.format("M月D日");
             let edDayMoment = moment([startObj.year(), startObj.month(), startObj.date()]).add(6, "day");
@@ -578,16 +606,17 @@ dispScheduleHeaders = function(startObj, endObj, prevFlag) {
             let edDay = edDayMoment.format(edFormat);
             html = "<div style='margin-bottom: 15px;margin-top:15px;margin-left: 50px;'><font size='5'>" + stDay + "~" + edDay + "</font></div>";
             //html = "<div>" + stDay + "~" + edDay + "</div>";
-            $("#schedule").append(html);
+            $("#schedule-data-"+startObj.format("YYYY-MM")).append(html);
         }
+
         var day = startObj.format("YYYY-MM-DD");
         html = "<div style='margin-bottom: 10px;' data-id='" + day + "'></div>";
         //html = "<div data-id='" + day + "'></div>";
-        $("#schedule").append(html);
+        $("#schedule-data-"+startObj.format("YYYY-MM")).append(html);
         startObj.add(1, "day");
     }
 }
-getListOfVEventsSchedule = function(startObj, endObj) {
+getListOfVEventsSchedule = function(startObj, endObj, initFlg) {
     let fromDay = startObj.toISOString();
     let toDay = endObj.toISOString();
     let urlOData = Common.getBoxUrl() + 'OData/vevent';
@@ -608,39 +637,13 @@ getListOfVEventsSchedule = function(startObj, endObj) {
             let eachFlg = false;
             _.each(data.d.results, function(item) {
                 scheduleRenderEvent(item);
-
-/*
-                // do something
-                let events = $('#calendar').fullCalendar('clientEvents', item.__id)[0];
-                if (events) {
-                    PCalendar.updateEvent(item);
-                } else {
-                    //PCalendar.renderEvent(item);
-                    listOfEvents.push(PCalendar.prepareEvent(item));
-                    if (!eachFlg) {
-                        if (upperFlg) {
-                            scheduleSkipNext++;
-                            //scheduleSkipPrev--;
-                        } else {
-                            scheduleSkipPrev++;
-                            //scheduleSkipNext--;
-                        }
-                        eachFlg = true;
-                    }
-                }
-*/
             });
         })
         .always(function(){
             hideSpinner('body');
-            $('[data-id="'+moment().format("YYYY-MM-DD")+'"]')[0].scrollIntoView(true)
-/*
-            $('#calendar').fullCalendar('renderEvents', listOfEvents, true);
-            if (searchDate) {
-                let scrollTop = $('.fc-list-heading[data-date="'+searchDate+'"]')[0].offsetTop;
-                $(".fc-scroller")[0].scrollTop = scrollTop;
+            if (initFlg) {
+                $('[data-id="'+moment().format("YYYY-MM-DD")+'"]')[0].scrollIntoView(true);
             }
-*/
         });
 };
 scheduleRenderEvent = function(item) {
@@ -658,30 +661,30 @@ scheduleRenderEvent = function(item) {
     if (event.allDay) {
         dayCnt--;
     }
-        for (var i = 0; i <= dayCnt; i++) {
-            var day = startObj.format("YYYY-MM-DD");
-            if ($("#"+day).length == 0) {
-                let table = [
-                    "<table>",
-                        "<tr>",
-                            "<td rowspan='2' width='50px' valign='top'>",
-                                "<font size='5'>",
-                                    startObj.format("D"),
-                                "</font>day",
-                            "</td>",
-                        "</tr>",
-                        "<tr>",
-                            "<td id='"+day+"' style='padding-top: 10px;'>",
-                            "</td>",
-                        "</tr>",
-                    "</table>"
-                ].join("");
-                $("[data-id='"+day+"']").append(table);
-            }
+    for (var i = 0; i <= dayCnt; i++) {
+        var day = startObj.format("YYYY-MM-DD");
+        if ($("#"+day).length == 0) {
+            let table = [
+                "<table>",
+                    "<tr>",
+                        "<td rowspan='2' width='50px' valign='top'>",
+                            "<font size='5'>",
+                                startObj.format("D"),
+                            "</font>day",
+                        "</td>",
+                    "</tr>",
+                    "<tr>",
+                        "<td id='"+day+"' style='padding-top: 10px;'>",
+                        "</td>",
+                    "</tr>",
+                "</table>"
+            ].join("");
+            $("[data-id='"+day+"']").append(table);
+        }
 
-            if ($("[data-id='" + day + "']").length > 0) {
-                if (startDay == day) {
-                    // Start date
+        if ($("[data-id='" + day + "']").length > 0) {
+            if (startDay == day) {
+                // Start date
                 let startTime = startObj.format("HH:mm");
                 let summary = PCalendar.displayCalendarTitle(event.title);
                 let dateRange = startTime + "~00:00";
@@ -691,32 +694,32 @@ scheduleRenderEvent = function(item) {
                     let endTime = endObj.format("HH:mm");
                     dateRange = startTime + "~" + endTime;
                 }
-                    let html = "<div><font size='3'>" + dateRange + ":" + summary + "</font></div>";
-                    $("#"+day).append(html);
-                } else if (endDay == day) {
-                    // End date
+                let html = "<div><font size='3'>" + dateRange + ":" + summary + "</font></div>";
+                $("#"+day).append(html);
+            } else if (endDay == day) {
+                // End date
                 let endTime = endObj.format("HH:mm");
                 let summary = PCalendar.displayCalendarTitle(event.title);
                 let dateRange = "00:00~" + endTime;
                 if (event.allDay) {
                     dateRange = i18next.t('glossary:Calendars.All_day');
                 }
-                    let html = "<div><font size='3'>" + dateRange + ":" + summary + "</font></div>";
-                    $("#"+day).append(html);
-                } else {
-                    // All day
+                let html = "<div><font size='3'>" + dateRange + ":" + summary + "</font></div>";
+                $("#"+day).append(html);
+            } else {
+                // All day
                 let summary = PCalendar.displayCalendarTitle(event.title);
-                    let dateRange = i18next.t('glossary:Calendars.All_day');
+                let dateRange = i18next.t('glossary:Calendars.All_day');
                 if (event.allDay) {
                     dateRange = i18next.t('glossary:Calendars.All_day');
                 }
-                    let html = "<div><font size='3'>" + dateRange + ":" + summary + "</font></div>";
-                    $("#"+day).append(html);
-                }
+                let html = "<div><font size='3'>" + dateRange + ":" + summary + "</font></div>";
+                $("#"+day).append(html);
             }
-            startObj.add(1, "day");
         }
+        startObj.add(1, "day");
     }
+}
 
 /*
  * Create event (https://fullcalendar.io/docs/event-object)
@@ -1490,9 +1493,9 @@ reRenderCalendar = function() {
         getListOfVEvents();
     } else {
         $("#schedule").empty();
-        sDateObj = moment().add(-1, "month").startOf("month");
-        eDateObj = moment().add(1, "month").endOf("month");
+        sDateObj = moment().add(-2, "month").startOf("month");
+        eDateObj = moment().add(2, "month").endOf("month");
         dispScheduleHeaders(moment(sDateObj), moment(eDateObj));
-        getListOfVEventsSchedule(moment(sDateObj), moment(eDateObj));
+        getListOfVEventsSchedule(moment(sDateObj), moment(eDateObj), true);
     }
 };
