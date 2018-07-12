@@ -47,7 +47,7 @@ function(request) {
   var setInfo = _p.util.queryParse(bodyAsString);
 
   try {
-    var personalBoxAccessor = _p.as("client").cell(pjvm.getCellName()).box(pjvm.getBoxName());
+    var personalBoxAccessor = _p.localbox();
 
     var accessInfo = [];
     var ews = null;
