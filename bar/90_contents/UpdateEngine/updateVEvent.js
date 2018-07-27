@@ -85,7 +85,7 @@ function(request){
       accessInfo = getAccessInfo(accInfo, vEvent);
     } else { // POST
       accessInfo = getAccessInfo(accInfo, params);
-      if(!accessInfo.srcAccountName){
+      if(params.srcType != "Personium" && !accessInfo.srcAccountName){
         return createResponse(400, {"error": "no such srcType or srcAccountName" })
       }
     }
@@ -243,9 +243,13 @@ function(request){
 
         personalEntityAccessor.update(exData.__id, exData, "*");
         returnParam = personalEntityAccessor.retrieve(exData.__id);
-      } else { // e.g. Yahoo!
-        // not supported now!
-        return createResponse(400, {"error": "Required srcType is not supported."})
+      } else { // Personium only
+        params.dtstart = pCal.toPersoniumDatetimeFormat(params.dtstart);
+        params.dtend = pCal.toPersoniumDatetimeFormat(params.dtend);
+        //return createResponse(200, params);
+        //return createResponse(200, params.__id);
+        personalEntityAccessor.update(params.__id, params, "*");
+        returnParam = personalEntityAccessor.retrieve(params.__id);
       }
 
     } else if (request.method === "DELETE") {
@@ -367,9 +371,8 @@ function(request){
             return createResponse(500, {"error": "Not delete vEvent of Office365 server."})
           }
         }
-      } else { // e.g. Yahoo!
-        // not supported now!
-        return createResponse(400, {"error": "Required srcType is not supported."})
+      } else { // Personium only
+        personalEntityAccessor.del(vEvent.__id);
       }
 
     } else { // POST
@@ -572,9 +575,12 @@ function(request){
             return createResponse(500, {"error": e.message})
           }
         }
-      } else { // e.g. Yahoo!
-        // not supported now!
-        return createResponse(400, {"error": "Required srcType is not supported."})
+      } else { // Personium only
+        params.dtstart = pCal.toPersoniumDatetimeFormat(params.dtstart);
+        params.dtend = pCal.toPersoniumDatetimeFormat(params.dtend);
+        //return createResponse(200, params);
+        returnParam = personalEntityAccessor.create(params);
+        //returnParam = personalEntityAccessor.retrieve(exData.__id);
       }
 
     }
@@ -710,5 +716,6 @@ function checkParams(request, params){
   }
 }
 
+var pCal = require("personium_cal").personiumCal;
 var googleCal = require("google_cal").googleCal;
 var outlookCal = require("outlook_cal").outlookCal;

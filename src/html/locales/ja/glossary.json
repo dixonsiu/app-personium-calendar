@@ -18,29 +18,36 @@
             }
         },
         "No_title": "(タイトルなし)",
+        "No_events": "イベントはありません。",
+        "Add_events": "予定追加",
+        "New_events": "新しい予定",
+        "Info_events": "イベント詳細",
         "Today": "今日",
         "All_day": "終日",
+        "List": "リスト",
         "Schedule": "スケジュール",
         "Schedule_listDayFormat": "MM月DD日[(]ddd[)]",
         "Month": "月",
         "Day": "日",
         "Month_titleFormat": "YYYY年MM月",
+        "Day_titleFormat": "D",
         "msg": {
             "info": {
             }
         }
     },
     "Account": {
-        "label": "アカウント",
+        "label": "連携アカウントの追加",
         "type": "種別",
         "types":{
-            "Google": "Google$t(glossary:Calendars.label)",
+            "Google": "Google",
             "Office365": "Office365",
-            "EWS": "EWS"
+            "EWS": "Exchange"
         },
         "srcAccountName": "アカウント名",
         "ID": "ID",
         "Password": "パスワード",
+        "Add": "別のアカウントを追加する",
         "Register": {
             "title": "新規アカウント",
             "label": "+ 新規アカウント",

@@ -18,13 +18,19 @@
             }
         },
         "No_title": "(No title)",
+        "No_events": "No Events.",
+        "Add_events": "Add schedu",
+        "New_events": "New Events",
+        "Info_events": "Event Details",
         "Today": "Today",
         "All_day": "All-day",
+        "List": "List",
         "Schedule": "Schedule",
         "Schedule_listDayFormat": "MMMM Do[(]ddd[)]",
         "Month": "Month",
         "Day": "Day",
         "Month_titleFormat": "MMMM YYYY",
+        "Day_titleFormat": "D",
         "msg": {
             "info": {
             }
@@ -34,13 +40,14 @@
         "label": "Account",
         "type": "Type",
         "types": {
-            "Google": "Google $t(glossary:Calendars.label)",
+            "Google": "Google",
             "Office365": "Office365",
-            "EWS": "EWS"
+            "EWS": "Exchange"
         },
         "srcAccountName": "Account Name",
         "ID": "ID",
         "Password": "Password",
+        "Add": "Add another account",
         "Register": {
             "title": "Register Account",
             "label": "+ Register Account",

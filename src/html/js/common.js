@@ -576,15 +576,52 @@ Common.displayMessageByKey = function(msg_key) {
     }
 };
 
+Common.loadContent = function(contentUrl) {
+    return $.ajax({
+        url: contentUrl,
+        type: "GET",
+        dataType: "html"
+    });
+}
+
 Common.openSlide = function() {
-    $("#dvOverlay").addClass('overlay-on');
-    $(".slide-menu").addClass('slide-on');
+    $('#menu-background').show();
+    $('#drawer_menu').animate({
+      width: 'show'
+    }, 300);
 };
 
 Common.closeSlide = function() {
-    $("#dvOverlay").removeClass('overlay-on');
-    $(".slide-menu").removeClass('slide-on');
+    $('#drawer_menu').animate({
+      width: 'hide'
+    }, 300, function () {
+      $('#menu-background').hide();
+      return false;
+    });
 };
+
+Common.slideShow = function(id) {
+    $(id).show();
+    $(id).animate({
+        left: 0
+    }, 300);
+}
+
+Common.slideHide = function(id, direction, callback) {
+    let m = "100%";
+    if (direction == "left") {
+        m = "200%";
+    }
+
+    $(id).animate({
+        "left": m
+    }, 300, function() {
+        $(id).hide();
+        if ((typeof callback !== "undefined") && $.isFunction(callback)) {
+            callback();
+        }
+    });
+}
 
 Common.startAnimation = function() {
     Common.displayMessageByKey("glossary:msg.info.syncingData");

@@ -23,18 +23,17 @@
 html,body {
     height: 100%;
 }
-body {
-  background-color: #EDEDED;
-  padding-top: 70px;
+main {
+    height: 100%;
+    padding-bottom: 5.0rem;
+    background-color: #F7F7F7;
 }
 header {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  width: 100%;
-  background-color: #333;
-  color: #ffffff;
-  font-size: 16px;
+    line-height: 4.0rem;
+    background-color: #FD8F74;
+    background-repeat: no-repeat;
+    background-size: cover;
+    color: #ffffff;
 }
 header > h1 {
   flex: 1 1 auto;

@@ -5,8 +5,16 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title data-i18n="glossary:title"></title>
-  <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.7.0/fullcalendar.min.css">
-  <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.7.0/fullcalendar.print.css" media="print">
+  <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.9.0/fullcalendar.min.css">
+  <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.9.0/fullcalendar.print.css" media="print">
+  <!--     Fonts and icons     -->
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.8/css/all.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-toggle/2.2.2/css/bootstrap-toggle.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.4.0/css/font-awesome.min.css" />
+  <link href='./css/calendar.css' rel='stylesheet' type='text/css'>
+  <link href='./css/personium.css' rel='stylesheet' type='text/css'>
+  
   <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.19.3/moment-with-locales.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.7.0/fullcalendar.min.js"></script>
@@ -23,63 +31,111 @@
   <script src="./js/common.js"></script>
   <script src="./js/common_personium.js"></script>
   <script src="./js/app.js"></script>
-  <link href='https://fonts.googleapis.com/css?family=Raleway:400,200' rel='stylesheet' type='text/css'>
-  <!--     Fonts and icons     -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-toggle/2.2.2/css/bootstrap-toggle.min.css" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.4.0/css/font-awesome.min.css" />
-  <link href='./css/common.css' rel='stylesheet' type='text/css'>
+  <script>
+    FontAwesomeConfig = {
+      searchPseudoElements: true
+    };
+  </script>
+  <script defer src="https://use.fontawesome.com/releases/v5.0.8/js/all.js"></script>
 </head>
 <body>
   <div class="mySpinner modal-backdrop">
       <i class="fa fa-spinner fa-pulse fa-3x fa-fw"></i>
       <span class="sr-only">Loading...</span>
   </div>
+  <div id="loadContent" class="loadHiddenDiv">
+  </div>
   <div class="myHiddenDiv" style="height: 100%;">
-    <header class="navbar navbar-fixed-top">
-      <a id="menuIcon" href="#" onclick="Common.openSlide();">
-        <i class="fa fa-bars fa-2x fa-fw"></i>
-      </a>
-      <h1 data-i18n="glossary:title"></h1>
-      <a id="addIcon" href="#" onclick="addButtonClick();return false;">
-        <i class="fa fa-plus fa-2x fa-fw"></i>
-      </a>
-      <a id="updateIcon" href="#" onclick="syncData();return false;">
-        <i class="fa fa-refresh fa-2x fa-fw"></i>
-        <span class="sr-only">Updating...</span>
-      </a>
-    </header>
-    <div id="dispMsg" class="container" style="display:none;"></div>
-    <div class="container" style="height: 80%;">
-      <div class='panel list-group toggle-panel' id='toggle-panel1' style="display:none;"></div>
-      <div id='calendar'></div>
-      <div id='schedule' style="height: 100%; border: 1px;overflow-y: scroll;">
-        
+    <div id="drawer">
+        <div id="menu-background">
+            <div id="drawer_menu">
+                <ul>
+                    <li class="menu-list">
+                        <a id="addAccount" onClick="displayAccountPanel();" href="javascript:void(0)" class="allToggle" data-i18n="glossary:Account.label"></a>
+                    </li>
+                    <li class="menu-list">
+                        <a href="#">週の開始曜日</a>
+                    </li>
+                    <li class="menu-list">
+                        <a href="#">通知</a>
+                    </li>
+                    <li class="menu-list">
+                        <a href="#">予定のデフォルト保存先</a>
+                    </li>
+                    <li class="menu-list">
+                        <a href="#">ご意見・ご要望</a>
+                    </li>
+                    <li class="menu-list app-version">
+                        <a href="#">バージョン 1.2.1</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <header>
+      <button id="drawer_btn" class="header-btn pn-btn">
+        <i class="fas fa-bars fa-2x header-ic-02"></i>
+      </button>
+      <div>
+        <button id="prev" class="calendar-arrow-btn pn-btn">
+          <i class="fas fa-angle-left fa-2x header-ic-01"></i>
+        </button>
+        <span class="calendar-title"></span>
+        <button id="next" class="calendar-arrow-btn pn-btn">
+          <i class="fas fa-angle-right fa-2x header-ic-01"></i>
+        </button>
       </div>
-    </div>
-    <div class="slide-menu">
-      <h1 data-i18n="menu.title"></h1>
-      <table class="menu-title">
-        <tr>
-          <td class="sidemenu-item"><h3>
-            <a onClick="displayAccountPanel();" href="javascript:void(0)" class="allToggle" data-i18n="glossary:Account.label"></a>
-          </h3></td>
-        </tr>
-      </table>
-    </div>
-    <div class="overlay" id="dvOverlay">
-    </div>
+
+      <button id="today-btn" class="header-btn-right header-btn pn-btn" data-i18n="glossary:Calendars.Today"></button>
+    </header>
+    <main>
+      <div id="dispMsg" class="container" style="display:none;position:absolute;background-color: rgba(255,255,255,0.8);width: 100%;z-index:9;"></div>
+      <div class="container" style="height: 80%;">
+        <div class='panel list-group toggle-panel' id='toggle-panel1' style="display:none;"></div>
+        <div id='calendar'></div>
+      </div>
+      <div id="schedule-scroller" class="fc fc-unthemed fc-ltr" style="height: 100%;overflow:auto;">
+        <div class="fc-view-container">
+          <div class="fc-view fc-listYear-view fc-list-view fc-widget-content">
+            <div id='schedule' class="fc-scroller"></div>
+          </div>
+        </div>
+      </div>
+      <div class="col-xs-12 display-table-cell v-align setting-screen">
+        <h1 class="row header-menu setting-header"></h1>
+        <div class="row" id="settingboard" style="height:100%;"></div>    
+      </div>
+      <!--<div id="modalDialogContainer"></div>-->
+    </main>
+    <footer>
+        <div class="switching-menu">
+            <button id="list" class="current">
+                <i class="fas fa-list fa-lg icon"></i>
+                <div class="icon-text" data-i18n="glossary:Calendars.List">リスト</div>
+            </button>
+            <button id="day">
+                <i class="fa fa-clock fa-lg icon"></i>
+                <div class="icon-text" data-i18n="glossary:Calendars.Day">日</div>
+            </button>
+            <button id="month">
+                <i class="fas fa-calendar-alt fa-lg icon"></i>
+                <div class="icon-text" data-i18n="glossary:Calendars.Month">月</div>
+            </button>
+        </div>
+
+        <button id="add" onclick="addButtonClick();">
+            <i class="fas fa-plus-circle fa-lg icon"></i>
+            <div class="icon-text" data-i18n="glossary:Calendars.Add_events">予定追加</div>
+        </button>
+    </footer>
+
     <div class="modal" id="dialogOverlay">
       <div class="mySpinner">
         <i class="fa fa-spinner fa-pulse fa-3x fa-fw"></i>
         <span class="sr-only">Sync...</span>
       </div>
     </div>
-    <div class="col-xs-12 display-table-cell v-align setting-menu">
-      <h1 class="row header-menu setting-header"></h1>
-      <div class="row" id="settingboard" style="height:100%;"></div>    
-    </div>
-    <div id="modalDialogContainer"></div>
   </div>
 </body>
 </html>

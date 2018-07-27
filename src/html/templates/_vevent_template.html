@@ -1,118 +1,94 @@
-<div id="modal-vevent" class="modal fade" data-keyboard="false" data-backdrop="static" role="dialog">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header login-header">
-        <button type="button" class="close" data-dismiss="modal">x</button>
-        <h4 class="modal-title" data-i18n="glossary:Calendars.VEvent.label">Event</h4>
-      </div>
-      <div class="modal-body">
-        <div class="row">
-          <div class="col-sm-3 col-md-3">
-            <span data-i18n="glossary:Account.type"></span>
-          </div>
-          <div class="col-sm-9 col-md-9">
-            <div class="row">
-              <div class="col-sm-4 col-md-4">
-                <input type="radio" id="srcTypeEWS" name="srcType" value="EWS" checked>
-                <label for="srcTypeEWS" data-i18n="glossary:Account.types.EWS"></label>
-              </div>
-              <div class="col-sm-4 col-md-4">
-                <input type="radio" id="srcTypeGOOGLE" name="srcType" value="Google">
-                <label for="srcTypeGOOGLE" data-i18n="glossary:Account.types.Google"></label>
-              </div>
-              <div class="col-sm-4 col-md-4">
-                <input type="radio" id="srcTypeOffice365" name="srcType" value="Office365"><label for="srcTypeOffice365" data-i18n="glossary:Account.types.Office365"></label>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="row">
-          <div class="col-sm-3 col-md-3">
-            <span data-i18n="glossary:Calendars.VEvent.label"></span>
-          </div>
-          <div class="col-sm-9 col-md-9">
-            <a href="" target="_blank" id="url" name="url">Details</a>
-          </div>
-        </div>
-        <div class="row">
-          <div class="col-sm-3 col-md-3">
-            <span data-i18n="glossary:Account.srcAccountName"></span>
-          </div>
-          <div class="col-sm-9 col-md-9">
-            <input type="text" id="srcAccountName" name="srcAccountName" value="" readonly>
-          </div>
-        </div>
-        <div class="row">
-          <div class="col-sm-3 col-md-3">
-            <span data-i18n="glossary:Calendars.VEvent.summary"></span>
-          </div>
-          <div class="col-sm-9 col-md-9">
-            <input type="text" id="summary" name="summary" value="">
-          </div>
-        </div>
-        <div class="row">
-          <div class="col-sm-3 col-md-3">
-            <span data-i18n="glossary:Calendars.VEvent.location"></span>
-          </div>
-          <div class="col-sm-9 col-md-9">
-            <input type="text" id="location" name="location" value="">
-          </div>
-        </div>
-        <div class="row">
-          <div class="col-sm-3 col-md-3">
-            <span data-i18n="glossary:Calendars.All_day"></span>
-          </div>
-          <div class="col-sm-9 col-md-9">
-            <input type="checkbox" id="allDay" name="allDay" checked data-toggle="toggle">
-          </div>
-        </div>
-        <div class="row">
-          <div class="col-sm-3 col-md-3">
-            <span data-i18n="glossary:Calendars.VEvent.dtstart"></span>
-          </div>
-          <div class="col-sm-9 col-md-9">
-            <input type="text" id="dtstart" name="dtstart" value="">
-          </div>
-        </div>
-        <div class="row">
-          <div class="col-sm-3 col-md-3">
-            <span data-i18n="glossary:Calendars.VEvent.dtend"></span>
-          </div>
-          <div class="col-sm-9 col-md-9">
-            <input type="text" id="dtend" name="dtend" value="">
-          </div>
-        </div>
-        <div class="row">
-          <div class="col-sm-3 col-md-3">
-            <span data-i18n="glossary:Calendars.VEvent.description"></span>
-          </div>
-          <div class="col-sm-9 col-md-9">
-            <textarea class="form-control" rows="5" id="description" name="description"></textarea>
-          </div>
-        </div>
-        <div class="row">
-          <div class="col-sm-3 col-md-3">
-            <span data-i18n="glossary:Calendars.VEvent.attendees"></span>
-          </div>
-          <div class="col-sm-9 col-md-9">
-            <textarea class="form-control" rows="5" id="attendees" name="attendees" readonly></textarea>
-          </div>
-        </div>
-        
-        <div class="row hidden d-none">
-          <div class="col-sm-3 col-md-3">
-            <span data-i18n="glossary:Calendars.VEvent.organizer"></span>
-          </div>
-          <div class="col-sm-9 col-md-9">
-            <input type="hidden" id="organizer" name="organizer" value="">
-          </div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-default" data-dismiss="modal" data-i18n="btn.cancel">Cancel</button>
-        <button type="button" class="btn btn-primary" id="b-save-vevent-ok" data-i18n="glossary:Calendars.VEvent.btn.save" >Save</button>
-        <button type="button" class="btn btn-primary" id="b-delete-vevent-ok" data-i18n="glossary:Calendars.VEvent.btn.delete">Delete</button>
-      </div>
-    </div>
-  </div>
-</div>
+<!doctype html>
+<html lang="ja">
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Cache-Control" content="no-cache">
+
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
+        crossorigin="anonymous"></script>
+    <title>Personium</title>
+</head>
+<body>
+    <header>
+        <button class="header-btn pn-back-btn pn-btn" onclick="PCalendar.backSubContent();">
+            <i id="back_btn" class="fas fa-angle-left fa-2x header-ic-01"></i>
+        </button>
+        <div data-i18n="glossary:Calendars.New_events">新しい予定</div>
+        <button id="edit-btn" class="header-btn-right header-btn pn-btn text-btn" data-i18n="glossary:Calendars.VEvent.btn.save">保存</button>
+
+    </header>
+
+    <main class="no-footer">
+        <ul class="add-event">
+            <li class="separate-li"></li>
+            <li class="event-info-li">
+                <div class="event-date-setting">
+                    <div class="input-group" style="width:100%;">
+                        <input id="event-title" type="text" class="form-control" data-i18n="[placeholder]glossary:Calendars.VEvent.summary" aria-label="タイトル" aria-describedby="basic-addon2">
+                    </div>
+                </div>
+            </li>
+            <li class="separate-li"></li>
+            <li class="event-info-li">
+                <div class="event-info-title" data-i18n="glossary:Calendars.VEvent.dtstart">開始</div>
+                <div class="event-date-setting">
+                    <input type="datetime-local" class="event-date" id="dtstart" name="event-start-date" value="2017-04-01T00:00">
+                </div>
+            </li>
+            <li class="event-info-li">
+                <div class="event-info-title" data-i18n="glossary:Calendars.VEvent.dtend">終了</div>
+                <div class="event-date-setting">
+                    <input type="datetime-local" class="event-date" id="dtend" name="event-start-date" value="2017-04-01T00:00:00">
+                </div>
+            </li>
+            <li class="event-info-li">
+                <div class="event-info-title" data-i18n="glossary:Calendars.All_day">終日</div>
+                <div class="event-date-setting">
+                    <div class="event-toggle-btn">
+                        <input type="checkbox" id="allDay" checked />
+                        <label for="allDay" data-on-label="On" data-off-label="Off"></label>
+                    </div>
+                </div>
+            </li>
+            <li class="separate-li"></li>
+            <li class="event-info-li">
+                <div class="event-info-title" data-i18n="glossary:Calendars.label">カレンダー</div>
+                <div class="event-date-setting event-data-setting-next" id="srcAccountName" data-account="Personium" data-type="Personium" onclick="selectAccountPanel();">Personium</div>
+            </li>
+            <li class="event-info-li">
+                <div class="event-date-setting">
+                    <div class="input-group" style="width:100%;">
+                        <input type="text" class="form-control" id="location" data-i18n="[placeholder]glossary:Calendars.VEvent.location" aria-label="場所" aria-describedby="basic-addon2">
+                    </div>
+                </div>
+            </li>
+            <li class="event-info-li">
+                <div class="event-date-setting-left">
+                    <div class="input-group" style="width:100%;">
+                        <a target="_blank" id="url" name="url">Details</a>
+                        <!--<input type="text" class="form-control" id="url" placeholder="URL" aria-label="URL" aria-describedby="basic-addon2">-->
+                    </div>
+                </div>
+            </li>
+            <li class="event-info-li">
+                <!-- <div class="event-info-title">メモ</div> -->
+                <div class="event-date-setting">
+                    <div class="form-group">
+                        <textarea class="form-control" rows="3" id="description" data-i18n="[placeholder]glossary:Calendars.VEvent.description" placeholder="メモ"></textarea>
+                    </div>
+                </div>
+            </li>
+        </ul>
+    </main>
+    <footer>
+        <button id="b-delete-vevent-ok" class="width-full-btn" data-i18n="glossary:Calendars.VEvent.btn.delete"></button>
+    </footer>
+</body>
+
+</html>
