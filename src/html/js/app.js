@@ -28,7 +28,6 @@ additionalCallback = function() {
     Common.setIdleTime();
 
     Common.getProfileName(Common.getCellUrl(), displayMyDisplayName);
-    createTitleHeader(true, true);
 
     renderFullCalendar();
 
@@ -85,114 +84,12 @@ Drawer_Menu = function() {
   });
 }
 
-/* old */
 displayMyDisplayName = function(extUrl, dispName) {
     $("#dispName")
         .attr("data-i18n", "[html]glossary:msg.info.description")
         .localize({
             "name": dispName
         });
-};
-
-// Create title header in "header-menu" class
-// settingFlg true: Settings false: Default
-// menuFlg true: show menu false: hide menu
-createTitleHeader = function(settingFlg, menuFlg) {
-    var setHtmlId = ".header-menu";
-    var backMenuId = "backMenu";
-    var backTitleId = "backTitle";
-    var titleId = "titleMenu";
-    if (settingFlg) {
-        setHtmlId = ".setting-header";
-        backMenuId = "settingBackMenu";
-        backTitleId = "settingBackTitle";
-        titleId = "settingTitleMenu";
-    }
-    
-    let backBtn = createBackBtn(backMenuId);
-    let backBtnTitle = createBackBtnTitle(backTitleId);
-    let title = $('<div>', {
-        id: titleId,
-        class: 'col-xs-6 text-center title'
-    });
-    let editMenu = createEditMenu(menuFlg);
-
-    $(setHtmlId)
-        .append($(editMenu), $(backBtn), $(backBtnTitle), $(title))
-        .localize();
-};
-
-createBackBtn = function(backMenuId) {
-    let backIcon = $('<i>', {
-        class: 'fa fa-chevron-left',
-        'aria-hidden': 'true'
-    });
-
-    let aTag = $('<a>', {
-        class: 'allToggle prev-icon',
-        href: '#',
-        onClick: 'moveBackahead();return false;'
-    });
-    aTag.append($(backIcon));
-
-    let backDom = $('<div>', {
-        id: backMenuId,
-        class: 'col-xs-1'
-    });
-    backDom.append($(aTag));
-
-    return backDom;
-};
-
-createBackBtnTitle = function(backTitleId) {
-    let aTd = $('<td>', {
-        id: backTitleId,
-        class: 'ellipsisText',
-        align: 'left'
-    });
-
-    let aRow = $('<tr>', {
-        style: 'vertical-align: middle;'
-    });
-    aRow.append($(aTd));
-
-    let aTable = $('<table>', {
-        class: 'table-fixed back-title'
-    });
-    aTable.append($(aRow));
-
-    let aDiv = $('<div>', {
-        class: 'col-xs-2'
-    });
-    aDiv.append($(aTable));
-
-    return aDiv;
-};
-
-createEditMenu = function(menuFlg) {
-    let editMenu = $('<div>', {
-        class: 'col-xs-3 text-right edit-menu'
-    });
-
-    if (menuFlg) {
-        let editButton = $('<a>', {
-            href: '#',
-            onClick: 'toggleEditMenu(this);',
-            'data-item-btn-viewable': 'true',
-            'data-i18n': 'btn.edit'
-        });
-        let finishButton = $('<a>', {
-            href: '#',
-            onClick: 'toggleEditMenu(this);',
-            'data-item-btn-viewable': 'false',
-            'data-i18n': 'btn.finish',
-            style: 'display:none;'
-        });
-        
-        editMenu.append($(editButton), $(finishButton));
-    }
-
-    return editMenu;
 };
 
 toggleEditMenu = function(aDom) {
@@ -221,66 +118,6 @@ toggleEditMenu = function(aDom) {
         line_contents.removeClass('clear-ic');
         a_tag.removeClass('disabled');
     }
-};
-
-moveBackahead = function() {
-    var no = Common.settingNowPage;
-    switch (no) {
-    case 0:
-        window.location.href = cm.user.prevUrl;
-        break;
-    case 1:
-        closeSetting();
-        break;
-    default:
-        $('.edit-menu').show();
-        $("#setting-panel" + no).toggleClass("slide-on");
-        $("#setting-panel" + (no - 1)).toggleClass("slide-on-holder");
-        break;
-    }
-
-    Common.settingNowPage = no - 1;
-    if (Common.settingNowPage >= 1) {
-        setTitleMenu(Common.settingNowTitle[Common.settingNowPage], true);
-    }
-};
-
-closeSetting = function() {
-    $(".setting-screen").toggleClass("slide-on");
-    $("#settingboard").empty();
-    $("#settingBackTitle").empty();
-    Common.settingNowPage = 0;
-};
-
-setBackahead = function(flg) {
-    var boardId = "settingboard";
-    Common.settingNowPage = Common.settingNowPage + 1;
-    boardId = "settingboard";
-    var toggleClass = "toggle-panel";
-    if (Common.settingNowPage == 1) {
-        // first page
-        toggleClass = "panel-default";
-    }
-    if (Common.settingNowPage == 2) {
-        $('.edit-menu').hide();
-    }
-    if (document.getElementById('setting-panel' + Common.settingNowPage) == null) {
-        $("#" + boardId).append('<div style="height:100%;overflow:auto;padding-bottom:85px;" class="panel list-group ' + toggleClass + '" id="setting-panel' + Common.settingNowPage + '"></div>');
-    }
-    if (document.getElementById('setting-panel' + (Common.settingNowPage + 1)) == null) {
-        $("#" + boardId).append('<div style="height:100%;overflow:auto;padding-bottom:85px;" class="panel list-group toggle-panel" id="setting-panel' + (Common.settingNowPage + 1) + '"></div>');
-    }
-};
-
-setTitleMenu = function(title, flg) {
-    if (i18next.exists(title)) {
-        $("#settingTitleMenu").html('<h4 class="ellipsisText" data-i18n="' + title + '"></h4>').localize();
-    } else {
-        $("#settingTitleMenu").html('<h4 class="ellipsisText">' + title + '</h4>');
-    }
-    var titles = Common.settingNowTitle;
-    titles[Common.settingNowPage] = title;
-    Common.settingNowTitle = titles;
 };
 
 displaySyncListPanel = function() {
@@ -320,7 +157,6 @@ displayAccountPanel = function() {
             );
         });
         $("#addAccountFooterButton").attr("data-i18n", "glossary:Account.Add").localize();
-        //$(".myHiddenDiv").hide();
     }).fail(function(error) {
         console.log(error);
     });
@@ -353,18 +189,10 @@ selectAccountPanel = function() {
         $(id + " footer").hide();
 
         $("#addAccountFooterButton").attr("data-i18n", "glossary:Account.Add").localize();
-        //$(".myHiddenDiv").hide();
     }).fail(function(error) {
         console.log(error);
     });
 }
-
-setEditMenu = function(menuFlg) {
-    $(".header-menu .edit-menu").remove();
-    $('.setting-header')
-        .append($(createEditMenu(menuFlg)))
-        .localize();
-};
 
 getAccountList = function() {
     return getAccessInfoAPI();
@@ -467,13 +295,6 @@ accountClickEvent = function(aDom) {
         }
     }
 }
-
-hideDeleteButton = function(aDom) {
-    if ($('.account-item .edit-icon').is(":visible")) {
-        $(aDom).closest('tr').find('.del-button').closest('td').hide();
-        $(aDom).closest('tr').find('.del-icon').closest('td').show();
-    }
-};
 
 /*
  * <a class="del-button list-group-item" href="#"
@@ -637,6 +458,16 @@ PCalendar.displayCalendarTitle = function(str) {
     return str || i18next.t('glossary:Calendars.No_title');
 };
 
+getListOfVEventsCount = function() {
+    let urlOData = Common.getBoxUrl() + 'OData/vevent';
+    let filterStr = $.param({
+        "$inlinecount": "allpages",
+        "$top": 0
+    });
+    let queryUrl = urlOData + '?' + filterStr;
+    let access_token = Common.getToken();
+    return Common.getListOfOData(queryUrl, access_token);
+}
 getListOfVEvents = function() {
     let sDate = sDateObj.toISOString();
     let eDate = eDateObj.toISOString();
@@ -644,7 +475,6 @@ getListOfVEvents = function() {
     let filterStr = $.param({
         "$top": 1000,
         "$filter": "dtend ge datetimeoffset'"+sDate+"' and dtstart le datetimeoffset'"+eDate+"'",
-        //"$filter": "dtstart ge datetimeoffset'2017-01-01T00:00:00+09:00'",
         "$orderby": "dtstart desc"
     });
     let queryUrl = urlOData + '?' + filterStr;
@@ -689,7 +519,6 @@ dispScheduleHeaders = function(startObj, endObj, firstFlg) {
         let html = "";
         if (startObj.date() == 1) {
             // display month header
-            //html = "<div style='height: 50px;margin-bottom: 10px;background-image: url(\"https://demo.personium.io/ksakamoto/__/IMG_0066.jpg\")'>" + startObj.format("YYYY年MM月") + "</div>";
             html = [
                 "<table class='fc-list-table' id='schedule-"+startObj.format("YYYY-MM")+"' data-date='"+startObj.format("YYYY-MM")+"'>",
                     "<tr class='list-month list-"+startObj.format("M")+"month'>",
@@ -697,34 +526,15 @@ dispScheduleHeaders = function(startObj, endObj, firstFlg) {
                     "</tr>",
                 "</table>"
             ].join("");
-            //html = "<table id='schedule-"+startObj.format("YYYY-MM")+"' data-date='"+startObj.format("YYYY-MM")+"'><div style='height: 200px;margin-bottom: 30px;background-image: url(\"https://demo.personium.io/ksakamoto/__/IMG_0066.jpg\")'><font size='5'>" + startObj.format("YYYY年MM月") + "</font></div><div id='schedule-data-"+startObj.format("YYYY-MM")+"'></div></table>";
             if (firstFlg) {
                 let preId = $("#schedule").children(":first").attr("id");
                 $("#schedule").prepend(html);
-                //$("#" + preId)[0].scrollIntoView(true);
             } else {
                 $("#schedule").append(html);
             }
         }
-/*
-        if (startObj.day() == DAY_WEEK_TOP) {
-            // display week header
-            let stDay = startObj.format("M月D日");
-            let edDayMoment = moment([startObj.year(), startObj.month(), startObj.date()]).add(6, "day");
-            let edFormat = "D日";
-            if (startObj.month() != edDayMoment.month()) {
-                edFormat = "M月" + edFormat;
-            }
-            let edDay = edDayMoment.format(edFormat);
-            html = "<div style='margin-bottom: 15px;margin-top:15px;margin-left: 50px;'><font size='5'>" + stDay + "~" + edDay + "</font></div>";
-            //html = "<div>" + stDay + "~" + edDay + "</div>";
-            $("#schedule-data-"+startObj.format("YYYY-MM")).append(html);
-        }
-*/
         var day = startObj.format("YYYY-MM-DD");
-        //html = "<span data-id='" + day + "'></span>";
         html = "<table class='fc-list-table' data-id='" + day + "'></table>";
-        //html = "<tr class='fc-list-heading' data-id='" + day + "'></tr>";
         $("#schedule-"+startObj.format("YYYY-MM")+">tbody").append(html);
         startObj.add(1, "day");
     }
@@ -736,7 +546,6 @@ getListOfVEventsSchedule = function(startObj, endObj, delPosition) {
     let filterStr = $.param({
         "$top": "1000",
         "$filter": "dtend ge datetimeoffset'"+fromDay+"' and dtstart le datetimeoffset'"+toDay+"'",
-        //"$filter": "dtstart ge datetimeoffset'2017-01-01T00:00:00+09:00'",
         "$orderby": "dtstart asc, dtend asc"
     });
     
@@ -814,7 +623,6 @@ scheduleRenderEvent = function(item) {
                 "</tr>"
             ].join("");
             $("[data-id='"+day+"']").append(table);
-            //$("#schedule-"+startObj.format("YYYY-MM")+">tbody").append(table);
         }
 
         let summary = PCalendar.displayCalendarTitle(event.title);
@@ -912,10 +720,6 @@ PCalendar.renderEvent = function(item) {
     $('#calendar').fullCalendar('renderEvent', event, true);
 };
 
-PCalendar.prepareEvent = function(item) {
-    return PCalendar.convertVEvent2FCalEvent(item);
-};
-
 PCalendar.updateEvent = function(item) {
     let currentFCalEvent = $('#calendar').fullCalendar('clientEvents', item.__id)[0]; // currently only the first event
     let updatedFCalEvent = PCalendar.convertVEvent2FCalEvent(item);
@@ -989,14 +793,21 @@ syncData = function() {
         .done(function(data, status, response){
             console.log(response.status);
             if (response.status == "204") {
-                /*
-                 * no setup info
-                 * 1. Display Menu->Account List-> Register Account Dialog
-                 * 2. Fill form
-                 * 3. Call setAccessInfoAPI
-                 */
-                Common.stopAnimation();
-                displaySyncListPanel();
+                getListOfVEventsCount().done(function(data) {
+                    if (data.d.__count == 0) {
+                        /*
+                         * no setup info
+                         * 1. Display Menu->Account List-> Register Account Dialog
+                         * 2. Fill form
+                         * 3. Call setAccessInfoAPI
+                         */
+                        displaySyncListPanel();
+                    }
+                }).fail(function(error) {
+                    console.log(error);
+                }).always(function() {
+                    Common.stopAnimation();
+                })
             } else {
                 if (data.status == 'OK') {
                     Common.stopAnimation();
@@ -1278,12 +1089,6 @@ modifyAccount = function(srcType) {
     return false;
 };
 
-displyAccessInfo = function(aDom) {
-    let accountInfo = $(aDom).closest("div").data('account-info');
-    console.log(accountInfo.srcAccountName);
-    return false;
-};
-
 deleteAccessInfo = function(aDom) {
     let accountInfo = $(aDom).closest("li").data('account-info');
     deleteAccessInfoAPI(accountInfo)
@@ -1320,33 +1125,6 @@ deleteAccessInfoAPI = function(accountInfo) {
     });
 };
 
-PCalendar.setAccountInfo = function(accountInfo) {
-    let srcTypeDefault = accountInfo.srcType;
-    $('#modal-vevent input[name=srcType][value=' + srcTypeDefault + ']').prop('checked', true);
-    let srcAccountNameDefault = accountInfo.srcAccountName;
-    $('#modal-vevent #srcAccountName').val(srcAccountNameDefault);
-};
-
-PCalendar.addVEventBtnHandler = function(accountList) {
-    let listEWS = _.where(accountList, { srcType: 'EWS'});
-    let listGoogle = _.where(accountList, { srcType: 'Google'});
-    let listOffice365 = _.where(accountList, { srcType: 'Office365'});
-
-    $('#srcTypeEWS').prop('disabled', (listEWS.length == 0));
-    $('#srcTypeGOOGLE').prop('disabled', (listGoogle.length == 0));
-    $('#srcTypeOffice365').prop('disabled', (listOffice365.length == 0));
-
-    $('#modal-vevent').on('change', 'input[type=radio][name=srcType]', function(){
-        console.log('Calendar type clicked. ' + this.value);
-        let tempAccountList = accountList;
-        let srcType = this.value;
-        let tempAccount = _.where(tempAccountList, { srcType: srcType });
-        let srcAccountName = tempAccount[0].srcAccountName;
-        $('#srcAccountName').val(srcAccountName);
-    });
-
-    $('#b-delete-vevent-ok').hide();
-};
 PCalendar.changeEditBtn = function(event) {
     $("#edit-btn").removeAttr("onclick").on("click", function() {
         PCalendar.editEvent(event);
@@ -1445,11 +1223,9 @@ PCalendar.setEditVEventInfo = function(event) {
     }
     $('#allDay').prop('checked', event.allDay);
     if (event.dtstart) {
-        //$('#modal-vevent #dtstart').val(moment(tempVEvent.dtstart).format());
         $('#dtstart').val(moment(event.dtstart).format("YYYY-MM-DDTHH:mm"));
     }
     if (event.dtend) {
-        //$('#modal-vevent #dtend').val(moment(tempVEvent.dtend).format());
         $('#dtend').val(moment(event.dtend).format("YYYY-MM-DDTHH:mm"));
     }
     if (event.description) {
@@ -1461,6 +1237,7 @@ PCalendar.setEditVEventInfo = function(event) {
         $('#organizer').val(event.srcAccountName);
     }
 };
+
 PCalendar.setEditVEventDisabled = function(disabled) {
     $("#event-title").attr("disabled", disabled);
     $("#dtstart").attr("disabled", disabled);
@@ -1477,35 +1254,6 @@ PCalendar.setEditVEventDisabled = function(disabled) {
     $("#url").attr("disabled", disabled);
     $("#description").attr("disabled", disabled);
 }
-
-PCalendar.editVEventBtnHandler = function(calEvent) {
-    $('#b-save-vevent-ok').click(function(){
-        console.log('Add event');
-        let tempVEvent = PCalendar.prepareVEvent('PUT', calEvent.vEvent);
-        PCalendar.updateVEventAPI('PUT', tempVEvent)
-            .done(function(data){
-                PCalendar.updateEvent(data);
-                $('#modal-vevent').modal('hide');
-            })
-            .fail(function(error){
-                console.log(error.responseJSON);
-                $('#modal-vevent').modal('hide');
-                Common.openWarningDialog(
-                    'warningDialog.title',
-                    error.responseJSON.error || error.responseJSON.message.value,
-                    function(){
-                        $('#modal-common').modal('hide');
-                        $('#modal-vevent').modal('show');
-                    }
-                );
-            });
-    });
-
-    $('#b-delete-vevent-ok').click(function() {
-        PCalendar.displayVEventDialog(calEvent);
-    });
-        
-};
 
 PCalendar.displayVEventDialog = function(calEvent) {
     let eventId = calEvent.id;
@@ -1626,4 +1374,11 @@ reRenderCalendar = function() {
     } else {
         initSchedule();
     }
+};
+
+/* debug */
+displyAccessInfo = function(aDom) {
+    let accountInfo = $(aDom).closest("div").data('account-info');
+    console.log(accountInfo.srcAccountName);
+    return false;
 };
