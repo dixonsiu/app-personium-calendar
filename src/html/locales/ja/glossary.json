@@ -25,8 +25,10 @@
         "Today": "今日",
         "All_day": "終日",
         "List": "リスト",
+        "DayFormat": "MM月DD日",
         "Schedule": "スケジュール",
         "Schedule_listDayFormat": "MM月DD日[(]ddd[)]",
+        "dayPopover": "YYYY年MM月DD日[(]ddd[])]",
         "Month": "月",
         "Day": "日",
         "Month_titleFormat": "YYYY年MM月",
@@ -34,7 +36,8 @@
         "msg": {
             "info": {
             }
-        }
+        },
+        "Sync": "同期"
     },
     "Account": {
         "label": "連携アカウントの追加",

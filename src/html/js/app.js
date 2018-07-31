@@ -34,22 +34,37 @@ additionalCallback = function() {
 
     syncData();
 
-    $('body').on('change', '#setting-panel2 input[type=radio][name=srcType]', function(){
-        let srcType = this.value;
-        switch(srcType) {
-        case 'Google':
-        case 'Office365':
-            $('#idCalendarAccount, #pwCalendarAccount')
-                .val('')
-                .prop('disabled', true);
-            break;
-        default:
-            $('#idCalendarAccount, #pwCalendarAccount')
-                .val('')
-                .prop('disabled', false);
-        }
+    $('#month').on('click', function () {
+        $('#calendar').fullCalendar('changeView', 'month');
+        ControlFooter($(this));
+    });
+    $('#day').on('click', function () {
+        $('#calendar').fullCalendar('changeView', 'agendaDay');
+        ControlFooter($(this));
+    });
+    $('#list').on('click', function () {
+        $('#calendar').fullCalendar('changeView', 'schedule');
+        ControlFooter($(this));
+    });
+    $('#prev').on('click', function () {
+      $('#calendar').fullCalendar('prev');
+    });
+    
+    $('#next').on('click', function () {
+      $('#calendar').fullCalendar('next');
     });
 };
+
+/**
+   * ControlFooter
+   * @param {*} target 
+   */
+  function ControlFooter(target) {
+    $('.switching-menu').find('.clicked').removeClass('clicked');
+    var result = $('.switching-menu').find('.current');
+    result.removeClass('current');
+    target.addClass('current');
+  }
 
 /**
  * Drawer_Menu
@@ -476,7 +491,6 @@ createDeleteBtn = function() {
 renderFullCalendar = function() {
     $('#calendar').fullCalendar({
         header: false,
-
         // customize the button names,
         // otherwise they'd all just say "list"
         buttonText: {
@@ -485,19 +499,16 @@ renderFullCalendar = function() {
         allDayText: i18next.t('glossary:Calendars.All_day'),
         views: {
             schedule: { 
-                buttonText: i18next.t('glossary:Calendars.Schedule'),
-                type: 'list',
-                visibleRange: {
-                    start: moment(moment().unix()).format("YYYY-MM-DD"),
-                    end: moment().add(21, "year").startOf("year").format("YYYY-MM-DD")
-                }
-                ,titleFormat: "[" + moment().locale(i18next.language).format("LL") + "]"
-                ,listDayFormat: i18next.t('glossary:Calendars.Schedule_listDayFormat')
+                type: 'agendaDay'
             },
-            agendaDay: { buttonText: i18next.t('glossary:Calendars.Day') },
+            agendaDay: { 
+                titleFormat: i18next.t('glossary:Calendars.DayFormat')
+            },
             month: { 
-                buttonText: i18next.t('glossary:Calendars.Month'),
-                titleFormat: i18next.t('glossary:Calendars.Month_titleFormat')
+                titleFormat: i18next.t('glossary:Calendars.Month_titleFormat'),
+                fixedWeekCount: false,
+                eventLimitText: '',
+                dayPopoverFormat: i18next.t('glossary:Calendars.dayPopover')
             }
         },
         height: "parent",
@@ -506,13 +517,21 @@ renderFullCalendar = function() {
         defaultView: 'schedule',
         defaultDate: moment().format(),
         timeFormat: 'H:mm' ,
+        axisFormat: 'HH:mm',
+        timeFormat: 'HH:mm',
+        slotLabelFormat: 'H:mm',
+        nowIndicator: true,
         navLinks: true, // can click day/week names to navigate views
         editable: true,
         eventLimit: true, // allow "more" link when too many events
         viewRender: function(currentView) {
                     dispListName = currentView.name;
                     if (currentView.name != "schedule") {
-                        $(".container").show();
+                        var title = currentView.title;
+                        $(".calendar-title").html(title);
+                        $("#prev").show();
+                        $("#next").show();
+                        $("#container").show();
                         $("#schedule").hide();
                         sDateObj = moment(currentView.start.valueOf());
                         eDateObj = moment(currentView.end.valueOf());
@@ -520,7 +539,7 @@ renderFullCalendar = function() {
                     } else {
                         $(".calendar-title").html(moment().locale(i18next.language).format(i18next.t('glossary:Calendars.Month_titleFormat')));
 
-                        $(".container").hide();
+                        $("#container").hide();
                         $("#prev").hide();
                         $("#next").hide();
                         $("#schedule").empty();
@@ -528,47 +547,49 @@ renderFullCalendar = function() {
 
                         initSchedule();
 
-                        $("#schedule-scroller").on("scroll", function() {
-                            let now = $("#schedule-scroller").scrollTop();
-
-                            let dispDate = "";
-                            $("#schedule").children().each(function(index, ele) {
-                                if (index == 0 || now > ele.offsetTop) {
-                                    dispTitlePos = ele.offsetTop;
-                                    dispDate = $(ele).data("date");
-                                } else {
-                                    $(".calendar-title").html(moment(dispDate + "-01").locale(i18next.language).format(i18next.t('glossary:Calendars.Month_titleFormat')));
-                                    return false;
+                        $("#schedule-scroller").removeAttr("onscroll").on("scroll", function() {
+                            if (dispListName == "schedule") {
+                                let now = $("#schedule-scroller").scrollTop();
+    
+                                let dispDate = "";
+                                $("#schedule").children().each(function(index, ele) {
+                                    if (index == 0 || now > ele.offsetTop) {
+                                        dispTitlePos = ele.offsetTop;
+                                        dispDate = $(ele).data("date");
+                                    } else {
+                                        $(".calendar-title").html(moment(dispDate + "-01").locale(i18next.language).format(i18next.t('glossary:Calendars.Month_titleFormat')));
+                                        return false;
+                                    }
+                                });
+    
+                                // The position where the top month data is visible
+                                let pageTop = $("#schedule").children(":first").next()[0].offsetTop + $("#schedule").children(":first").next().innerHeight();
+                                // Position where data of the bottom month can be seen
+                                let pageBottom = $("#schedule").children(":last").prev()[0].offsetTop - $("#schedule-scroller")[0].clientHeight;
+                                if( now > pageBottom )
+                                {
+                                    // Acquire data for the next month
+                                    let lastMonth = $("#schedule").children(":last").data("date");
+                                    let startObj = moment(lastMonth).add(1, "month").startOf("month");
+                                    let endObj = moment(lastMonth).add(1, "month").endOf("month");
+    
+                                    dispScheduleHeaders(moment(startObj), moment(endObj), false);
+                                    getListOfVEventsSchedule(moment(startObj), moment(endObj), ":first");
+                                } else if (now < pageTop) {
+                                    // Acquire past data
+                                    let firstMonth = $("#schedule").children(":first").data("date");
+                                    let startObj = moment(firstMonth).add(-1, "month").startOf("month");
+                                    let endObj = moment(firstMonth).add(-1, "month").endOf("month");
+    
+                                    dispScheduleHeaders(moment(startObj), moment(endObj), true);
+                                    getListOfVEventsSchedule(moment(startObj), moment(endObj), ":last");
                                 }
-                            });
-
-                            // The position where the top month data is visible
-                            let pageTop = $("#schedule").children(":first").next()[0].offsetTop + $("#schedule").children(":first").next().innerHeight();
-                            // Position where data of the bottom month can be seen
-                            let pageBottom = $("#schedule").children(":last").prev()[0].offsetTop - $("#schedule-scroller")[0].clientHeight;
-                            if( now > pageBottom )
-                            {
-                                // Acquire data for the next month
-                                let lastMonth = $("#schedule").children(":last").data("date");
-                                let startObj = moment(lastMonth).add(1, "month").startOf("month");
-                                let endObj = moment(lastMonth).add(1, "month").endOf("month");
-
-                                dispScheduleHeaders(moment(startObj), moment(endObj), false);
-                                getListOfVEventsSchedule(moment(startObj), moment(endObj), ":first");
-                            } else if (now < pageTop) {
-                                // Acquire past data
-                                let firstMonth = $("#schedule").children(":first").data("date");
-                                let startObj = moment(firstMonth).add(-1, "month").startOf("month");
-                                let endObj = moment(firstMonth).add(-1, "month").endOf("month");
-
-                                dispScheduleHeaders(moment(startObj), moment(endObj), true);
-                                getListOfVEventsSchedule(moment(startObj), moment(endObj), ":last");
                             }
                         })
                     }
                 },
         eventClick: function(calEvent, jsEvent, view) {
-            return PCalendar.displayEditVEventDialog(calEvent, jsEvent, view);
+            return PCalendar.displayEditVEvent(calEvent);
         },
         dayClick: function(date, jsEvent, view) {
             let dateWTime = moment(date.format() + "T" + moment().format('HH:mm:00'));
@@ -587,23 +608,7 @@ renderFullCalendar = function() {
 
 scheduleDayClick = function(aDom) {
     let eventItem = $(aDom).data('event-item');
-    Common.loadContent("./templates/_vevent_template.html").done(function(data) {
-        var out_html = $($.parseHTML(data));
-        $("#loadContent").empty();
-        let id = PCalendar.createSubContent(out_html);
-        $("#b-delete-vevent-ok").on("click", function() {
-            PCalendar.displayVEventDialog(eventItem);
-        });
-        $(id + " header div").attr("data-i18n", "glossary:Calendars.Info_events").localize();
-        $("#edit-btn").attr("data-i18n", "glossary:Account.Edit.label").localize();
-        $("#edit-btn").on("click", function() {
-            PCalendar.changeEditBtn(eventItem);
-        });
-        PCalendar.setEditVEventInfo(eventItem.vEvent);
-        PCalendar.setEditVEventDisabled(true);
-    }).fail(function(error) {
-        console.log(error);
-    });
+    PCalendar.displayEditVEvent(eventItem);
 }
 
 // Use today's date
@@ -619,8 +624,8 @@ displayAddEventDialog = function(date) {
         let id = PCalendar.createSubContent(out_html);
         $(id + " footer").hide();
         $("#edit-btn").on("click", PCalendar.addEvent);
-        let startDatetime = moment().second(0).format("YYYY-MM-DDTHH:mm");
-        let endDatetime = moment().add(1, 'hours').format("YYYY-MM-DDTHH:mm");
+        let startDatetime = date.second(0).format("YYYY-MM-DDTHH:mm");
+        let endDatetime = date.add(1, 'hours').format("YYYY-MM-DDTHH:mm");
         $("#dtstart").val(startDatetime);
         $("#dtend").val(endDatetime);
     }).fail(function(error) {
@@ -1402,28 +1407,30 @@ PCalendar.editEvent = function(event) {
         });
 }
 
-PCalendar.displayEditVEventDialog = function(calEvent, jsEvent, view) {
-    $("[data-toggle='toggle']").bootstrapToggle('destroy');
-    
-    $("body #modalDialogContainer").load(
-        "./templates/_vevent_template.html",
-        function(responseText, textStatus, jqXHR) {
-            $('body #modal-vevent').localize();
-
-            PCalendar.setEditVEventInfo(calEvent.vEvent);
-
-            PCalendar.editVEventBtnHandler(calEvent);
-            
-            $("[data-toggle='toggle']").bootstrapToggle();
-
-            $('#modal-vevent').modal('show');
-        }
-    );    
+PCalendar.displayEditVEvent = function(calEvent) {
+    Common.loadContent("./templates/_vevent_template.html").done(function(data) {
+        var out_html = $($.parseHTML(data));
+        $("#loadContent").empty();
+        let id = PCalendar.createSubContent(out_html);
+        $("#b-delete-vevent-ok").on("click", function() {
+            PCalendar.displayVEventDialog(calEvent);
+        });
+        $(id + " header div").attr("data-i18n", "glossary:Calendars.Info_events").localize();
+        $("#edit-btn").attr("data-i18n", "glossary:Account.Edit.label").localize();
+        $("#edit-btn").on("click", function() {
+            PCalendar.changeEditBtn(calEvent);
+        });
+        PCalendar.setEditVEventInfo(calEvent.vEvent);
+        PCalendar.setEditVEventDisabled(true);
+    }).fail(function(error) {
+        console.log(error);
+    });    
 };
 PCalendar.setEditVEventInfo = function(event) {
     $('#srcAccountName').data("type", event.srcType);
     if (event.url) {
         $('#url').attr('href', event.url);
+        $('#url').text(event.url);
     }
     $('#srcAccountName').data("account", event.srcAccountName);
     $('#srcAccountName').text(event.srcAccountName);

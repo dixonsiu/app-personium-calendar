@@ -148,7 +148,7 @@ main {
     transition: all 0.3s linear 0s;
     width: 100%;
     opacity: 1;
-    z-index: 3;
+    z-index: 99;
 }
 
 /*sort*/

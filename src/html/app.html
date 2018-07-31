@@ -54,6 +54,9 @@
                         <a id="addAccount" onClick="displayAccountPanel();" href="javascript:void(0)" class="allToggle" data-i18n="glossary:Account.label"></a>
                     </li>
                     <li class="menu-list">
+                        <a href="#" onClick="syncData();return false;" data-i18n="glossary:Calendars.Sync"></a>
+                    </li>
+                    <li class="menu-list">
                         <a href="#">週の開始曜日</a>
                     </li>
                     <li class="menu-list">
@@ -90,8 +93,8 @@
       <button id="today-btn" class="header-btn-right header-btn pn-btn" data-i18n="glossary:Calendars.Today"></button>
     </header>
     <main>
-      <div id="dispMsg" class="container" style="display:none;position:absolute;background-color: rgba(255,255,255,0.8);width: 100%;z-index:9;"></div>
-      <div class="container" style="height: 80%;">
+      <div id="dispMsg" style="display:none;position:absolute;background-color: rgba(255,255,255,0.8);width: 100%;z-index:9;"></div>
+      <div id="container" style="height:100%;">
         <div class='panel list-group toggle-panel' id='toggle-panel1' style="display:none;"></div>
         <div id='calendar'></div>
       </div>

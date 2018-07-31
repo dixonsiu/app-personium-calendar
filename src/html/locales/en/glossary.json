@@ -25,8 +25,10 @@
         "Today": "Today",
         "All_day": "All-day",
         "List": "List",
+        "DayFormat": "MM-DD",
         "Schedule": "Schedule",
         "Schedule_listDayFormat": "MMMM Do[(]ddd[)]",
+        "dayPopover": "YYYY-MM-DD[(]ddd[])]",
         "Month": "Month",
         "Day": "Day",
         "Month_titleFormat": "MMMM YYYY",
@@ -34,7 +36,8 @@
         "msg": {
             "info": {
             }
-        }
+        },
+        "sync": "Sync"
     },
     "Account": {
         "label": "Account",
