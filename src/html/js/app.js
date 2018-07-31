@@ -445,10 +445,15 @@ displayAddEventDialog = function(date) {
         let id = PCalendar.createSubContent(out_html);
         $(id + " footer").hide();
         $("#edit-btn").on("click", PCalendar.addEvent);
-        let startDatetime = date.second(0).format("YYYY-MM-DDTHH:mm");
+        let startDatetime = date.format("YYYY-MM-DDTHH:mm");
         let endDatetime = date.add(1, 'hours').format("YYYY-MM-DDTHH:mm");
-        $("#dtstart").val(startDatetime);
-        $("#dtend").val(endDatetime);
+        $("#dtstart_date").val(date.format("YYYY-MM-DD"));
+        $("#dtstart_time").val(date.format("HH:mm"));
+        $("#dtend_date").val(date.add(1, 'hours').format("YYYY-MM-DD"));
+        $("#dtend_time").val(date.format("HH:mm"));
+        $("#dtstart_time").hide();
+        $("#dtend_time").hide();
+        PCalendar.allDaySetClickEvent();
     }).fail(function(error) {
         console.log(error);
     });
@@ -1200,6 +1205,7 @@ PCalendar.displayEditVEvent = function(calEvent) {
         });
         PCalendar.setEditVEventInfo(calEvent.vEvent);
         PCalendar.setEditVEventDisabled(true);
+        PCalendar.allDaySetClickEvent();
     }).fail(function(error) {
         console.log(error);
     });    
@@ -1222,11 +1228,23 @@ PCalendar.setEditVEventInfo = function(event) {
         $('#location').val(event.location);
     }
     $('#allDay').prop('checked', event.allDay);
+    let dtstart = moment(event.dtstart);
+    let dtend = moment(event.dtend);
+    if (event.allDay) {
+        $('#dtstart_time').hide();
+        $('#dtend_time').hide();
+        dtend.add(-1, "day");
+    } else {
+        $('#dtstart_time').show();
+        $('#dtend_time').show();
+    }
     if (event.dtstart) {
-        $('#dtstart').val(moment(event.dtstart).format("YYYY-MM-DDTHH:mm"));
+        $('#dtstart_date').val(dtstart.format("YYYY-MM-DD"));
+        $('#dtstart_time').val(dtstart.format("HH:mm"));
     }
     if (event.dtend) {
-        $('#dtend').val(moment(event.dtend).format("YYYY-MM-DDTHH:mm"));
+        $('#dtend_date').val(dtend.format("YYYY-MM-DD"));
+        $('#dtend_time').val(dtend.format("HH:mm"));
     }
     if (event.description) {
         $('#description').val(event.description);
@@ -1237,11 +1255,24 @@ PCalendar.setEditVEventInfo = function(event) {
         $('#organizer').val(event.srcAccountName);
     }
 };
+PCalendar.allDaySetClickEvent = function() {
+    $("#allDay").off().on("change", function() {
+        if ($(this).prop("checked")) {
+            $('#dtstart_time').hide();
+            $('#dtend_time').hide();
+        } else {
+            $('#dtstart_time').show();
+            $('#dtend_time').show();
+        }
+    })
+}
 
 PCalendar.setEditVEventDisabled = function(disabled) {
     $("#event-title").attr("disabled", disabled);
-    $("#dtstart").attr("disabled", disabled);
-    $("#dtend").attr("disabled", disabled);
+    $("#dtstart_date").attr("disabled", disabled);
+    $("#dtstart_time").attr("disabled", disabled);
+    $("#dtend_date").attr("disabled", disabled);
+    $("#dtend_time").attr("disabled", disabled);
     $("#allDay").attr("disabled", disabled);
     $("#srcAccountName").attr("disabled", disabled);
     //if (disabled) {
@@ -1304,14 +1335,23 @@ PCalendar.displayVEventDialog = function(calEvent) {
     };
  */
 PCalendar.prepareVEvent = function(method, tempVEvent) {
+    let dtstartStr = $('#dtstart_date').val();
+    let dtendStr = $('#dtend_date').val();
+    if ($('#allDay').prop('checked')) {
+        dtendStr = moment($('#dtend_date').val()).add(1, "day").format("YYYY-MM-DD");
+    } else {
+        dtstartStr = $('#dtstart_date').val() + "T" + $('#dtstart_time').val();
+        dtendStr = $('#dtend_date').val() + "T" + $('#dtend_time').val();
+    }
+
     let tempData = {
         srcType: $('#srcAccountName').data("type"),
         srcAccountName: $('#srcAccountName').data("account"),
         allDay: $('#allDay').prop('checked'),
-        start: $('#dtstart').val(),
-        end: $('#dtend').val(),
-        dtstart: moment($('#dtstart').val()).toISOString(),
-        dtend: moment($('#dtend').val()).toISOString(),
+        start: dtstartStr,
+        end: dtendStr,
+        dtstart: moment(dtstartStr).toISOString(),
+        dtend: moment(dtendStr).toISOString(),
         organizer: $('#organizer').val() || $('#srcAccountName').data("type"), // Usually the organizer is the account owner
         summary: $('#event-title').val(),
         description: $('#description').val(),

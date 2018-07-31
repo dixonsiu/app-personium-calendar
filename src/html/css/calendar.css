@@ -408,8 +408,8 @@ footer button svg{
 }
 
 .event-date {
-    width: 100%;
     border: 0;
+    text-align: right;
 }
 
 .event-date-setting input[type="datetime-local"],
