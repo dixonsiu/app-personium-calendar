@@ -368,7 +368,7 @@ renderFullCalendar = function() {
 
                         initSchedule();
 
-                        $("#schedule-scroller").removeAttr("onscroll").on("scroll", function() {
+                        $("#schedule-scroller").on("scroll", function() {
                             if (dispListName == "schedule") {
                                 let now = $("#schedule-scroller").scrollTop();
     
@@ -509,6 +509,7 @@ getListOfVEvents = function() {
 };
 
 initSchedule = function() {
+    $("#schedule-scroller").removeAttr("onscroll");
     $("#schedule").empty();
     sDateObj = moment().startOf("month");
     eDateObj = moment().add(11, "month").endOf("month");
