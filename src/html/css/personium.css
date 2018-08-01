@@ -92,6 +92,25 @@ main {
     border: none;
 }
 
+/* spinner */
+div.mySpinner {
+  position: fixed;
+  height: 5em;
+  width: 5em;
+  overflow: show;
+  margin: auto;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  background-color: transparent !important;
+}
+
+div.mySpinner > i {
+  color: #D3D3D3 !important;
+  font-size: 5em;
+}
+
 /*drawer menu*/
 
 #drawer {
