@@ -413,7 +413,7 @@ renderFullCalendar = function() {
             return PCalendar.displayEditVEvent(calEvent);
         },
         dayClick: function(date, jsEvent, view) {
-            let dateWTime = moment(date.format() + "T" + moment().format('HH:mm:00'));
+            let dateWTime = moment(date.format());
             displayAddEventDialog(dateWTime);
         }
     });
@@ -445,14 +445,20 @@ displayAddEventDialog = function(date) {
         let id = PCalendar.createSubContent(out_html);
         $(id + " footer").hide();
         $("#edit-btn").on("click", PCalendar.addEvent);
-        let startDatetime = date.format("YYYY-MM-DDTHH:mm");
-        let endDatetime = date.add(1, 'hours').format("YYYY-MM-DDTHH:mm");
-        $("#dtstart_date").val(date.format("YYYY-MM-DD"));
-        $("#dtstart_time").val(date.format("HH:mm"));
-        $("#dtend_date").val(date.add(1, 'hours').format("YYYY-MM-DD"));
-        $("#dtend_time").val(date.format("HH:mm"));
-        $("#dtstart_time").hide();
-        $("#dtend_time").hide();
+        if (dispListName == "agendaDay") {
+            $("#dtstart_date").val(date.format("YYYY-MM-DD"));
+            $("#dtstart_time").val(date.format("HH:mm"));
+            $("#dtend_date").val(date.add(1, 'hours').format("YYYY-MM-DD"));
+            $("#dtend_time").val(date.format("HH:mm"));
+            $('#allDay').prop('checked', false);
+        } else {
+            $("#dtstart_date").val(date.format("YYYY-MM-DD"));
+            $("#dtstart_time").val(moment().format("HH:mm"));
+            $("#dtend_date").val(date.format("YYYY-MM-DD"));
+            $("#dtend_time").val(moment().add(1, 'hours').format("HH:mm"));
+            $("#dtstart_time").hide();
+            $("#dtend_time").hide();
+        }
         PCalendar.allDaySetClickEvent();
     }).fail(function(error) {
         console.log(error);
