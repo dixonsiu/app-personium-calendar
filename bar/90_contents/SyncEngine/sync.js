@@ -35,7 +35,7 @@ function(request){
     var office365Url = outlookUrl;
 
     try {
-        var personalBoxAccessor = _p.as("client").cell(pjvm.getCellName()).box(pjvm.getBoxName());
+        var personalBoxAccessor = _p.localbox();
         var personalCollectionAccessor = personalBoxAccessor.odata(collectionName);
         var personalEntityAccessor = personalCollectionAccessor.entitySet(entityType);
 
