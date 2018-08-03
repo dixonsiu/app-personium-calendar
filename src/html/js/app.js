@@ -9,6 +9,7 @@ scheduleDispNum = 10;
 scheduleSkipPrev = 0;
 scheduleSkipNext = 0;
 
+/* new */
 getEngineEndPoint = function() {
     return Common.getAppCellUrl() + "__/html/Engine/getAppAuthToken";
 };
@@ -22,35 +23,66 @@ getNamesapces = function() {
 };
 
 additionalCallback = function() {
-    $('#dvOverlay').on('click', function() {
-        Common.closeSlide();
-    });
+    Drawer_Menu();
 
     Common.setIdleTime();
 
     Common.getProfileName(Common.getCellUrl(), displayMyDisplayName);
-    createTitleHeader(true, true);
 
     renderFullCalendar();
 
     syncData();
 
-    $('body').on('change', '#setting-panel2 input[type=radio][name=srcType]', function(){
-        let srcType = this.value;
-        switch(srcType) {
-        case 'Google':
-        case 'Office365':
-            $('#idCalendarAccount, #pwCalendarAccount')
-                .val('')
-                .prop('disabled', true);
-            break;
-        default:
-            $('#idCalendarAccount, #pwCalendarAccount')
-                .val('')
-                .prop('disabled', false);
-        }
+    $('#month').on('click', function () {
+        $('#calendar').fullCalendar('changeView', 'month');
+        ControlFooter($(this));
+    });
+    $('#day').on('click', function () {
+        $('#calendar').fullCalendar('changeView', 'agendaDay');
+        ControlFooter($(this));
+    });
+    $('#list').on('click', function () {
+        $('#calendar').fullCalendar('changeView', 'schedule');
+        ControlFooter($(this));
+    });
+    $('#prev').on('click', function () {
+      $('#calendar').fullCalendar('prev');
+    });
+    
+    $('#next').on('click', function () {
+      $('#calendar').fullCalendar('next');
     });
 };
+
+/**
+   * ControlFooter
+   * @param {*} target 
+   */
+  function ControlFooter(target) {
+    $('.switching-menu').find('.clicked').removeClass('clicked');
+    var result = $('.switching-menu').find('.current');
+    result.removeClass('current');
+    target.addClass('current');
+  }
+
+/**
+ * Drawer_Menu
+ * param:none
+ */
+Drawer_Menu = function() {
+  $('#drawer_btn').on('click', function () {
+    Common.openSlide();
+    return false;
+  });
+
+  $('#menu-background').click(function () {
+    Common.closeSlide();
+  });
+
+  $('#drawer_menu').click(function (event) {
+    event.stopPropagation();
+  });
+}
 
 displayMyDisplayName = function(extUrl, dispName) {
     $("#dispName")
@@ -60,179 +92,46 @@ displayMyDisplayName = function(extUrl, dispName) {
         });
 };
 
-// Create title header in "header-menu" class
-// settingFlg true: Settings false: Default
-// menuFlg true: show menu false: hide menu
-createTitleHeader = function(settingFlg, menuFlg) {
-    var setHtmlId = ".header-menu";
-    var backMenuId = "backMenu";
-    var backTitleId = "backTitle";
-    var titleId = "titleMenu";
-    if (settingFlg) {
-        setHtmlId = ".setting-header";
-        backMenuId = "settingBackMenu";
-        backTitleId = "settingBackTitle";
-        titleId = "settingTitleMenu";
-    }
-    
-    let backBtn = createBackBtn(backMenuId);
-    let backBtnTitle = createBackBtnTitle(backTitleId);
-    let title = $('<div>', {
-        id: titleId,
-        class: 'col-xs-6 text-center title'
-    });
-    let editMenu = createEditMenu(menuFlg);
-
-    $(setHtmlId)
-        .append($(editMenu), $(backBtn), $(backBtnTitle), $(title))
-        .localize();
-};
-
-createBackBtn = function(backMenuId) {
-    let backIcon = $('<i>', {
-        class: 'fa fa-chevron-left',
-        'aria-hidden': 'true'
-    });
-
-    let aTag = $('<a>', {
-        class: 'allToggle prev-icon',
-        href: '#',
-        onClick: 'moveBackahead();return false;'
-    });
-    aTag.append($(backIcon));
-
-    let backDom = $('<div>', {
-        id: backMenuId,
-        class: 'col-xs-1'
-    });
-    backDom.append($(aTag));
-
-    return backDom;
-};
-
-createBackBtnTitle = function(backTitleId) {
-    let aTd = $('<td>', {
-        id: backTitleId,
-        class: 'ellipsisText',
-        align: 'left'
-    });
-
-    let aRow = $('<tr>', {
-        style: 'vertical-align: middle;'
-    });
-    aRow.append($(aTd));
-
-    let aTable = $('<table>', {
-        class: 'table-fixed back-title'
-    });
-    aTable.append($(aRow));
-
-    let aDiv = $('<div>', {
-        class: 'col-xs-2'
-    });
-    aDiv.append($(aTable));
-
-    return aDiv;
-};
-
-createEditMenu = function(menuFlg) {
-    let editMenu = $('<div>', {
-        class: 'col-xs-3 text-right edit-menu'
-    });
-
-    if (menuFlg) {
-        let editButton = $('<a>', {
-            href: '#',
-            onClick: 'toggleEditMenu(this);',
-            'data-item-btn-viewable': 'true',
-            'data-i18n': 'btn.edit'
-        });
-        let finishButton = $('<a>', {
-            href: '#',
-            onClick: 'toggleEditMenu(this);',
-            'data-item-btn-viewable': 'false',
-            'data-i18n': 'btn.finish',
-            style: 'display:none;'
-        });
-        
-        editMenu.append($(editButton), $(finishButton));
-    }
-
-    return editMenu;
-};
-
 toggleEditMenu = function(aDom) {
-    $(aDom)
-        .toggle()
-        .siblings().toggle();
-    let showBtn = $(aDom).data('item-btn-viewable');
-    $('.account-item .del-icon, .account-item .edit-icon').toggle(showBtn);
-
-    if (!showBtn) {
-        // hide delete button explicitly
-        $('.account-item .del-button').hide();
+    var wide_line = $('.slide-list-line');
+    var line_contents = $('.slide-list-line-contents');
+    var a_tag = $('.slide-list-line-contents>a');
+    if (!($(aDom).hasClass('editing'))) {
+        if (($(aDom).hasClass('edited'))) {
+            $(aDom).removeClass('edited');
+        }
+        
+        $(aDom).addClass('editing');
+        $('.add-new-account').css('display', 'none');
+        line_contents.addClass('edit-ic');
+        wide_line.animate({
+            'left': '0px'
+        }, 500);
+    } else if (($(aDom).hasClass('editing')) && !($(aDom).hasClass('edited'))) {
+        $(aDom).removeClass('editing');
+        $(aDom).addClass('edited');
+        wide_line.animate({
+            'left': '-70px'
+        }, 500);
+        $('.add-new-account').css('display', 'block');
+        line_contents.removeClass('edit-ic');
+        line_contents.removeClass('clear-ic');
+        a_tag.removeClass('disabled');
     }
 };
 
-moveBackahead = function() {
-    var no = Common.settingNowPage;
-    switch (no) {
-    case 0:
-        window.location.href = cm.user.prevUrl;
-        break;
-    case 1:
-        closeSetting();
-        break;
-    default:
-        $('.edit-menu').show();
-        $("#setting-panel" + no).toggleClass("slide-on");
-        $("#setting-panel" + (no - 1)).toggleClass("slide-on-holder");
-        break;
-    }
-
-    Common.settingNowPage = no - 1;
-    if (Common.settingNowPage >= 1) {
-        setTitleMenu(Common.settingNowTitle[Common.settingNowPage], true);
-    }
-};
-
-closeSetting = function() {
-    $(".setting-menu").toggleClass("slide-on");
-    $("#settingboard").empty();
-    $("#settingBackTitle").empty();
-    Common.settingNowPage = 0;
-};
-
-setBackahead = function(flg) {
-    var boardId = "settingboard";
-    Common.settingNowPage = Common.settingNowPage + 1;
-    boardId = "settingboard";
-    var toggleClass = "toggle-panel";
-    if (Common.settingNowPage == 1) {
-        // first page
-        toggleClass = "panel-default";
-    }
-    if (Common.settingNowPage == 2) {
-        $('.edit-menu').hide();
-    }
-    if (document.getElementById('setting-panel' + Common.settingNowPage) == null) {
-        $("#" + boardId).append('<div style="height:100%;overflow:auto;padding-bottom:85px;" class="panel list-group ' + toggleClass + '" id="setting-panel' + Common.settingNowPage + '"></div>');
-    }
-    if (document.getElementById('setting-panel' + (Common.settingNowPage + 1)) == null) {
-        $("#" + boardId).append('<div style="height:100%;overflow:auto;padding-bottom:85px;" class="panel list-group toggle-panel" id="setting-panel' + (Common.settingNowPage + 1) + '"></div>');
-    }
-};
-
-setTitleMenu = function(title, flg) {
-    if (i18next.exists(title)) {
-        $("#settingTitleMenu").html('<h4 class="ellipsisText" data-i18n="' + title + '"></h4>').localize();
-    } else {
-        $("#settingTitleMenu").html('<h4 class="ellipsisText">' + title + '</h4>');
-    }
-    var titles = Common.settingNowTitle;
-    titles[Common.settingNowPage] = title;
-    Common.settingNowTitle = titles;
-};
+displaySyncListPanel = function() {
+    Common.closeSlide();
+    Common.loadContent("./templates/_list_template.html").done(function(data) {
+        var out_html = $($.parseHTML(data));
+        $("#loadContent").empty();
+        let id = PCalendar.createSubContent(out_html);
+        $(id + " .pn-back-btn").hide();
+        $(id + " .header-btn-right").hide();
+    }).fail(function(error) {
+        console.log(error);
+    });
+}
 
 /*
  * Display the followings:
@@ -241,37 +140,59 @@ setTitleMenu = function(title, flg) {
  */
 displayAccountPanel = function() {
     Common.closeSlide();
-    $("#setting-panel1").remove();
-    setBackahead(true);
-    setTitleMenu("glossary:Account.label", true);
-    setEditMenu(true);
-    $("#setting-panel1").empty();
-    $("#setting-panel1").append('<div class="panel-body"></div>');
-    let html = [
-        '<div class="list-group-item button-row">',
-            '<a href="#" class="allToggle" onClick="displayAccountRegistrationDialog()" data-i18n="glossary:Account.Register.label"></a>',
-        '</div>'].join('');
-    $("#setting-panel1 > .panel-body").append(html).localize();
-    getAccountList().done(function(data) {
-        dispAccountList(data);
+    Common.loadContent("./templates/_list_template.html").done(function(data) {
+        var out_html = $($.parseHTML(data));
+        $("#loadContent").empty();
+        let id = PCalendar.createSubContent(out_html);
+        $(id + " main").empty();
+        $("#addAccountFooterButton").removeAttr("onclick").on('click', displayAccountRegistrationDialog);
+        getAccountList().done(function(data) {
+            dispAccountList(id + " main", data);
+        }).fail(function(error) {
+            console.log(error.responseJSON);
+            Common.openWarningDialog(
+                'warningDialog.title',
+                error.responseJSON.error || error.responseJSON.message.value,
+                function(){ $('#modal-common').modal('hide')}
+            );
+        });
+        $("#addAccountFooterButton").attr("data-i18n", "glossary:Account.Add").localize();
     }).fail(function(error) {
-        console.log(error.responseJSON);
-        Common.openWarningDialog(
-            'warningDialog.title',
-            error.responseJSON.error || error.responseJSON.message.value,
-            function(){ $('#modal-common').modal('hide')}
-        );
-    }).always(function(){
-        $(".setting-menu").toggleClass('slide-on');
+        console.log(error);
     });
 };
 
-setEditMenu = function(menuFlg) {
-    $(".header-menu .edit-menu").remove();
-    $('.setting-header')
-        .append($(createEditMenu(menuFlg)))
-        .localize();
-};
+selectAccountPanel = function() {
+    Common.loadContent("./templates/_list_template.html").done(function(data) {
+        var out_html = $($.parseHTML(data));
+        let id = PCalendar.createSubContent(out_html);
+        $(id + " main").empty();
+        $("#addAccountFooterButton").removeAttr("onclick").on('click', displayAccountRegistrationDialog);
+        getAccountList().done(function(data) {
+            dispAccountList(id + " main", data);
+        }).fail(function(error) {
+            console.log(error.responseJSON);
+            Common.openWarningDialog(
+                'warningDialog.title',
+                error.responseJSON.error || error.responseJSON.message.value,
+                function(){ $('#modal-common').modal('hide')}
+            );
+        }).always(function() {
+            $(id + " .slide-list-line-contents").removeAttr("onclick").on('click', function() {
+                $("#srcAccountName").text($(this).find("a").text());
+                $('#srcAccountName').data("account", $(this).find("a").text());
+                $('#srcAccountName').data("type", $(this).find("div").text());
+                PCalendar.backSubContent();
+            })
+        });
+        $(id + " .header-btn-right").hide();
+        $(id + " footer").hide();
+
+        $("#addAccountFooterButton").attr("data-i18n", "glossary:Account.Add").localize();
+    }).fail(function(error) {
+        console.log(error);
+    });
+}
 
 getAccountList = function() {
     return getAccessInfoAPI();
@@ -288,77 +209,43 @@ getAccessInfoAPI = function() {
     });
 };
 
-dispAccountList = function(results) {
-    let html = '';
-    $("#setting-panel1 > .panel-body > .account-item").remove();
+dispAccountList = function(id ,results) {
+    $(id).empty();
+    let aUl = $('<ul>', {
+        class: 'slide-list hover-action'
+    });
     for (var i = 0; i < results.length; i++) {
-        var acc = results[i];      
-
-        let aRow = $('<tr>')
-            .data('account-info', acc)
-            .append($(createDeleteIcon()), $(createInfoTd(i, acc)), $(createEditBtn()), $(createDeleteBtn()));
-
-        let aTable = $('<table>', {
-            style: 'width: 100%;'
-        });
-        aTable.append($(aRow));
+        var acc = results[i];
 
         let aDiv = $('<div>', {
-            class: 'list-group-item account-item',
+            class: 'slide-list-line pn-list slide-list-no-ic',
             'data-account-info': acc
-        });
+        }).append($(createDeleteIcon()), $(createInfoTd(i, acc)), $(createDeleteBtn()));
 
-        aDiv
-            .append($(aTable))
-            .insertBefore('#setting-panel1 > .panel-body > .button-row');
+        let aLi = $('<li>')
+        .data('account-info', acc)
+        .append($(aDiv));
+
+        aUl.append($(aLi));
     }
-    $('#setting-panel1 > .panel-body > .account-item').localize();
+    $(id).append($(aUl)).localize();
 };
 
 createInfoTd = function(i, accountInfo) {
-    let typeImg = "https://demo.personium.io/HomeApplication/__/icons/ico_user_00.png";
-    if (accountInfo.srcType !== "EWS") {
-        typeImg = "https://demo.personium.io/HomeApplication/__/icons/ico_user_01.png";
-    }
-    let aImg = $('<img>', {
-        class: 'image-circle-small',
-        src: typeImg
-    });
+    let aDiv = $('<div>', {
+        class: 'account-type'
+    }).append(accountInfo.srcType);
 
     let aAnchor = $('<a>', {
         class: 'ellipsisText'
-    }).html(accountInfo.srcAccountName);
-    aAnchor.append($(aImg));
+    }).append(accountInfo.srcAccountName);
 
-    let aInfoTd = $('<td>', {
-        style: 'width: 80%;',
-        onClick: 'return hideDeleteButton(this);'
-    });
-    aInfoTd.append($(aAnchor));
-
-    return aInfoTd;
-};
-
-createEditBtn = function() {
-    let barIcon = $('<i>', {
-        class: 'fa fa-bars fa-2x fa-fw',
-        'aria-hidden': 'true'
-    });
-
-    let aEditBtn = $('<a>', {
-        class: 'list-group-button',
-        href: '#',
-        onClick: 'return displayAccountModificationDialog(this);',
-        'data-i18n': '[title]glossary:Account.Edit.label'
-    });
-    aEditBtn.append($(barIcon));
-
-    let aEditTd = $('<td>', {
-        class: 'edit-icon'
-    });
-    aEditTd.append($(aEditBtn));
-
-    return aEditTd;
+    let infoDiv = $('<div>', {
+        class: 'slide-list-line-contents pn-list-no-arrow',
+        onClick: 'return accountClickEvent(this);'
+    }).append($(aAnchor)).append($(aDiv));
+    
+    return infoDiv;
 };
 
 /*
@@ -369,64 +256,62 @@ createEditBtn = function() {
  */
 createDeleteIcon = function() {
     let minusCircleIcon = $('<i>', {
-        class: 'fa fa-minus-circle fa-2x',
-        'aria-hidden': 'true'
+        class: 'fas fa-minus-circle fa-2x'
     });
 
-    let aDeleteIcon = $('<a>', {
-        class: 'list-group-button',
-        href: '#',
+    let aDeleteIcon = $('<button>', {
+        class: 'delete-check-btn',
         onClick: 'return displayDeleteButton(this);'
     });
     aDeleteIcon.append($(minusCircleIcon));
 
-    let aDeleteTd = $('<td>', {
-        class: 'del-icon'
-    });
-    aDeleteTd.append($(aDeleteIcon));
-
-    return aDeleteTd;
+    return aDeleteIcon;
 };
 
 displayDeleteButton = function(aDom) {
-    $(aDom).closest('td').hide();
-    $(aDom).closest('tr').find('.del-button').closest('td').show();
+    var a_tag = $('.slide-list-line-contents>a');
+    a_tag.addClass('disabled');
+    $(aDom).parent().animate({
+      'left': '-170px'
+    }, 500);
+    $(aDom).next().addClass('clear-ic');
 };
 
-hideDeleteButton = function(aDom) {
-    if ($('.account-item .edit-icon').is(":visible")) {
-        $(aDom).closest('tr').find('.del-button').closest('td').hide();
-        $(aDom).closest('tr').find('.del-icon').closest('td').show();
+accountClickEvent = function(aDom) {
+    if ($(aDom).hasClass('clear-ic')) {
+        var wide_line = $(aDom).closest('.slide-list-line');
+
+        // Processing being edited
+        if ($(aDom).hasClass('clear-ic')) {
+            wide_line.animate({
+                'left': '0px'
+            }, 500);
+            $(aDom).removeClass('clear-ic');
+        }
+    } else if ($(aDom).hasClass('edit-ic')) {
+        let accountInfo = $(aDom).closest("li").data('account-info');
+        if (accountInfo.srcType == "EWS") {
+            displayAccountModificationDialog(aDom, accountInfo);
+        }
     }
-};
+}
 
 /*
  * <a class="del-button list-group-item" href="#"
  */
 createDeleteBtn = function() {
-    let aDeleteBtn = $('<a>', {
-        class: 'list-group-button',
-        href: '#',
+    let aDeleteBtn = $('<button>', {
+        class: 'line-delete-btn',
         onClick: 'return deleteAccessInfo(this);',
         'data-i18n': 'glossary:Account.Delete.label'
     });
 
-    let aDeleteTd = $('<td>', {
-        class: 'del-button'
-    });
-    aDeleteTd.append($(aDeleteBtn));
-
-    return aDeleteTd;
+    return aDeleteBtn;
 };
 
 renderFullCalendar = function() {
     $('#calendar').fullCalendar({
-        header: {
-            left: 'prev,next today',
-            center: 'title',
-            right: 'schedule,agendaDay,month'
-        },
-
+        header: false,
         // customize the button names,
         // otherwise they'd all just say "list"
         buttonText: {
@@ -435,85 +320,117 @@ renderFullCalendar = function() {
         allDayText: i18next.t('glossary:Calendars.All_day'),
         views: {
             schedule: { 
-                buttonText: i18next.t('glossary:Calendars.Schedule'),
-                type: 'list',
-                visibleRange: {
-                    start: moment(moment().unix()).format("YYYY-MM-DD"),
-                    end: moment().add(21, "year").startOf("year").format("YYYY-MM-DD")
-                }
-                ,titleFormat: "[" + moment().locale(i18next.language).format("LL") + "]"
-                ,listDayFormat: i18next.t('glossary:Calendars.Schedule_listDayFormat')
+                type: 'agendaDay'
             },
-            agendaDay: { buttonText: i18next.t('glossary:Calendars.Day') },
+            agendaDay: { 
+                titleFormat: i18next.t('glossary:Calendars.DayFormat')
+            },
             month: { 
-                buttonText: i18next.t('glossary:Calendars.Month'),
-                titleFormat: i18next.t('glossary:Calendars.Month_titleFormat')
+                titleFormat: i18next.t('glossary:Calendars.Month_titleFormat'),
+                fixedWeekCount: false,
+                eventLimitText: '',
+                dayPopoverFormat: i18next.t('glossary:Calendars.dayPopover')
             }
         },
         height: "parent",
         locale: i18next.language,
         timezone: 'Asia/Tokyo',
-        defaultView: 'month',//'schedule',
+        defaultView: 'schedule',
         defaultDate: moment().format(),
         timeFormat: 'H:mm' ,
+        axisFormat: 'HH:mm',
+        timeFormat: 'HH:mm',
+        slotLabelFormat: 'H:mm',
+        nowIndicator: true,
         navLinks: true, // can click day/week names to navigate views
         editable: true,
         eventLimit: true, // allow "more" link when too many events
         viewRender: function(currentView) {
                     dispListName = currentView.name;
                     if (currentView.name != "schedule") {
-                        $(".fc-view-container").show();
+                        var title = currentView.title;
+                        $(".calendar-title").html(title);
+                        $("#prev").show();
+                        $("#next").show();
+                        $("#container").show();
                         $("#schedule").hide();
                         sDateObj = moment(currentView.start.valueOf());
                         eDateObj = moment(currentView.end.valueOf());
                         getListOfVEvents();
                     } else {
-                        $(".fc-view-container").hide();
+                        $(".calendar-title").html(moment().locale(i18next.language).format(i18next.t('glossary:Calendars.Month_titleFormat')));
+
+                        $("#container").hide();
+                        $("#prev").hide();
+                        $("#next").hide();
                         $("#schedule").empty();
                         $("#schedule").show();
 
-                        $("#schedule").on("scroll", function() {
-                            // The position of the lower end of the display area
-                            var bottom = this.scrollTop + this.clientHeight;
-                            // The position of the top of the last element
-                            var top = $("#schedule").find(":last")[0].offsetTop - this.offsetTop;
-                            if( top <= bottom )
-                            {
-                                // Acquire data for the next month
-                                let lastMonth = $("#schedule").children(":last").data("date");
-                                let startObj = moment(lastMonth).add(1, "month").startOf("month");
-                                let endObj = moment(lastMonth).add(1, "month").endOf("month");
-                                $("#schedule").children(":first").remove();
+                        initSchedule();
 
-                                dispScheduleHeaders(moment(startObj), moment(endObj), false);
-                                getListOfVEventsSchedule(moment(startObj), moment(endObj));
-                            } else if (this.scrollTop == 0) {
-                                // Acquire past data
-                                let firstMonth = $("#schedule").children(":first").data("date");
-                                let startObj = moment(firstMonth).add(-1, "month").startOf("month");
-                                let endObj = moment(firstMonth).add(-1, "month").endOf("month");
-                                $("#schedule").children(":last").remove();
-
-                                dispScheduleHeaders(moment(startObj), moment(endObj), true);
-                                getListOfVEventsSchedule(moment(startObj), moment(endObj));
+                        $("#schedule-scroller").on("scroll", function() {
+                            if (dispListName == "schedule") {
+                                let now = $("#schedule-scroller").scrollTop();
+    
+                                let dispDate = "";
+                                $("#schedule").children().each(function(index, ele) {
+                                    if (index == 0 || now > ele.offsetTop) {
+                                        dispTitlePos = ele.offsetTop;
+                                        dispDate = $(ele).data("date");
+                                    } else {
+                                        $(".calendar-title").html(moment(dispDate + "-01").locale(i18next.language).format(i18next.t('glossary:Calendars.Month_titleFormat')));
+                                        return false;
+                                    }
+                                });
+    
+                                // The position where the top month data is visible
+                                let pageTop = $("#schedule").children(":first").next()[0].offsetTop + $("#schedule").children(":first").next().innerHeight();
+                                // Position where data of the bottom month can be seen
+                                let pageBottom = $("#schedule").children(":last").prev()[0].offsetTop - $("#schedule-scroller")[0].clientHeight;
+                                if( now > pageBottom )
+                                {
+                                    // Acquire data for the next month
+                                    let lastMonth = $("#schedule").children(":last").data("date");
+                                    let startObj = moment(lastMonth).add(1, "month").startOf("month");
+                                    let endObj = moment(lastMonth).add(1, "month").endOf("month");
+    
+                                    dispScheduleHeaders(moment(startObj), moment(endObj), false);
+                                    getListOfVEventsSchedule(moment(startObj), moment(endObj), ":first");
+                                } else if (now < pageTop) {
+                                    // Acquire past data
+                                    let firstMonth = $("#schedule").children(":first").data("date");
+                                    let startObj = moment(firstMonth).add(-1, "month").startOf("month");
+                                    let endObj = moment(firstMonth).add(-1, "month").endOf("month");
+    
+                                    dispScheduleHeaders(moment(startObj), moment(endObj), true);
+                                    getListOfVEventsSchedule(moment(startObj), moment(endObj), ":last");
+                                }
                             }
                         })
-
-                        sDateObj = moment().add(-2, "month").startOf("month");
-                        eDateObj = moment().add(2, "month").endOf("month");
-                        dispScheduleHeaders(moment(sDateObj), moment(eDateObj));
-                        getListOfVEventsSchedule(moment(sDateObj), moment(eDateObj), true);
                     }
                 },
         eventClick: function(calEvent, jsEvent, view) {
-            return PCalendar.displayEditVEventDialog(calEvent, jsEvent, view);
+            return PCalendar.displayEditVEvent(calEvent);
         },
         dayClick: function(date, jsEvent, view) {
-            let dateWTime = moment(date.format() + "T" + moment().format('HH:mm:00'));
+            let dateWTime = moment(date.format());
             displayAddEventDialog(dateWTime);
         }
     });
+
+    $('#today-btn').on('click', function () {
+        if (dispListName != "schedule") {
+            $('#calendar').fullCalendar('today');
+        } else {
+            initSchedule();
+        }
+    });
 };
+
+scheduleDayClick = function(aDom) {
+    let eventItem = $(aDom).data('event-item');
+    PCalendar.displayEditVEvent(eventItem);
+}
 
 // Use today's date
 addButtonClick = function() {
@@ -522,15 +439,29 @@ addButtonClick = function() {
 
 // Use date clicked by the user
 displayAddEventDialog = function(date) {
-    getAccountList().done(function(data) {
-        PCalendar.displayAddVEventDialog(data, date);
+    Common.loadContent("./templates/_vevent_template.html").done(function(data) {
+        var out_html = $($.parseHTML(data));
+        $("#loadContent").empty();
+        let id = PCalendar.createSubContent(out_html);
+        $(id + " footer").hide();
+        $("#edit-btn").on("click", PCalendar.addEvent);
+        if (dispListName == "agendaDay") {
+            $("#dtstart_date").val(date.format("YYYY-MM-DD"));
+            $("#dtstart_time").val(date.format("HH:mm"));
+            $("#dtend_date").val(date.add(1, 'hours').format("YYYY-MM-DD"));
+            $("#dtend_time").val(date.format("HH:mm"));
+            $('#allDay').prop('checked', false);
+        } else {
+            $("#dtstart_date").val(date.format("YYYY-MM-DD"));
+            $("#dtstart_time").val(moment().format("HH:mm"));
+            $("#dtend_date").val(date.format("YYYY-MM-DD"));
+            $("#dtend_time").val(moment().add(1, 'hours').format("HH:mm"));
+            $("#dtstart_time").hide();
+            $("#dtend_time").hide();
+        }
+        PCalendar.allDaySetClickEvent();
     }).fail(function(error) {
-        console.log(error.responseJSON);
-        Common.openWarningDialog(
-            'warningDialog.title',
-            error.responseJSON.error || error.responseJSON.message.value,
-            function(){ $('#modal-common').modal('hide')}
-        );
+        console.log(error);
     });
 };
 
@@ -538,6 +469,16 @@ PCalendar.displayCalendarTitle = function(str) {
     return str || i18next.t('glossary:Calendars.No_title');
 };
 
+getListOfVEventsCount = function() {
+    let urlOData = Common.getBoxUrl() + 'OData/vevent';
+    let filterStr = $.param({
+        "$inlinecount": "allpages",
+        "$top": 0
+    });
+    let queryUrl = urlOData + '?' + filterStr;
+    let access_token = Common.getToken();
+    return Common.getListOfOData(queryUrl, access_token);
+}
 getListOfVEvents = function() {
     let sDate = sDateObj.toISOString();
     let eDate = eDateObj.toISOString();
@@ -545,7 +486,6 @@ getListOfVEvents = function() {
     let filterStr = $.param({
         "$top": 1000,
         "$filter": "dtend ge datetimeoffset'"+sDate+"' and dtstart le datetimeoffset'"+eDate+"'",
-        //"$filter": "dtstart ge datetimeoffset'2017-01-01T00:00:00+09:00'",
         "$orderby": "dtstart desc"
     });
     let queryUrl = urlOData + '?' + filterStr;
@@ -574,6 +514,15 @@ getListOfVEvents = function() {
         });
 };
 
+initSchedule = function() {
+    $("#schedule-scroller").removeAttr("onscroll");
+    $("#schedule").empty();
+    sDateObj = moment().startOf("month");
+    eDateObj = moment().add(11, "month").endOf("month");
+    dispScheduleHeaders(moment(sDateObj), moment(eDateObj));
+    getListOfVEventsSchedule(moment(sDateObj), moment(eDateObj));
+}
+
 dispScheduleHeaders = function(startObj, endObj, firstFlg) {
     var diff = endObj.diff(startObj);
     var duration = moment.duration(diff);
@@ -582,48 +531,33 @@ dispScheduleHeaders = function(startObj, endObj, firstFlg) {
         let html = "";
         if (startObj.date() == 1) {
             // display month header
-            //html = "<div style='height: 50px;margin-bottom: 10px;background-image: url(\"https://demo.personium.io/ksakamoto/__/IMG_0066.jpg\")'>" + startObj.format("YYYY年MM月") + "</div>";
-            html = "<div style='height: 200px;margin-bottom: 30px;background-image: url(\"https://demo.personium.io/ksakamoto/__/IMG_0066.jpg\")'><font size='5'>" + startObj.format("YYYY年MM月") + "</font></div>";
-            $("#schedule").append(html);
-            html = "<table id='schedule-"+startObj.format("YYYY-MM")+"' data-date='"+startObj.format("YYYY-MM")+"'><div style='height: 200px;margin-bottom: 30px;background-image: url(\"https://demo.personium.io/ksakamoto/__/IMG_0066.jpg\")'><font size='5'>" + startObj.format("YYYY年MM月") + "</font></div><div id='schedule-data-"+startObj.format("YYYY-MM")+"'></div></table>";
+            html = [
+                "<table class='fc-list-table' id='schedule-"+startObj.format("YYYY-MM")+"' data-date='"+startObj.format("YYYY-MM")+"'>",
+                    "<tr class='list-month list-"+startObj.format("M")+"month'>",
+                        "<th class='list-month-title' colspan='3'>"+startObj.locale(i18next.language).format(i18next.t('glossary:Calendars.Month_titleFormat'))+"</th>",
+                    "</tr>",
+                "</table>"
+            ].join("");
             if (firstFlg) {
                 let preId = $("#schedule").children(":first").attr("id");
                 $("#schedule").prepend(html);
-                $("#" + preId)[0].scrollIntoView(true);
             } else {
                 $("#schedule").append(html);
             }
         }
-
-        if (startObj.day() == DAY_WEEK_TOP) {
-            // display week header
-            let stDay = startObj.format("M月D日");
-            let edDayMoment = moment([startObj.year(), startObj.month(), startObj.date()]).add(6, "day");
-            let edFormat = "D日";
-            if (startObj.month() != edDayMoment.month()) {
-                edFormat = "M月" + edFormat;
-            }
-            let edDay = edDayMoment.format(edFormat);
-            html = "<div style='margin-bottom: 15px;margin-top:15px;margin-left: 50px;'><font size='5'>" + stDay + "~" + edDay + "</font></div>";
-            //html = "<div>" + stDay + "~" + edDay + "</div>";
-            $("#schedule-data-"+startObj.format("YYYY-MM")).append(html);
-        }
-
         var day = startObj.format("YYYY-MM-DD");
-        html = "<div style='margin-bottom: 10px;' data-id='" + day + "'></div>";
-        //html = "<div data-id='" + day + "'></div>";
-        $("#schedule-data-"+startObj.format("YYYY-MM")).append(html);
+        html = "<table class='fc-list-table' data-id='" + day + "'></table>";
+        $("#schedule-"+startObj.format("YYYY-MM")+">tbody").append(html);
         startObj.add(1, "day");
     }
 }
-getListOfVEventsSchedule = function(startObj, endObj, initFlg) {
+getListOfVEventsSchedule = function(startObj, endObj, delPosition) {
     let fromDay = startObj.toISOString();
     let toDay = endObj.toISOString();
     let urlOData = Common.getBoxUrl() + 'OData/vevent';
     let filterStr = $.param({
         "$top": "1000",
         "$filter": "dtend ge datetimeoffset'"+fromDay+"' and dtstart le datetimeoffset'"+toDay+"'",
-        //"$filter": "dtstart ge datetimeoffset'2017-01-01T00:00:00+09:00'",
         "$orderby": "dtstart asc, dtend asc"
     });
     
@@ -634,20 +568,44 @@ getListOfVEventsSchedule = function(startObj, endObj, initFlg) {
     let delCnt = 0;
     Common.getListOfOData(queryUrl, access_token)
         .done(function(data) {
-            let eachFlg = false;
             _.each(data.d.results, function(item) {
                 scheduleRenderEvent(item);
             });
+
+            while (startObj.isBefore(endObj)) {
+                var month = startObj.format("YYYY-MM");
+                if ($("#schedule-"+month+" .fc-list-heading").length == 0) {
+                    scheduleRenderNoEvent(startObj);
+                }
+                startObj.add(1, "month");
+            }
         })
         .always(function(){
             hideSpinner('body');
-            if (initFlg) {
+            if (delPosition == undefined) {
                 $('[data-id="'+moment().format("YYYY-MM-DD")+'"]')[0].scrollIntoView(true);
+            } else if (delPosition) {
+                $("#schedule").children(delPosition).remove();
             }
         });
 };
+
+scheduleRenderNoEvent = function(startObj) {
+    let html = [
+        "<table class='fc-list-table noEventTable'>",
+            "<tr class='fc-list-item'>",
+                "<td class='fc-list-item-time fc-widget-content'>",
+                    i18next.t('glossary:Calendars.No_events'),
+                    "<br><br>",
+                "</td>",
+            "</tr>",
+        "</table>"
+    ].join("");
+    $("#schedule-"+startObj.format("YYYY-MM")+">tbody").append(html);
+}
 scheduleRenderEvent = function(item) {
     let event = PCalendar.convertVEvent2FCalEvent(item);
+    let id = event.vEvent.__id;
     let startObj = moment(event.start);
     let endObj = moment(event.end);
     let diffStartObj = moment(event.start).startOf("day");
@@ -663,60 +621,105 @@ scheduleRenderEvent = function(item) {
     }
     for (var i = 0; i <= dayCnt; i++) {
         var day = startObj.format("YYYY-MM-DD");
-        if ($("#"+day).length == 0) {
+        if ($("[data-id='"+day+"']").children().length == 0) {
             let table = [
-                "<table>",
-                    "<tr>",
-                        "<td rowspan='2' width='50px' valign='top'>",
-                            "<font size='5'>",
-                                startObj.format("D"),
-                            "</font>day",
-                        "</td>",
-                    "</tr>",
-                    "<tr>",
-                        "<td id='"+day+"' style='padding-top: 10px;'>",
-                        "</td>",
-                    "</tr>",
-                "</table>"
+                "<tr class='fc-list-heading'>",
+                    "<td class='fc-widget-header' colspan='3'>",
+                        "<a class='fc-list-heading-main' style='padding-right:5px;font-size:30px;'>",
+                            startObj.locale(i18next.language).format(i18next.t('glossary:Calendars.Day_titleFormat')),
+                        "</a>",
+                        "<a class='fc-list-heading-alt' style='float:left; padding-top: 13px;'>",
+                            startObj.locale(i18next.language).format("ddd"),
+                        "</a>",
+                    "</td>",
+                "</tr>"
             ].join("");
             $("[data-id='"+day+"']").append(table);
         }
 
-        if ($("[data-id='" + day + "']").length > 0) {
-            if (startDay == day) {
-                // Start date
-                let startTime = startObj.format("HH:mm");
-                let summary = PCalendar.displayCalendarTitle(event.title);
-                let dateRange = startTime + "~00:00";
-                if (event.allDay) {
-                    dateRange = i18next.t('glossary:Calendars.All_day');
-                } else if (startDay == endDay) {
-                    let endTime = endObj.format("HH:mm");
-                    dateRange = startTime + "~" + endTime;
-                }
-                let html = "<div><font size='3'>" + dateRange + ":" + summary + "</font></div>";
-                $("#"+day).append(html);
-            } else if (endDay == day) {
-                // End date
+        let summary = PCalendar.displayCalendarTitle(event.title);
+        let dateRange = "";
+        let dataId = "";
+        if (startDay == day) {
+            // Start date
+            let startTime = startObj.format("HH:mm");
+            if (event.allDay) {
+                dateRange = i18next.t('glossary:Calendars.All_day');
+            } else if (startDay == endDay) {
                 let endTime = endObj.format("HH:mm");
-                let summary = PCalendar.displayCalendarTitle(event.title);
-                let dateRange = "00:00~" + endTime;
-                if (event.allDay) {
-                    dateRange = i18next.t('glossary:Calendars.All_day');
-                }
-                let html = "<div><font size='3'>" + dateRange + ":" + summary + "</font></div>";
-                $("#"+day).append(html);
+                dateRange = startTime + " - " + endTime;
             } else {
-                // All day
-                let summary = PCalendar.displayCalendarTitle(event.title);
-                let dateRange = i18next.t('glossary:Calendars.All_day');
-                if (event.allDay) {
-                    dateRange = i18next.t('glossary:Calendars.All_day');
-                }
-                let html = "<div><font size='3'>" + dateRange + ":" + summary + "</font></div>";
-                $("#"+day).append(html);
+                dateRange = startTime + " - 00:00";
+            }
+        } else if (endDay == day) {
+            // End date
+            let endTime = endObj.format("HH:mm");
+            if (event.allDay) {
+                dateRange = i18next.t('glossary:Calendars.All_day');
+            } else {
+                dateRange = "00:00 - " + endTime;
+            }
+        } else {
+            // All day
+            dateRange = i18next.t('glossary:Calendars.All_day');
+        }
+        let html = [
+            "<td class='fc-list-item-time fc-widget-content'>",
+                dateRange,
+            "</td>",
+            "<td class='fc-list-item-marker fc-widget-content'>",
+                "<span class='fc-event-dot' style='background-color:"+event.color+";'></span>",
+            "</td>",
+            "<td class='fc-list-item-title fc-widget-content'>",
+                "<a>",
+                    summary,
+                "</a>",
+            "</td>"
+        ].join("");
+        if ($("[data-id='"+day+"']").find("[name='"+id+"']").length > 0) {
+            $("[data-id='"+day+"']").find("[name='"+id+"']").data("event-item", event);
+            $("[data-id='"+day+"']").find("[name='"+id+"']").empty().append(html);
+        } else {
+            let aTr = $("<tr>", {
+                class: "fc-list-item",
+                name: id,
+                "data-event-item": JSON.stringify(event),
+                onClick: "scheduleDayClick(this);"
+            }).append(html);
+            $("[data-id='"+day+"']").append($(aTr));
+        }
+        var month = startObj.format("YYYY-MM");
+        $("#schedule-"+month).find(".noEventTable").remove();
+
+        startObj.add(1, "day");
+    }
+}
+scheduleRemoveEvent = function(item) {
+    let event = PCalendar.convertVEvent2FCalEvent(item);
+    let id = event.vEvent.id;
+    let startObj = moment(event.start);
+    let endObj = moment(event.end);
+    let diffStartObj = moment(event.start).startOf("day");
+    let diffEndObj = moment(event.end).startOf("day");
+    var diff = diffEndObj.diff(diffStartObj);
+    var duration = moment.duration(diff);
+    var dayCnt = Math.floor(duration.asDays());
+    if (event.allDay) {
+        dayCnt--;
+    }
+
+    for (var i = 0; i <= dayCnt; i++) {
+        var day = startObj.format("YYYY-MM-DD");
+        $("[data-id='"+day+"']").find("[name='"+id+"']").remove();
+        if ($("[data-id='"+day+"']").children().length <= 1) {
+            $("[data-id='"+day+"']").empty();
+
+            var month = startObj.format("YYYY-MM");
+            if ($("#schedule-"+month).find(".fc-list-heading").length == 0) {
+                scheduleRenderNoEvent(startObj);
             }
         }
+
         startObj.add(1, "day");
     }
 }
@@ -727,10 +730,6 @@ scheduleRenderEvent = function(item) {
 PCalendar.renderEvent = function(item) {
     let event = PCalendar.convertVEvent2FCalEvent(item);
     $('#calendar').fullCalendar('renderEvent', event, true);
-};
-
-PCalendar.prepareEvent = function(item) {
-    return PCalendar.convertVEvent2FCalEvent(item);
 };
 
 PCalendar.updateEvent = function(item) {
@@ -806,16 +805,21 @@ syncData = function() {
         .done(function(data, status, response){
             console.log(response.status);
             if (response.status == "204") {
-                /*
-                 * no setup info
-                 * 1. Display Menu->Account List-> Register Account Dialog
-                 * 2. Fill form
-                 * 3. Call setAccessInfoAPI
-                 */
-                Common.stopAnimation();
-                Common.openSlide();
-                displayAccountPanel();
-                displayAccountRegistrationDialog();
+                getListOfVEventsCount().done(function(data) {
+                    if (data.d.__count == 0) {
+                        /*
+                         * no setup info
+                         * 1. Display Menu->Account List-> Register Account Dialog
+                         * 2. Fill form
+                         * 3. Call setAccessInfoAPI
+                         */
+                        displaySyncListPanel();
+                    }
+                }).fail(function(error) {
+                    console.log(error);
+                }).always(function() {
+                    Common.stopAnimation();
+                })
             } else {
                 if (data.status == 'OK') {
                     Common.stopAnimation();
@@ -840,8 +844,7 @@ syncData = function() {
             if ((jqXHR.status == '400') && (jqXHR.responseJSON.srcType)) {
                 let srcType = jqXHR.responseJSON.srcType;
                 let accountInfo;
-                Common.openSlide();
-                displayAccountPanel();
+                displaySyncListPanel();
 
                 $('.list-group-item.account-item tr').each(function(index) {
                     if (accountInfo.srcType == srcType) {
@@ -876,72 +879,14 @@ sync = function() {
 };
 
 displayAccountRegistrationDialog = function() {
-    setBackahead(true);
-
-    $("#setting-panel2").empty();
-
-    var html = [
-        '<div class="modal-body">',
-            '<div class="row">',
-                '<div class="col-sm-1 col-md-1">',
-                    '<span data-i18n="glossary:Account.type"></span>',
-                '</div>',
-                '<div class="col-sm-11 col-md-11">',
-                    '<div class="row">',
-                        '<div class="col-sm-4 col-md-4">',
-                            '<input type="radio" id="srcTypeEWS" name="srcType" value="EWS" checked>',
-                            '<label for="srcTypeEWS" data-i18n="glossary:Account.types.EWS"></label>',
-                        '</div>',
-                        '<div class="col-sm-4 col-md-4">',
-                            '<input type="radio" id="srcTypeGOOGLE" name="srcType" value="Google">',
-                            '<label for="srcTypeGOOGLE" data-i18n="glossary:Account.types.Google"></label>',
-                        '</div>',
-                        '<div class="col-sm-4 col-md-4">',
-                            '<input type="radio" id="srcTypeOffice365" name="srcType" value="Office365">',
-                            '<label for="srcTypeOffice365" data-i18n="glossary:Account.types.Office365"></label>',
-                        '</div>',
-                    '</div>',
-                '</div>',
-            '</div>',
-            /*
-            '<div class="row">',
-                '<div class="col-sm-1 col-md-1">',
-                    '<span>URL</span>',
-                '</div>',
-                '<div class="col-sm-11 col-md-11">',
-                    '<input type="text" id="srcUrl">',
-                '</div>',
-            '</div>',
-            */
-            '<div class="row">',
-                '<div class="col-sm-1 col-md-1">',
-                    '<span data-i18n="glossary:Account.ID"></span>',
-                '</div>',
-                '<div class="col-sm-11 col-md-11">',
-                    '<input type="text" id="idCalendarAccount" name="idCalendarAccount" value="">',
-                '</div>',
-            '</div>',
-            '<div class="row">',
-                '<div class="col-sm-1 col-md-1">',
-                    '<span data-i18n="glossary:Account.Password"></span>',
-                '</div>',
-                '<div class="col-sm-11 col-md-11">',
-                    '<input type="password" id="pwCalendarAccount" name="pwCalendarAccount" value="">',
-                '</div>',
-            '</div>',
-        '</div>',
-        '<div class="modal-footer">',
-            '<button type="button" class="btn btn-default" onClick="moveBackahead(true);" data-i18n="btn.cancel"></button>',
-            '<button type="button" class="btn btn-primary" id="b-add-account-ok" onClick="return registerAccount();" data-i18n="glossary:Account.Register.btnOK"></button>',
-        '</div>'
-    ].join("");
-    $("#setting-panel2")
-        .append(html)
-        .localize();
-
-    $("#setting-panel2").toggleClass('slide-on');
-    $("#setting-panel1").toggleClass('slide-on-holder');
-    setTitleMenu("glossary:Account.Register.title", true);
+    Common.loadContent("./templates/_list_template.html").done(function(data) {
+        var out_html = $($.parseHTML(data));
+        let id = PCalendar.createSubContent(out_html);
+        $(id + " .header-btn-right").hide();
+        $(id + " footer").hide();
+    }).fail(function(error) {
+        console.log(error);
+    });
 };
 
 registerAccount = function() {
@@ -955,7 +900,7 @@ registerAccount = function() {
         PCalendar.prepareOAuth2Account(srcType);
         break;
     default:
-        setAccessInfoAPI('POST')
+        setAccessInfoAPI('POST', srcType)
             .done(function(data, status, response){
                 syncFullData();
             })
@@ -972,6 +917,68 @@ registerAccount = function() {
 
     return false;
 };
+
+PCalendar.createSubContent = function(html) {
+    let no = $(".subContent").length;
+    if (no == 0) {
+        $("#loadContent").show();
+    }
+
+    let aDiv = $("<div>", {
+        id: "subContent" + no,
+        class: "subContent subContent" + no,
+        style: "z-index: " + (10 + no)
+    }).append(html);
+    
+    $("#loadContent").append($(aDiv)).localize();
+    Common.slideShow('.subContent' + no);
+    return '.subContent' + no;
+};
+PCalendar.backSubContent = function(allFlag) {
+    let result = "";
+    if (allFlag) {
+        Common.slideHide(".subContent", "right", function() {
+            $(".subContent").remove();
+            $("#loadContent").hide();
+        })
+    } else {
+        let no = $(".subContent").length - 1;
+        Common.slideHide(".subContent" + no, "right", function() {
+            $(".subContent" + no).remove();
+            if (no <= 0) {
+                $("#loadContent").hide();
+            }
+        });
+        result = ".subContent" + (no - 1);
+    }
+
+    return result;
+}
+
+PCalendar.dispPasswordScreen = function() {
+    Common.loadContent("./templates/_change_password_template.html").done(function(data) {
+        let out_html = $($.parseHTML(data));
+        PCalendar.createSubContent(out_html);
+    }).fail(function(error) {
+        console.log(error);
+    });
+};
+
+PCalendar.EwsRegister = function() {
+    setAccessInfoAPI('POST', 'EWS')
+        .done(function(data, status, response){
+            syncFullData();
+        })
+        .fail(function(error){
+            console.log(error.responseJSON);
+            Common.openWarningDialog(
+                'warningDialog.title',
+                error.responseJSON.error || error.responseJSON.message.value,
+                function(){ $('#modal-common').modal('hide')}
+            );
+            $('#dialogOverlay').hide();
+        });
+}
 
 PCalendar.prepareOAuth2Account = function(srcType) {
     let pData = setAccountData(srcType);
@@ -994,8 +1001,7 @@ setAccountData = function(srcType) {
     return pData;
 };
 
-setAccessInfoAPI = function(method) {
-    let srcType = $('[name=srcType]:checked').val();
+setAccessInfoAPI = function(method, srcType) {
     let srcUrl = $('#srcUrl').val();
     let srcAccountName = $('#idCalendarAccount').val();
     let pw = $('#pwCalendarAccount').val();
@@ -1026,20 +1032,8 @@ syncFullData = function() {
         .done(function(data, status, response){
             if (data.syncCompleted) {
                 $('#dialogOverlay').hide();
-                moveBackahead(true);
-                // Rerender the account list
-                getAccountList().done(function(data) {
-                    dispAccountList(data);
-                }).fail(function(error) {
-                    console.log(error.responseJSON);
-                    Common.openWarningDialog(
-                        'warningDialog.title',
-                        error.responseJSON.error || error.responseJSON.message.value,
-                        function(){ $('#modal-common').modal('hide')}
-                    );
-                }).always(function(){
-                    reRenderCalendar();
-                });
+                PCalendar.backSubContent(true);
+                reRenderCalendar();
             } else {
                 syncFullData();
             }
@@ -1056,97 +1050,35 @@ syncFullData = function() {
 };
 
 displayAccountModificationDialog = function(aDom, accountInfo) {
-    if (aDom) {
-        accountInfo = $(aDom).closest("tr").data('account-info');
-    }
     console.log(accountInfo.srcAccountName);
-    
-    setBackahead(true);
-
-    $("#setting-panel2").empty();
-
-    var html = [
-        '<div class="modal-body">',
-            '<div class="row">',
-                '<div class="col-sm-1 col-md-1">',
-                    '<span data-i18n="glossary:Account.type"></span>',
-                '</div>',
-                '<div class="col-sm-11 col-md-11">',
-                    '<div class="row">',
-                        '<div class="col-sm-4 col-md-4">',
-                            '<input type="radio" id="srcTypeEWS" name="srcType" value="EWS" checked>',
-                            '<label for="srcTypeEWS" data-i18n="glossary:Account.types.EWS"></label>',
-                        '</div>',
-                        '<div class="col-sm-4 col-md-4">',
-                            '<input type="radio" id="srcTypeGOOGLE" name="srcType" value="Google">',
-                            '<label for="srcTypeGOOGLE" data-i18n="glossary:Account.types.Google"></label>',
-                        '</div>',
-                        '<div class="col-sm-4 col-md-4">',
-                            '<input type="radio" id="srcTypeOffice365" name="srcType" value="Office365">',
-                            '<label for="srcTypeOffice365" data-i18n="glossary:Account.types.Office365"></label>',
-                        '</div>',
-                    '</div>',
-                '</div>',
-            '</div>',
-            /*
-            '<div class="row">',
-                '<div class="col-sm-1 col-md-1">',
-                    '<span>URL</span>',
-                '</div>',
-                '<div class="col-sm-11 col-md-11">',
-                    '<input type="text" id="srcUrl">',
-                '</div>',
-            '</div>',
-            */
-            '<div class="row">',
-                '<div class="col-sm-1 col-md-1">',
-                    '<span data-i18n="glossary:Account.ID"></span>',
-                '</div>',
-                '<div class="col-sm-11 col-md-11">',
-                    '<input type="text" id="idCalendarAccount" name="idCalendarAccount">',
-                '</div>',
-            '</div>',
-            '<div class="row">',
-                '<div class="col-sm-1 col-md-1">',
-                    '<span data-i18n="glossary:Account.Password"></span>',
-                '</div>',
-                '<div class="col-sm-11 col-md-11">',
-                    '<input type="password" id="pwCalendarAccount" name="pwCalendarAccount">',
-                '</div>',
-            '</div>',
-        '</div>',
-        '<div class="modal-footer">',
-            '<button type="button" class="btn btn-default" onClick="moveBackahead(true);" data-i18n="btn.cancel"></button>',
-            '<button type="button" class="btn btn-primary" id="b-add-account-ok" onClick="return modifyAccount();" data-i18n="glossary:Account.Edit.btnOK"></button>',
-        '</div>'
-    ].join("");
-    $("#setting-panel2")
-        .append(html)
-        .localize();
-        
-    $('input:radio[name=srcType]')
-        .val([accountInfo.srcType])
-        .prop('disabled', true);
-    $('#idCalendarAccount')
+    Common.loadContent("./templates/_change_password_template.html").done(function(data) {
+        let out_html = $($.parseHTML(data));
+        let id = PCalendar.createSubContent(out_html);
+        $('#idCalendarAccount')
         .val(accountInfo.srcAccountName)
         .prop("readonly", true);
-
-    $("#setting-panel2").toggleClass('slide-on');
-    $("#setting-panel1").toggleClass('slide-on-holder');
-    setTitleMenu("glossary:Account.Edit.title", true);
+        $("#changePassOkBtn").removeAttr('onclick');
+        $("#changePassOkBtn").on('click', function() {
+            modifyAccount(accountInfo.srcType);
+        });
+        $(id + " .header-title").attr("data-i18n", "glossary:Account.Edit.title").localize();
+        $("#changePassOkBtn").attr("data-i18n", "glossary:Account.Edit.btnOK").localize();
+    }).fail(function(error) {
+        console.log(error);
+    });
 };
 
-modifyAccount = function() {
+modifyAccount = function(srcType) {
     // show spinner
     $('#dialogOverlay').show();
 
-    setAccessInfoAPI('PUT')
+    setAccessInfoAPI('PUT', srcType)
         .done(function(data, status, response){
             $('#dialogOverlay').hide();
-            moveBackahead(true);
+            let id = PCalendar.backSubContent();
             // Rerender the account list
             getAccountList().done(function(data) {
-                dispAccountList(data);
+                dispAccountList(id + " main", data);
             }).fail(function(error) {
                 console.log(error.responseJSON);
                 Common.openWarningDialog(
@@ -1169,27 +1101,18 @@ modifyAccount = function() {
     return false;
 };
 
-displyAccessInfo = function(aDom) {
-    let accountInfo = $(aDom).closest("tr").data('account-info');
-    console.log(accountInfo.srcAccountName);
-    return false;
-};
-
 deleteAccessInfo = function(aDom) {
-    let accountInfo = $(aDom).closest("tr").data('account-info');
+    let accountInfo = $(aDom).closest("li").data('account-info');
     deleteAccessInfoAPI(accountInfo)
         .done(function(){
             console.log('Finish deleting ' + accountInfo.srcAccountName);
             // Rerender the account list
-            getAccountList().done(function(data) {
-                dispAccountList(data);
-            }).fail(function(error) {
-                console.log(error.responseJSON);
-                Common.openWarningDialog(
-                    'warningDialog.title',
-                    error.responseJSON.error || error.responseJSON.message.value,
-                    function(){ $('#modal-common').modal('hide')}
-                );
+            $(aDom).closest('li').animate({
+                width: 'hide',
+                height: 'hide',
+                opacity: 'hide'
+            }, 'slow', function () {
+                $(aDom).remove();
             });
         })
         .fail(function(error){
@@ -1214,179 +1137,174 @@ deleteAccessInfoAPI = function(accountInfo) {
     });
 };
 
-/*
- * accountList
- * Example:  [{"srcType":"Google","srcAccountName":"john.doe@gmail.com"}]
- */
-PCalendar.displayAddVEventDialog = function(accountList, date) {
-    $("[data-toggle='toggle']").bootstrapToggle('destroy');
-    
-    let startDatetime = date.second(0).format();
-    let endDatetime = date.add(1, 'hours').format();
-    $("body #modalDialogContainer").load(
-        "./templates/_vevent_template.html",
-        function(responseText, textStatus, jqXHR) {
-            $('body #modal-vevent').localize();
-
-            PCalendar.setAccountInfo(accountList[0]);
-
-            $('#dtstart').val(startDatetime);
-            $('#dtend').val(endDatetime);
-
-            PCalendar.addVEventBtnHandler(accountList);
-            
-            $("[data-toggle='toggle']").bootstrapToggle();
-
-            $('#modal-vevent').modal('show');
-        }
-    );    
-};
-
-PCalendar.setAccountInfo = function(accountInfo) {
-    let srcTypeDefault = accountInfo.srcType;
-    $('#modal-vevent input[name=srcType][value=' + srcTypeDefault + ']').prop('checked', true);
-    let srcAccountNameDefault = accountInfo.srcAccountName;
-    $('#modal-vevent #srcAccountName').val(srcAccountNameDefault);
-};
-
-PCalendar.addVEventBtnHandler = function(accountList) {
-    let listEWS = _.where(accountList, { srcType: 'EWS'});
-    let listGoogle = _.where(accountList, { srcType: 'Google'});
-    let listOffice365 = _.where(accountList, { srcType: 'Office365'});
-
-    $('#srcTypeEWS').prop('disabled', (listEWS.length == 0));
-    $('#srcTypeGOOGLE').prop('disabled', (listGoogle.length == 0));
-    $('#srcTypeOffice365').prop('disabled', (listOffice365.length == 0));
-
-    $('#modal-vevent').on('change', 'input[type=radio][name=srcType]', function(){
-        console.log('Calendar type clicked. ' + this.value);
-        let tempAccountList = accountList;
-        let srcType = this.value;
-        let tempAccount = _.where(tempAccountList, { srcType: srcType });
-        let srcAccountName = tempAccount[0].srcAccountName;
-        $('#srcAccountName').val(srcAccountName);
+PCalendar.changeEditBtn = function(event) {
+    $("#edit-btn").removeAttr("onclick").on("click", function() {
+        PCalendar.editEvent(event);
     });
-
-    $('#b-delete-vevent-ok').hide();
-
-    $('#b-save-vevent-ok').click(function(){
-        console.log('Add event');
-        let tempVEvent = PCalendar.prepareVEvent('POST');
-        PCalendar.updateVEventAPI('POST', tempVEvent)
-            .done(function(data){
+    PCalendar.setEditVEventDisabled(false);
+    $("#edit-btn").attr("data-i18n", "glossary:Calendars.VEvent.btn.save").localize();
+}
+PCalendar.addEvent = function() {
+    console.log('Add event');
+    let tempVEvent = PCalendar.prepareVEvent('POST');
+    PCalendar.updateVEventAPI('POST', tempVEvent)
+        .done(function(data){
+            if (dispListName != "schedule") {
                 PCalendar.renderEvent(data);
-                $('#modal-vevent').modal('hide');
-            })
-            .fail(function(error){
-                console.log(error.responseJSON);
-                $('#modal-vevent').modal('hide');
-                Common.openWarningDialog(
-                    'warningDialog.title',
-                    error.responseJSON.error || error.responseJSON.message.value,
-                    function(){
-                        $('#modal-common').modal('hide');
-                        $('#modal-vevent').modal('show');
-                    }
-                );
-            });
-    });
-};
-
-PCalendar.displayEditVEventDialog = function(calEvent, jsEvent, view) {
-    $("[data-toggle='toggle']").bootstrapToggle('destroy');
-    
-    $("body #modalDialogContainer").load(
-        "./templates/_vevent_template.html",
-        function(responseText, textStatus, jqXHR) {
-            $('body #modal-vevent').localize();
-
-            PCalendar.setEditVEventInfo(calEvent);
-
-            PCalendar.editVEventBtnHandler(calEvent);
+            } else {
+                scheduleRenderEvent(data);
+            }
             
-            $("[data-toggle='toggle']").bootstrapToggle();
-
-            $('#modal-vevent').modal('show');
-        }
-    );    
-};
-PCalendar.setEditVEventInfo = function(calEvent) {
-    let tempVEvent = calEvent.vEvent;
-    $('#modal-vevent input:radio[name=srcType]')
-        .val([tempVEvent.srcType])
-        .prop('disabled', true);
-    if (tempVEvent.url) {
-        $('#modal-vevent #url').attr('href', tempVEvent.url);
-    }
-    $('#modal-vevent #srcAccountName')
-        .val(tempVEvent.srcAccountName)
-        .prop("readonly", true);
-    if (tempVEvent.attendees) {
-        $('#modal-vevent #attendees').text(tempVEvent.attendees);
-    }
-    if (tempVEvent.summary) {
-        $('#modal-vevent #summary').val(tempVEvent.summary);
-    }
-    if (tempVEvent.location) {
-        $('#modal-vevent #location').val(tempVEvent.location);
-    }
-    $('#allDay').prop('checked', calEvent.allDay);
-    if (tempVEvent.dtstart) {
-        //$('#modal-vevent #dtstart').val(moment(tempVEvent.dtstart).format());
-        $('#modal-vevent #dtstart').val(calEvent.start.format());
-    }
-    if (tempVEvent.dtend) {
-        //$('#modal-vevent #dtend').val(moment(tempVEvent.dtend).format());
-        $('#modal-vevent #dtend').val(calEvent.end.format());
-    }
-    if (tempVEvent.description) {
-        $('#modal-vevent #description').val(tempVEvent.description);
-    }
-    if (tempVEvent.organizer) {
-        $('#modal-vevent #organizer').val(tempVEvent.organizer);
-    } else {
-        $('#modal-vevent #organizer').val(tempVEvent.srcAccountName);
-    }
-};
-
-PCalendar.editVEventBtnHandler = function(calEvent) {
-    $('#b-save-vevent-ok').click(function(){
-        console.log('Add event');
-        let tempVEvent = PCalendar.prepareVEvent('PUT', calEvent.vEvent);
-        PCalendar.updateVEventAPI('PUT', tempVEvent)
-            .done(function(data){
+            PCalendar.backSubContent();
+        })
+        .fail(function(error){
+            console.log(error.responseJSON);
+            PCalendar.backSubContent();
+            Common.openWarningDialog(
+                'warningDialog.title',
+                error.responseJSON.error || error.responseJSON.message.value,
+                function(){
+                    $('#modal-common').modal('hide');
+                    $('#modal-vevent').modal('show');
+                }
+            );
+        });
+}
+PCalendar.editEvent = function(event) {
+    console.log('Edit event');
+    let tempVEvent = PCalendar.prepareVEvent('PUT', event.vEvent);
+    PCalendar.updateVEventAPI('PUT', tempVEvent)
+        .done(function(data){
+            if (dispListName != "schedule") {
                 PCalendar.updateEvent(data);
-                $('#modal-vevent').modal('hide');
-            })
-            .fail(function(error){
-                console.log(error.responseJSON);
-                $('#modal-vevent').modal('hide');
-                Common.openWarningDialog(
-                    'warningDialog.title',
-                    error.responseJSON.error || error.responseJSON.message.value,
-                    function(){
-                        $('#modal-common').modal('hide');
-                        $('#modal-vevent').modal('show');
-                    }
-                );
-            });
-    });
+            } else {
+                scheduleRenderEvent(data);
+            }
+            
+            PCalendar.backSubContent();
+        })
+        .fail(function(error){
+            console.log(error.responseJSON);
+            PCalendar.backSubContent();
+            Common.openWarningDialog(
+                'warningDialog.title',
+                error.responseJSON.error || error.responseJSON.message.value,
+                function(){
+                    $('#modal-common').modal('hide');
+                    $('#modal-vevent').modal('show');
+                }
+            );
+        });
+}
 
-    $('#b-delete-vevent-ok').click(function() {
-        PCalendar.displayVEventDialog(calEvent);
-    });
-        
+PCalendar.displayEditVEvent = function(calEvent) {
+    Common.loadContent("./templates/_vevent_template.html").done(function(data) {
+        var out_html = $($.parseHTML(data));
+        $("#loadContent").empty();
+        let id = PCalendar.createSubContent(out_html);
+        $("#b-delete-vevent-ok").on("click", function() {
+            PCalendar.displayVEventDialog(calEvent);
+        });
+        $(id + " header div").attr("data-i18n", "glossary:Calendars.Info_events").localize();
+        $("#edit-btn").attr("data-i18n", "glossary:Account.Edit.label").localize();
+        $("#edit-btn").on("click", function() {
+            PCalendar.changeEditBtn(calEvent);
+        });
+        PCalendar.setEditVEventInfo(calEvent.vEvent);
+        PCalendar.setEditVEventDisabled(true);
+        PCalendar.allDaySetClickEvent();
+    }).fail(function(error) {
+        console.log(error);
+    });    
 };
+PCalendar.setEditVEventInfo = function(event) {
+    $('#srcAccountName').data("type", event.srcType);
+    if (event.url) {
+        $('#url').attr('href', event.url);
+        $('#url').text(event.url);
+    }
+    $('#srcAccountName').data("account", event.srcAccountName);
+    $('#srcAccountName').text(event.srcAccountName);
+    if (event.attendees) {
+        $('#attendees').text(event.attendees);
+    }
+    if (event.summary) {
+        $('#event-title').val(event.summary);
+    }
+    if (event.location) {
+        $('#location').val(event.location);
+    }
+    $('#allDay').prop('checked', event.allDay);
+    let dtstart = moment(event.dtstart);
+    let dtend = moment(event.dtend);
+    if (event.allDay) {
+        $('#dtstart_time').hide();
+        $('#dtend_time').hide();
+        dtend.add(-1, "day");
+    } else {
+        $('#dtstart_time').show();
+        $('#dtend_time').show();
+    }
+    if (event.dtstart) {
+        $('#dtstart_date').val(dtstart.format("YYYY-MM-DD"));
+        $('#dtstart_time').val(dtstart.format("HH:mm"));
+    }
+    if (event.dtend) {
+        $('#dtend_date').val(dtend.format("YYYY-MM-DD"));
+        $('#dtend_time').val(dtend.format("HH:mm"));
+    }
+    if (event.description) {
+        $('#description').val(event.description);
+    }
+    if (event.organizer) {
+        $('#organizer').val(event.organizer);
+    } else {
+        $('#organizer').val(event.srcAccountName);
+    }
+};
+PCalendar.allDaySetClickEvent = function() {
+    $("#allDay").off().on("change", function() {
+        if ($(this).prop("checked")) {
+            $('#dtstart_time').hide();
+            $('#dtend_time').hide();
+        } else {
+            $('#dtstart_time').show();
+            $('#dtend_time').show();
+        }
+    })
+}
+
+PCalendar.setEditVEventDisabled = function(disabled) {
+    $("#event-title").attr("disabled", disabled);
+    $("#dtstart_date").attr("disabled", disabled);
+    $("#dtstart_time").attr("disabled", disabled);
+    $("#dtend_date").attr("disabled", disabled);
+    $("#dtend_time").attr("disabled", disabled);
+    $("#allDay").attr("disabled", disabled);
+    $("#srcAccountName").attr("disabled", disabled);
+    //if (disabled) {
+        $("#srcAccountName").css("pointer-events", "none");
+    //} else {
+    //    $("#srcAccountName").css("pointer-events", "auto");
+    //}
+    
+    $("#location").attr("disabled", disabled);
+    $("#url").attr("disabled", disabled);
+    $("#description").attr("disabled", disabled);
+}
 
 PCalendar.displayVEventDialog = function(calEvent) {
     let eventId = calEvent.id;
     if (window.confirm('Remove Event: ' + PCalendar.displayCalendarTitle(calEvent.title))) {
-        $('#modal-vevent').modal('hide');
+        PCalendar.backSubContent();
         $('#dialogOverlay').show();
         PCalendar.deleteVEventAPI({__id: eventId})
             .done(function(){
-                $('#calendar').fullCalendar('removeEvents', eventId);
-                
+                if (dispListName != "schedule") {
+                    $('#calendar').fullCalendar('removeEvents', eventId);
+                } else {
+                    scheduleRemoveEvent(calEvent);
+                }
             })
             .fail(function(error){
                 console.log(error.responseJSON);
@@ -1424,16 +1342,25 @@ PCalendar.displayVEventDialog = function(calEvent) {
     };
  */
 PCalendar.prepareVEvent = function(method, tempVEvent) {
+    let dtstartStr = $('#dtstart_date').val();
+    let dtendStr = $('#dtend_date').val();
+    if ($('#allDay').prop('checked')) {
+        dtendStr = moment($('#dtend_date').val()).add(1, "day").format("YYYY-MM-DD");
+    } else {
+        dtstartStr = $('#dtstart_date').val() + "T" + $('#dtstart_time').val();
+        dtendStr = $('#dtend_date').val() + "T" + $('#dtend_time').val();
+    }
+
     let tempData = {
-        srcType: $('#modal-vevent [name=srcType]:checked').val(),
-        srcAccountName: $('#srcAccountName').val(),
+        srcType: $('#srcAccountName').data("type"),
+        srcAccountName: $('#srcAccountName').data("account"),
         allDay: $('#allDay').prop('checked'),
-        start: $('#dtstart').val(),
-        end: $('#dtend').val(),
-        dtstart: moment($('#dtstart').val()).toISOString(),
-        dtend: moment($('#dtend').val()).toISOString(),
-        organizer: $('#organizer').val() || $('#srcAccountName').val(), // Usually the organizer is the account owner
-        summary: $('#summary').val(),
+        start: dtstartStr,
+        end: dtendStr,
+        dtstart: moment(dtstartStr).toISOString(),
+        dtend: moment(dtendStr).toISOString(),
+        organizer: $('#organizer').val() || $('#srcAccountName').data("type"), // Usually the organizer is the account owner
+        summary: $('#event-title').val(),
         description: $('#description').val(),
         location: $('#location').val()
     };
@@ -1492,10 +1419,13 @@ reRenderCalendar = function() {
     if (dispListName != "schedule") {
         getListOfVEvents();
     } else {
-        $("#schedule").empty();
-        sDateObj = moment().add(-2, "month").startOf("month");
-        eDateObj = moment().add(2, "month").endOf("month");
-        dispScheduleHeaders(moment(sDateObj), moment(eDateObj));
-        getListOfVEventsSchedule(moment(sDateObj), moment(eDateObj), true);
+        initSchedule();
     }
+};
+
+/* debug */
+displyAccessInfo = function(aDom) {
+    let accountInfo = $(aDom).closest("div").data('account-info');
+    console.log(accountInfo.srcAccountName);
+    return false;
 };
