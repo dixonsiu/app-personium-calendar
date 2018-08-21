@@ -145,6 +145,7 @@ displayAccountPanel = function() {
         $("#loadContent").empty();
         let id = PCalendar.createSubContent(out_html);
         $(id + " main").empty();
+        $(id + " .header-title").attr("data-i18n", "glossary:Account.label").localize();
         $("#addAccountFooterButton").removeAttr("onclick").on('click', displayAccountRegistrationDialog);
         getAccountList().done(function(data) {
             dispAccountList(id + " main", data);
@@ -619,6 +620,8 @@ scheduleRenderEvent = function(item) {
     if (event.allDay) {
         dayCnt--;
     }
+
+    scheduleRemoveEvent(id);
     for (var i = 0; i <= dayCnt; i++) {
         var day = startObj.format("YYYY-MM-DD");
         if ($("[data-id='"+day+"']").children().length == 0) {
@@ -694,34 +697,19 @@ scheduleRenderEvent = function(item) {
         startObj.add(1, "day");
     }
 }
-scheduleRemoveEvent = function(item) {
-    let event = PCalendar.convertVEvent2FCalEvent(item);
-    let id = event.vEvent.id;
-    let startObj = moment(event.start);
-    let endObj = moment(event.end);
-    let diffStartObj = moment(event.start).startOf("day");
-    let diffEndObj = moment(event.end).startOf("day");
-    var diff = diffEndObj.diff(diffStartObj);
-    var duration = moment.duration(diff);
-    var dayCnt = Math.floor(duration.asDays());
-    if (event.allDay) {
-        dayCnt--;
-    }
-
-    for (var i = 0; i <= dayCnt; i++) {
-        var day = startObj.format("YYYY-MM-DD");
-        $("[data-id='"+day+"']").find("[name='"+id+"']").remove();
+scheduleRemoveEvent = function(id) {
+    $("[name='"+id+"']").each(function(index, ele) {
+        let day = $(ele).parent().data("id");
+        $(ele).remove();
         if ($("[data-id='"+day+"']").children().length <= 1) {
+            var month = $("[data-id='"+day+"']").parents("table").data("date");
             $("[data-id='"+day+"']").empty();
 
-            var month = startObj.format("YYYY-MM");
             if ($("#schedule-"+month).find(".fc-list-heading").length == 0) {
-                scheduleRenderNoEvent(startObj);
+                scheduleRenderNoEvent(moment(day));
             }
         }
-
-        startObj.add(1, "day");
-    }
+    })
 }
 
 /*
@@ -801,6 +789,7 @@ Common.getListOfOData = function(url, token) {
 
 syncData = function() {
     Common.startAnimation();
+    Common.closeSlide();
     sync()
         .done(function(data, status, response){
             console.log(response.status);
@@ -1303,7 +1292,7 @@ PCalendar.displayVEventDialog = function(calEvent) {
                 if (dispListName != "schedule") {
                     $('#calendar').fullCalendar('removeEvents', eventId);
                 } else {
-                    scheduleRemoveEvent(calEvent);
+                    scheduleRemoveEvent(calEvent.id);
                 }
             })
             .fail(function(error){
