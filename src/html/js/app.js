@@ -145,6 +145,7 @@ displayAccountPanel = function() {
         $("#loadContent").empty();
         let id = PCalendar.createSubContent(out_html);
         $(id + " main").empty();
+        $(id + " .header-title").attr("data-i18n", "glossary:Account.label").localize();
         $("#addAccountFooterButton").removeAttr("onclick").on('click', displayAccountRegistrationDialog);
         getAccountList().done(function(data) {
             dispAccountList(id + " main", data);
@@ -801,6 +802,7 @@ Common.getListOfOData = function(url, token) {
 
 syncData = function() {
     Common.startAnimation();
+    Common.closeSlide();
     sync()
         .done(function(data, status, response){
             console.log(response.status);

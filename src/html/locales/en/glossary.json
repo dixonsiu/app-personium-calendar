@@ -19,7 +19,7 @@
         },
         "No_title": "(No title)",
         "No_events": "No Events.",
-        "Add_events": "Add schedu",
+        "Add_events": "Add Event",
         "New_events": "New Events",
         "Info_events": "Event Details",
         "Today": "Today",
@@ -37,7 +37,8 @@
             "info": {
             }
         },
-        "Sync": "Sync"
+        "Sync": "Sync",
+        "Version": "Version 1.2.1"
     },
     "Account": {
         "label": "Account",
