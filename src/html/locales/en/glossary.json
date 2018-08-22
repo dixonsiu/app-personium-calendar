@@ -37,6 +37,7 @@
             "info": {
             }
         },
+        "NotInterlock": "Start without interlocking",
         "Sync": "Sync",
         "Version": "Version 1.2.1"
     },
