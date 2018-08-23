@@ -126,6 +126,7 @@ displaySyncListPanel = function() {
         var out_html = $($.parseHTML(data));
         $("#loadContent").empty();
         let id = PCalendar.createSubContent(out_html);
+        $(id + " .header-title").attr("data-i18n", "glossary:Account.label").localize();
         $(id + " .pn-back-btn").hide();
         $(id + " .header-btn-right").hide();
     }).fail(function(error) {
@@ -871,6 +872,7 @@ displayAccountRegistrationDialog = function() {
     Common.loadContent("./templates/_list_template.html").done(function(data) {
         var out_html = $($.parseHTML(data));
         let id = PCalendar.createSubContent(out_html);
+        $(id + " .header-title").attr("data-i18n", "glossary:Account.label").localize();
         $(id + " .header-btn-right").hide();
         $(id + " footer").hide();
     }).fail(function(error) {

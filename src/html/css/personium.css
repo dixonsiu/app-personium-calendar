@@ -406,7 +406,7 @@ div.mySpinner > i {
 }
 
 .pn-list>span {
-    margin: auto 0;
+    margin: auto 10px;
     flex: 1;
     font-size: 1.2rem;
     word-break: break-word;
