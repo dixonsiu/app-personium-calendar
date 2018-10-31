@@ -44,7 +44,7 @@ Common.accessData = {
     refExpires: null
 };
 
-Common.path_based_cellurl_enabled = false;
+Common.path_based_cellurl_enabled = true;
 Common.unitUrl = "";
 
 /*
@@ -193,12 +193,14 @@ Common.getBoxUrlFromResponse = function(info) {
 Common.setInfo = function(url) {
     Common.setBoxUrl(url);
     Common.getBox(url, Common.getToken()).done(function(boxObj) {
-        Common.accessData.unitUrl = boxObj.unit.url;
-        Common.accessData.cellUrl = boxObj.cell.url;
-        Common.accessData.cellName = boxObj.cell.name;
-        Common.accessData.boxName = boxObj.box.name;
-    }).fail(function(xmlObj) {
-        if (xmlObj.status == "200") {
+        if (boxObj.box) {
+            Common.accessData.unitUrl = boxObj.unit.url;
+            Common.accessData.cellUrl = boxObj.cell.url;
+            Common.accessData.cellName = boxObj.cell.name;
+            Common.accessData.boxName = boxObj.box.name;
+        } else {
+            // In older version, URL is decomposed and created
+            var urlSplit = url.split("/");
             Common.accessData.unitUrl = _.first(urlSplit, 3).join("/") + "/";
             Common.accessData.cellUrl = _.first(urlSplit, 4).join("/") + "/";
             Common.accessData.cellName = Common.getCellNameFromUrl(Common.accessData.cellUrl);
@@ -216,7 +218,7 @@ Common.getUnitUrl = function() {
 Common.changeLocalUnitToUnitUrl = function (cellUrl) {
     var result = cellUrl;
     if (cellUrl.startsWith(Common.PERSONIUM_LOCALUNIT)) {
-        if (Common.path_based_cellurl_enabled) {
+        if (!Common.path_based_cellurl_enabled) {
             // https://cellname.fqdn/
             let cellname = cellUrl.replace(Common.PERSONIUM_LOCALUNIT + "/", "");
             if (cellname.endsWith("/")) {
