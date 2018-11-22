@@ -69,7 +69,8 @@ function(request){
 function toAccessRefreshToken(oAuthInfo, params) {
     var clientId = null;
     var clientSecret = null;
-    var redirectUri = encodeURIComponent("https://demo.personium.io/app-personium-calendar/__/Engine/oauth2callback");
+    var accInfo = require("acc_info").accInfo;    
+    var redirectUri = encodeURIComponent(accInfo.APP_CELL_URL + "__/Engine/oauth2callback");
     var grantType = "authorization_code";
     var tokenEp = null;
     var srcType = null;

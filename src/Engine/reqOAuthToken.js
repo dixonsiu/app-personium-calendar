@@ -54,7 +54,8 @@ function(request){
 
 
 function getRedirectURL(oAuthInfo, params) {
-    var redirectUri = encodeURIComponent("https://demo.personium.io/app-personium-calendar/__/Engine/oauth2callback");
+    var accInfo = require("acc_info").accInfo;    
+    var redirectUri = encodeURIComponent(accInfo.APP_CELL_URL + "__/Engine/oauth2callback");
     var clientId = null;
     var authorizationEp = null;
     var scope = null;
