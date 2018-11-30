@@ -1,6 +1,6 @@
 {
-  "bar_version": "1",
+  "bar_version": "2",
   "box_version": "1.01",
-  "DefaultPath": "app-personium-calendar",
+  "default_path": "app-personium-calendar",
   "schema": "https://demo.personium.io/app-personium-calendar/"
 }
