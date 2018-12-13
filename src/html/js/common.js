@@ -22,12 +22,8 @@ var Common = Common || {};
 
 Common.PERSONIUM_LOCALUNIT = "personium-localunit:";
 
-//Default timeout limit - 60 minutes.
-Common.IDLE_TIMEOUT =  3600000;
-// 55 minutes
-Common.IDLE_CHECK = 3300000;
-// Records last activity time.
-Common.lastActivity = new Date().getTime();
+//Default timeout limit - 30 minutes.
+Common.REFRESH_TIMEOUT = 1800000;
 
 Common.settingNowPage = 0;
 Common.settingNowTitle = {};
@@ -385,19 +381,10 @@ Common.checkParam = function() {
 /*
  * Initialize info for idling check
  */
-Common.setIdleTime = function() {
-    // Create Session Expired Modal
-    Common.appendSessionExpiredDialog();
-
-    //Common.refreshToken();
-
-    // check 5 minutes before session expires (60minutes)
-    Common.checkIdleTimer = setInterval(Common.checkIdleTime, Common.IDLE_CHECK);
-
-    $(document).on('click mousemove keypress', function (event) {
-        Common.lastActivity = new Date().getTime();
-    });
-}
+Common.setRefreshTimer = function() {
+    // refresh token every 30 minutes
+    Common.checkRefreshTimer = setInterval(Common.refreshToken, Common.REFRESH_TIMEOUT);
+};
 
 Common.appendSessionExpiredDialog = function() {
     // Session Expiration
@@ -636,24 +623,6 @@ Common.getProtectedBoxAccessToken4ExtCell = function(cellUrl, tcat, aaat) {
             'content-type': 'application/x-www-form-urlencoded'
         }
     });
-};
-
-/*
- * idling check 
- * Common.lastActivity + Common.accessData.expires * 1000
- */
-Common.checkIdleTime = function() {
-    if (new Date().getTime() > Common.lastActivity + Common.IDLE_TIMEOUT) {
-        Common.stopIdleTimer();
-        $('#modal-session-expired').modal('show');
-    } else {
-        Common.refreshToken();
-    }
-};
-
-Common.stopIdleTimer = function() {
-    clearInterval(Common.checkIdleTimer);
-    $(document).off('click mousemove keypress');
 };
 
 Common.showIrrecoverableErrorDialog = function(msg_key) {

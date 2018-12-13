@@ -45,7 +45,7 @@ getAppRole = function(auth) {
 additionalCallback = function() {
     Drawer_Menu();
 
-    Common.setIdleTime();
+    Common.setRefreshTimer();
 
     Common.getProfileName(Common.getTargetCellUrl(), displayMyDisplayName);
 
