@@ -27,6 +27,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-toggle/2.2.2/js/bootstrap-toggle.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-datetimepicker/2.5.20/jquery.datetimepicker.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jdenticon@1.8.0"></script>
   
   <script src="./js/common.js"></script>
   <script src="./js/common_personium.js"></script>
@@ -54,11 +55,27 @@
                         <a id="addAccount" onClick="displayAccountPanel();" href="javascript:void(0)" class="allToggle" data-i18n="glossary:Account.label"></a>
                     </li>
                     <li class="menu-list">
+                        <a id="receivedSharingRequest" onClick="displayReceivedSendSharingListPanel();" href="javascript:void(0)" class="allToggle" data-i18n="glossary:Sharing.Received.label"></a>
+                    </li>
+                    <li class="menu-list">
+                        <a id="sharingRequest" onClick="displaySendSharingListPanel();" href="javascript:void(0)" class="allToggle" data-i18n="glossary:Sharing.Send.label"></a>
+                    </li>
+                    <li class="menu-list">
                         <a href="#" onClick="syncData();return false;" data-i18n="glossary:Calendars.Sync"></a>
                     </li>
                     <li class="menu-list app-version">
                         <a href="#" data-i18n="glossary:Calendars.Version"></a>
                     </li>
+                </ul>
+            </div>
+            <div id="other_list">
+                <ul>
+                    <li class="menu-list menu-list-header">
+                        <span>別のCalendarを表示</span>
+                    </li>
+                </ul>
+                <ul id="otherAllowedCells">
+                    
                 </ul>
             </div>
         </div>
@@ -68,25 +85,30 @@
       <button id="drawer_btn" class="header-btn pn-btn">
         <i class="fas fa-bars fa-2x header-ic-02"></i>
       </button>
-      <div>
-        <button id="prev" class="calendar-arrow-btn pn-btn">
-          <i class="fas fa-angle-left fa-2x header-ic-01"></i>
-        </button>
-        <span class="calendar-title"></span>
-        <button id="next" class="calendar-arrow-btn pn-btn">
-          <i class="fas fa-angle-right fa-2x header-ic-01"></i>
-        </button>
-      </div>
 
-      <button id="today-btn" class="header-btn-right header-btn pn-btn" data-i18n="glossary:Calendars.Today"></button>
+      <div id="calendarTitle" class="calendar-displayname ellipsisText"></div>
+
+      <button id="other_btn" class="header-btn-right header-btn pn-btn" >Other</button>
     </header>
     <main>
+      <div class="date-header">
+        <div class="date-title">
+          <button id="prev" class="calendar-arrow-btn pn-btn">
+            <i class="fas fa-angle-left fa-2x header-ic-01"></i>
+          </button>
+          <span class="calendar-title"></span>
+          <button id="next" class="calendar-arrow-btn pn-btn">
+            <i class="fas fa-angle-right fa-2x header-ic-01"></i>
+          </button>
+          <button id="today-btn" class="pn-btn date-heder-right" data-i18n="glossary:Calendars.Today"></button>
+        </div>
+      </div>
       <div id="dispMsg" style="display:none;position:absolute;background-color: rgba(255,255,255,0.8);width: 100%;z-index:9;"></div>
-      <div id="container" style="height:100%;">
+      <div id="container" style="height:92%;">
         <div class='panel list-group toggle-panel' id='toggle-panel1' style="display:none;"></div>
         <div id='calendar'></div>
       </div>
-      <div id="schedule-scroller" class="fc fc-unthemed fc-ltr" style="height: 100%;overflow:auto;">
+      <div id="schedule-scroller" class="fc fc-unthemed fc-ltr" style="height: 94%;overflow:auto;">
         <div class="fc-view-container">
           <div class="fc-view fc-listYear-view fc-list-view fc-widget-content">
             <div id='schedule' class="fc-scroller"></div>

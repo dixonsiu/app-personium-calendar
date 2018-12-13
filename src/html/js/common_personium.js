@@ -17,26 +17,42 @@
 var Common = Common || {};
 
 Common.approvalRel = function(extCell, uuid, msgId, callback) {
-    Common.changeStatusMessageAPI(uuid, "approved").done(function() {
-        $("#" + msgId).remove();
-        if ((typeof callback !== "undefined") && $.isFunction(callback)) {
-            callback();
-        }
-        var title = i18next.t("readResponseTitle");
-        var body = i18next.t("readResponseApprovedBody");
-        Common.sendMessageAPI(uuid, extCell, "message", title, body);
+    Common.showConfirmDialog("msg.info.requestApproval", function() {
+        Common.changeStatusMessageAPI(uuid, "approved").done(function() {
+            $("#" + msgId).remove();
+            var title = i18next.t("readResponseTitle");
+            var body = i18next.t("readResponseApprovedBody");
+            Common.sendMessageAPI(uuid, extCell, "message", title, body).done(function(data) {
+                $("#modal-common").modal('hide');
+                if ((typeof callback !== "undefined") && $.isFunction(callback)) {
+                    callback();
+                }
+            });
+        }).fail(function(data) {
+            Common.showWarningDialog("msg.error.failedChangeStatus", function(){
+                $("#modal-common").modal('hide'); 
+            });
+        });
     });
 };
 
 Common.rejectionRel = function(extCell, uuid, msgId, callback) {
-    Common.changeStatusMessageAPI(uuid, "rejected").done(function() {
-        $("#" + msgId).remove();
-        if ((typeof callback !== "undefined") && $.isFunction(callback)) {
-            callback();
-        }
-        var title = i18next.t("readResponseTitle");
-        var body = i18next.t("readResponseDeclinedBody");
-        Common.sendMessageAPI(uuid, extCell, "message", title, body);
+    Common.showConfirmDialog("msg.info.requestRejection", function() {
+        Common.changeStatusMessageAPI(uuid, "rejected").done(function() {
+            $("#" + msgId).remove();
+            var title = i18next.t("readResponseTitle");
+            var body = i18next.t("readResponseDeclinedBody");
+            Common.sendMessageAPI(uuid, extCell, "message", title, body).done(function(data) {
+                $("#modal-common").modal('hide');
+                if ((typeof callback !== "undefined") && $.isFunction(callback)) {
+                    callback();
+                }
+            });
+        }).fail(function(data) {
+            Common.showWarningDialog("msg.error.failedChangeStatus", function(){
+                $("#modal-common").modal('hide'); 
+            });
+        });
     });
 };
 
@@ -98,7 +114,7 @@ Common.dispAllowedCellListAfter = function(extUrl, no) {
     Common.getCell(extUrl).done(function(cellObj) {
         dispName = cellObj.cell.name;
     }).fail(function(xmlObj) {
-        if (xmlObj.status == "200") {
+        if (xmlObj.status == "200" || xmlObj.status == "412") {
             dispName = Common.getCellNameFromUrl(extUrl);
         } else {
             dispName = extUrl;
@@ -155,13 +171,14 @@ Common.getOtherAllowedCells = function() {
                 objSel.removeChild(objSel.firstChild);
             }
         }
+/*
         objSel = document.getElementById("requestCells");
         if (objSel.hasChildNodes()) {
             while (objSel.childNodes.length > 0) {
                 objSel.removeChild(objSel.firstChild);
             }
-        }
-        
+        }      
+*/
         var results = json.d.results;
         if (results.length > 0) {
             results.sort(function(val1, val2) {
@@ -170,7 +187,7 @@ Common.getOtherAllowedCells = function() {
 
             for (var i in results) {
                 var url = Common.changeLocalUnitToUnitUrl(results[i].Url);
-                Common.dispOtherAllowedCells(url);
+                Common.dispOtherAllowedCells(url, i);
             }
         }
     });
@@ -187,29 +204,36 @@ Common.getExtCell = function() {
     });
 };
 
-Common.dispOtherAllowedCells = function(extUrl) {
-    Common.getProfileName(extUrl, Common.prepareExtCellForApp);
+Common.dispOtherAllowedCells = function(extUrl, no) {
+    Common.getProfileName(extUrl, Common.prepareExtCellForApp, no);
 };
 
-Common.getProfileName = function(extUrl, callback) {
-    let dispName = "";
+Common.getProfileName = function(extUrl, callback, no) {
+    let profObj = {
+        dispName: "",
+        description: "",
+        dispImage: Common.getJdenticon(extUrl)
+    };
+    let number = no;
     Common.getCell(extUrl).done(function(cellObj) {
-        dispName = cellObj.cell.name;
+        profObj.dispName = cellObj.cell.name;
     }).fail(function(xmlObj) {
-        if (xmlObj.status == "200") {
-            dispName = Common.getCellNameFromUrl(extUrl);
+        if (xmlObj.status == "200" || xmlObj.status == "412") {
+            profObj.dispName = Common.getCellNameFromUrl(extUrl);
         } else {
-            dispName = extUrl;
+            profObj.dispName = extUrl;
         }
     }).always(function() {
         Common.getProfile(extUrl).done(function(data) {
             if (data !== null) {
-                dispName = data.DisplayName;
+                profObj.dispName = data.DisplayName;
+                profObj.description = data.Description;
+                profObj.dispImage = data.Image;
             }
         }).always(function(){
-            console.log(dispName);
+            console.log(profObj.dispName);
             if ((typeof callback !== "undefined") && $.isFunction(callback)) {
-                callback(extUrl, dispName);
+                callback(extUrl, profObj, number);
             }
         });
     })
@@ -219,12 +243,12 @@ Common.getProfileName = function(extUrl, callback) {
  * Get Transcell Token of the external Cell and prepare its data.
  * When done, execute callback (add external Cell to proper list).
  */
-Common.prepareExtCellForApp = function(extUrl, dispName) {
+Common.prepareExtCellForApp = function(extUrl, profObj, no) {
     $.when(Common.getTranscellToken(extUrl), Common.getAppAuthToken(extUrl))
         .done(function(result1, result2) {
             let tempTCAT = result1[0].access_token; // Transcell Access Token
             let tempAAAT = result2[0].access_token; // App Authentication Access Token
-            Common.perpareExtCellInfo(extUrl, tempTCAT, tempAAAT, Common.appendExtCellToList, dispName);
+            Common.perpareExtCellInfo(extUrl, tempTCAT, tempAAAT, Common.appendExtCellToList, profObj.dispName, profObj.dispImage, no);
         })
 };
 
@@ -234,7 +258,7 @@ Common.prepareExtCellForApp = function(extUrl, dispName) {
  * 2. Get Box URL.
  * 3. Execute callback (add external Cell to proper list).
  */
-Common.perpareExtCellInfo = function(cellUrl, tcat, aaat, callback, dispName) {
+Common.perpareExtCellInfo = function(cellUrl, tcat, aaat, callback, dispName, dispImage, no) {
     Common.getProtectedBoxAccessToken4ExtCell(cellUrl, tcat, aaat).done(function(appCellToken) {
         Common.getBoxUrlAPI(cellUrl, appCellToken.access_token)
             .done(function(data, textStatus, request) {
@@ -247,7 +271,7 @@ Common.perpareExtCellInfo = function(cellUrl, tcat, aaat, callback, dispName) {
                 console.log(boxUrl);
 
                 if ((typeof callback !== "undefined") && $.isFunction(callback)) {
-                    callback(boxUrl, tcat, cellUrl, dispName);
+                    callback(boxUrl, tcat, cellUrl, dispName, dispImage, no);
                 }
             })
             .fail(function(error) {
@@ -265,15 +289,33 @@ Common.perpareExtCellInfo = function(cellUrl, tcat, aaat, callback, dispName) {
  * - List contains Cell which has read permission
  * - List contains Cell which does not has read permission
  */
-Common.appendExtCellToList = function(extBoxUrl, extTcat, extUrl, dispName) {
+Common.appendExtCellToList = function(extBoxUrl, extTcat, extUrl, dispName, dispImage, no) {
+    let onclick = "Common.execOtherApp('"+extUrl+"');";
+    let noId = no;
+    let appendId = "otherAllowedCells";
+    let notDispFlg = false;
     Common.getAppDataAPI(extBoxUrl, extTcat)
-        .done(function(data) {
-            Common.appendOtherAllowedCells(extUrl, dispName);
-        }).fail(function(data) {
+        .fail(function(data) {
             // Insufficient access privileges
             if (data.status === 403) {
-                Common.appendRequestCells(extUrl, dispName);
+                noId = "Share" + no;
+                onclick = "dispSendCellInfo('"+extUrl+"');";
+                appendId = "sendSharingCells";
+            } else {
+                notDispFlg = true;
             }
+        }).always(function() {
+            if (!notDispFlg && !$("#otherCell" + noId).length) {
+                if (Object.keys(reqReceivedUUID).length > 0) {
+                    noId = "Share" + no;
+                    appendId = "sendSharingCells";
+                    onclick = "dispReceivedCellInfo('"+extUrl+"', '"+reqReceivedUUID[no]+"', 'otherCell"+noId+"', '"+reqRequestAuthority[no]+"');";
+                }
+
+                let html = Common.createOtherCells(extUrl, dispName, dispImage, noId, onclick);
+                $("#" + appendId).append(html);
+            }
+            $('body > div.mySpinner').hide();
         });
 };
 
@@ -302,6 +344,7 @@ Common.getAppDataAPI = function(targetBoxUrl, token) {
             url: targetBoxUrl + getAppDataPath(),
             headers: {
                     'Authorization':'Bearer ' + token,
+                    'Accept':'application/json'
             }
         },
         getAppRequestInfo()
@@ -310,10 +353,43 @@ Common.getAppDataAPI = function(targetBoxUrl, token) {
     return $.ajax(requestInfo);
 };
 
-Common.appendOtherAllowedCells = function(extUrl, dispName) {
-    $("#otherAllowedCells").append('<option value="' + extUrl + '">' + dispName + '</option>');
-    $("#bReadAnotherCell").prop("disabled", false);
+Common.createOtherCells = function(extUrl, dispName, dispImage, no, onclick) {
+    let html = [
+        '<li id="otherCell' + no + '">',
+            '<a href="javascript:void(0)" onClick="'+onclick+'">',
+                '<div class="pn-list">',
+                    '<div class="pn-list-icon">',
+                        '<img src="'+dispImage+'">',
+                    '</div>',
+                    '<div class="account-info">',
+                        '<div class="user-name">'+dispName+'</div>',
+                        '<div>',
+                            '<span data-i18n="RegistrationDate"></span>',
+                            '<span></span>',
+                        '</div>',
+                    '</div>',
+                '</div>',
+            '</a>',
+        '</li>'
+    ].join("");
+    return html;
 };
+
+Common.execOtherApp = function(extUrl) {
+    let childWindow = window.open('about:blank');
+    let url = location.href;
+    let urlMatch = url.match(/targetCell=(.+)$/);
+    if (urlMatch) {
+        let delStr = urlMatch[1];
+        url = url.replace(delStr, "");
+    } else {
+        url = url + "&targetCell=";
+    }
+    url = url + extUrl;
+
+    childWindow.location.href = url;
+    childWindow = null;
+}
 
 Common.appendRequestCells = function(extUrl, dispName) {
     $("#requestCells").append('<option value="' + extUrl + '">' + dispName + '</option>');

@@ -78,7 +78,6 @@ main {
 }
 
 .calendar-arrow-btn {
-    color: #ffffff;
     padding: 0;
 }
 
@@ -109,6 +108,27 @@ main {
 }
 
 /*Calendar.html*/
+.calendar-displayname{
+    text-align: center;
+    padding-left: 5rem;
+    padding-right: 5rem;
+    width: auto !important;
+}
+
+.date-header {
+    border-bottom: 0.5px solid;
+}
+.date-title {
+    text-align: center;
+    font-size: 1.5rem;
+    line-height: 2.5rem;
+}
+.date-heder-right{
+    right: 20px;
+    position: absolute;
+    font-size: 1.2rem;
+    color: blue;
+}
 
 #calendar {
     margin: 0 auto;
@@ -529,4 +549,43 @@ input:checked+label::after {
 
 .disable{
     pointer-events: none;
+}
+
+/* shared screen */
+.extcell-profile {
+    text-align: center;
+    padding: 20px;
+}
+
+.authority-panel {
+    padding: 20px;
+}
+
+.authority-label {
+    font-size: 1.5em;
+    font-weight: bold;
+}
+
+.user-icon {
+    background-size: cover;
+    position: relative;
+    display: inline-block;
+    border-radius: 50%;
+    overflow: hidden;
+}
+.user-icon-large {
+    width: 120px;
+    height: 120px;
+}
+.extcell-profile>.user-description, .extcell-profile>.user-cell-url {
+    text-align: left;
+    margin-top: 10px;
+}
+
+.shared-footer>div {
+    display: flex;
+    width: 100%;
+    position: relative;
+    height: 3.0rem;
+    height: 100%;
 }

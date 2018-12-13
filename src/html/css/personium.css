@@ -81,6 +81,15 @@ main {
     padding-top: 4.0rem;
 }
 
+.ellipsisText {
+  width: 80%;
+  white-space: nowrap;
+  overflow: hidden;
+  margin: 0;
+  text-overflow: ellipsis;
+  -o-text-overflow: ellipsis;
+}
+
 .bg-white {
     background: #ffffff;
 }
@@ -152,6 +161,33 @@ div.mySpinner > i {
 
 #drawer_btn {
     left: 12px;
+}
+
+#other_list {
+    position: fixed;
+    right: 0;
+    display: none;
+    width: 272px;
+    background: #f2f2f2;
+    overflow: auto;
+    height: 100%;
+}
+
+#other_list>ul>li>a {
+    text-decoration: none;
+    color: #707070;
+    display: block;
+}
+
+#other_list>ul {
+    width: 272px;
+    padding-left: 0;
+    list-style-type: none;
+}
+
+#other_list>ul>li {
+    border-bottom: 1px solid #999999;
+    padding-left: 20px;
 }
 
 #menu-background,
@@ -244,6 +280,11 @@ div.mySpinner > i {
 }
 
 /*drawer menu's list*/
+
+.menu-list-header {
+    background-color: #FD8F74;
+    color: #ffffff;
+}
 
 .menu-list {
     height: 48px;
@@ -681,4 +722,17 @@ footer {
     z-index: var(--side-menu);
     -webkit-transition: all .5s ease;
     transition: all .5s ease;
+}
+
+.disable-field {
+    background-color: #F7F7F7;
+}
+
+.disable-field>a {
+    color: #BBBBBB !important;
+    pointer-events: none;
+}
+
+.colorGray {
+    color: #9c9c9c !important;
 }

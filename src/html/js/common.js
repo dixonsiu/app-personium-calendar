@@ -69,44 +69,64 @@ $(document).ready(function() {
 
             Common.appendCommonDialog();
 
+            Common.setAccessData();
+
+            if (!Common.checkParam()) {
+                // cannot do anything to recover
+                // display a dialog and close the app.
+                return;
+            };
+
             Common.setAppCellUrl(function() {
-                Common.setAccessData();
-
-                if (!Common.checkParam()) {
-                    // cannot do anything to recover
-                    // display a dialog and close the app.
-                    return;
-                };
-
                 Common.startOAuth2(function(){
-                    let cellUrl = Common.getCellUrl();
-                    let token = Common.getToken();
-                    Common.getBoxUrlAPI(cellUrl, token)
-                        .done(function(data, textStatus, request) {
-                            let tempInfo = {
-                                data: data,
-                                request: request,
-                                targetCellUrl: cellUrl
-                            };
-                            let boxUrl = Common.getBoxUrlFromResponse(tempInfo);
-                            console.log(boxUrl);
-                            Common.setInfo(boxUrl);
-                            // define your own additionalCallback for each App/screen
-                            if ((typeof additionalCallback !== "undefined") && $.isFunction(additionalCallback)) {
-                                additionalCallback();
-                            }
-                        })
-                        .fail(function(error) {
-                            console.log(error.responseJSON.code);
-                            console.log(error.responseJSON.message.value);
-                            Common.showIrrecoverableErrorDialog("msg.error.failedToGetBoxUrl");
-                        });
+                    let cellUrl = Common.getTargetCellUrl();
+                    if (cellUrl !== Common.getCellUrl()) {
+                        $.when(Common.getTranscellToken(cellUrl), Common.getAppAuthToken(cellUrl))
+                            .done(function(result1, result2) {
+                                let tempTCAT = result1[0].access_token; // Transcell Access Token
+                                let tempAAAT = result2[0].access_token; // App Authentication Access Token
+                                Common.getProtectedBoxAccessToken4ExtCell(cellUrl, tempTCAT, tempAAAT).done(function(appCellToken) {
+                                    Common.updateSessionStorage(appCellToken);
+                                    let token = appCellToken.access_token;
+                                    Common.prevAdditionalCallback(cellUrl, token);
+                                }).fail(function(error) {
+                                    console.log(error.responseJSON.code);
+                                    console.log(error.responseJSON.message.value);
+                                });
+                            })
+                    } else {
+                        let token = Common.getToken();
+                        Common.prevAdditionalCallback(cellUrl, token);
+                    }
                 });
     
                 Common.updateContent();
-            });
+                });
         });
 });
+
+Common.prevAdditionalCallback = function(cellUrl, token) {
+    Common.getBoxUrlAPI(cellUrl, token)
+        .done(function(data, textStatus, request) {
+            let tempInfo = {
+                data: data,
+                request: request,
+                targetCellUrl: cellUrl
+            };
+            let boxUrl = Common.getBoxUrlFromResponse(tempInfo);
+            console.log(boxUrl);
+            Common.setInfo(boxUrl);
+            // define your own additionalCallback for each App/screen
+            if ((typeof additionalCallback !== "undefined") && $.isFunction(additionalCallback)) {
+                additionalCallback();
+            }
+        })
+        .fail(function(error) {
+            console.log(error.responseJSON.code);
+            console.log(error.responseJSON.message.value);
+            Common.showIrrecoverableErrorDialog("msg.error.failedToGetBoxUrl");
+        });
+}
 
 /*
  * Need to move to a function to avoid conflicting with the i18nextBrowserLanguageDetector initialization.
@@ -160,21 +180,32 @@ Common.setAccessData = function() {
         case "refresh_token":
             Common.accessData.refToken = param[1];
             break;
+        case "targetCell":
+            Common.setTargetCellUrl(param[1]);
         }
     }
 
-    Common.getCell(Common.accessData.cellUrl).done(function(cellObj){
-        Common.unitUrl = cellObj.unit.url;
-    }).fail(function() {
-        let unitUrlSplit = Common.accessData.cellUrl.split("/");
-        Common.unitUrl = _.first(unitUrlSplit, 3).join("/") + "/";
-    }).always(function() {
-        Common.getCell(Common.unitUrl).done(function(unitObj) {
-            Common.path_based_cellurl_enabled = unitObj.unit.path_based_cellurl_enabled;
-        }).fail(function() {
+    var cellUrl = Common.getCellUrl();
+    if (!Common.accessData.targetCellUrl) {
+        Common.setTargetCellUrl(cellUrl);
+    }
+
+    Common.getCell(cellUrl).done(function(cellObj, status, xhr){
+        let ver = xhr.getResponseHeader("x-personium-version");
+        if (ver >= "1.7.1") {
+            Common.unitUrl = cellObj.unit.url;
+            Common.path_based_cellurl_enabled = cellObj.unit.path_based_cellurl_enabled;
+        } else {
+            let unitUrlSplit = cellUrl.split("/");
+            Common.unitUrl = _.first(unitUrlSplit, 3).join("/") + "/";
             Common.path_based_cellurl_enabled = true;
-        })
-    })
+        }
+        
+    }).fail(function() {
+        let unitUrlSplit = cellUrl.split("/");
+        Common.unitUrl = _.first(unitUrlSplit, 3).join("/") + "/";
+        Common.path_based_cellurl_enabled = true;
+    });
 };
 
 Common.getBoxUrlAPI = function(cellUrl, token) {
@@ -198,18 +229,23 @@ Common.getBoxUrlFromResponse = function(info) {
 
 Common.setInfo = function(url) {
     Common.setBoxUrl(url);
-    Common.getBox(url, Common.getToken()).done(function(boxObj) {
-        if (boxObj.box) {
+    Common.getBox(url, Common.getToken()).done(function(boxObj, status, xhr) {
+        var urlSplit = url.split("/");
+        let ver = xhr.getResponseHeader("x-personium-version");
+        if (ver >= "1.7.1") {
             Common.accessData.unitUrl = boxObj.unit.url;
-            Common.accessData.cellUrl = boxObj.cell.url;
+        } else {
+            Common.accessData.unitUrl = _.first(urlSplit, 3).join("/") + "/";
+        }
+        
+        if (boxObj.box) {
+            Common.setTargetCellUrl(boxObj.cell.url);
             Common.accessData.cellName = boxObj.cell.name;
             Common.accessData.boxName = boxObj.box.name;
         } else {
             // In older version, URL is decomposed and created
-            var urlSplit = url.split("/");
-            Common.accessData.unitUrl = _.first(urlSplit, 3).join("/") + "/";
-            Common.accessData.cellUrl = _.first(urlSplit, 4).join("/") + "/";
-            Common.accessData.cellName = Common.getCellNameFromUrl(Common.accessData.cellUrl);
+            Common.setTargetCellUrl(_.first(urlSplit, 4).join("/") + "/");
+            Common.accessData.cellName = Common.getCellNameFromUrl(Common.getTargetCellUrl());
             Common.accessData.boxName = _.last(_.compact(urlSplit));
         }
     }).always(function() {
@@ -235,7 +271,7 @@ Common.changeLocalUnitToUnitUrl = function (cellUrl) {
             result = unitSplit.join("/");
         } else {
             // https://fqdn/cellname/
-            result = cellUrl.replace(Common.PERSONIUM_LOCALUNIT + "/", Common.getUnitUrl());
+            result = cellUrl.replace(Common.PERSONIUM_LOCALUNIT + "/", Common.unitUrl);
         }
     }
 
@@ -248,6 +284,14 @@ Common.setCellUrl = function(url) {
 
 Common.getCellUrl = function() {
     return Common.accessData.cellUrl;
+};
+
+Common.setTargetCellUrl = function(url) {
+    Common.accessData.targetCellUrl = Common.preparePersoniumUrl(url);
+};
+
+Common.getTargetCellUrl = function() {
+    return Common.accessData.targetCellUrl;
 };
 
 Common.getCellName = function() {
@@ -390,6 +434,7 @@ Common.appendCommonDialog = function() {
                     '</div>',
                     '<div class="modal-body"></div>',
                     '<div class="modal-footer">',
+                        '<button type="button" class="btn btn-primary" id="b-common-cancel" data-i18n="sessionExpiredDialog.cancelBtn" style="display:none;" onclick="$(\'#modal-common\').modal(\'hide\');"></button>',
                         '<button type="button" class="btn btn-primary" id="b-common-ok" data-i18n="sessionExpiredDialog.btnOk"></button>',
                     '</div>',
                '</div>',
@@ -397,6 +442,9 @@ Common.appendCommonDialog = function() {
         '</div>'
     ].join("");
     $("body").append(html);
+    $('#modal-common').on('hidden.bs.modal', function () {
+        $("#modal-common #b-common-cancel").hide();
+    });
 };
 
 Common.openCommonDialog = function(title_key, message_key, okBtnCallback) {
@@ -406,7 +454,7 @@ Common.openCommonDialog = function(title_key, message_key, okBtnCallback) {
     $("#modal-common .modal-body")
         .attr('data-i18n', '[html]' + message_key);
 
-    $('#b-common-ok').one('click', function() {
+    $('#b-common-ok').off().one('click', function() {
         if ((typeof okBtnCallback !== "undefined") && $.isFunction(okBtnCallback)) {
             okBtnCallback();
         } else {
@@ -455,9 +503,8 @@ Common.closeTab = function() {
 // https://qiita.com/kawaz/items/1e51c374b7a13c21b7e2
 Common.startOAuth2 = function(callback) {
     let endPoint = getStartOAuth2EngineEndPoint();
-    let cellUrl = Common.getCellUrl();
     let params = $.param({
-        cellUrl: cellUrl
+        cellUrl: Common.getCellUrl()
     });
     $.ajax({
         type: "POST",
@@ -618,6 +665,11 @@ Common.showIrrecoverableErrorDialog = function(msg_key) {
     Common.openCommonDialog("irrecoverableErrorDialog.title", msg_key);
 };
 
+Common.showConfirmDialog = function(msg_key, callback) {
+    $("#modal-common #b-common-cancel").show();
+    Common.openCommonDialog("confirmDialog.title", msg_key, callback);
+}
+
 Common.showWarningDialog = function(msg_key, callback) {
     Common.openCommonDialog("warningDialog.title", msg_key, callback);
 };
@@ -670,13 +722,30 @@ Common.openSlide = function() {
     }, 300);
 };
 
+Common.openOther = function() {
+    $('#menu-background').show();
+    $('#other_list').animate({
+      width: 'show'
+    }, 300);
+};
+
 Common.closeSlide = function() {
-    $('#drawer_menu').animate({
-      width: 'hide'
-    }, 300, function () {
-      $('#menu-background').hide();
-      return false;
-    });
+    if ($('#drawer_menu').css('display') == 'block') {
+        $('#drawer_menu').animate({
+          width: 'hide'
+        }, 300, function () {
+          $('#menu-background').hide();
+          return false;
+        });
+    } else {
+        $('#other_list').animate({
+          width: 'hide'
+        }, 300, function () {
+          $('#menu-background').hide();
+          return false;
+        });
+    }
+    
 };
 
 Common.slideShow = function(id) {
@@ -713,3 +782,16 @@ Common.stopAnimation = function() {
     $('#updateIcon').prop('disabled', false);
     $('#updateIcon > i').removeClass("fa-spin");
 };
+
+/*
+ * Based on the passed value, we generate an image using jdenticon and return it in base64 format.
+ * This function can not be used unless you load jdenticon.
+ */
+Common.getJdenticon = function (value) {
+    var canvas = document.createElement("canvas");
+    canvas.height = 172;
+    canvas.width = 172;
+    jdenticon.update(canvas, value);
+    var icon_quality = 0.8;
+    return canvas.toDataURL("image/jpeg", icon_quality);
+}
