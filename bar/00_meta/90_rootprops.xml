@@ -1,24 +1,24 @@
 <multistatus xmlns="DAV:">
     <response>
-        <href>dcbox:/</href>
+        <href>personium-localbox:/</href>
         <propstat>
             <prop>
                 <resourcetype>
                     <collection/>
                 </resourcetype>
-                <acl xml:base="https://demo.personium.io/app-personium-calendar/__role/__/" xmlns:p="urn:x-dcl:xmlns">
+                <acl xml:base="https://demo.personium.io/app-personium-calendar/__role/__/" xmlns:p="urn:x-personium:xmlns">
                 </acl>
             </prop>
         </propstat>
     </response>
     <response>
-        <href>dcbox:/AccessInfo</href>
+        <href>personium-localbox:/AccessInfo</href>
         <propstat>
             <prop>
                 <resourcetype>
                     <collection/>
                 </resourcetype>
-                <acl xml:base="https://demo.personium.io/app-personium-calendar/__role/__/" xmlns:p="urn:x-dcl:xmlns">
+                <acl xml:base="https://demo.personium.io/app-personium-calendar/__role/__/" xmlns:p="urn:x-personium:xmlns">
                     <ace>
                         <principal>
                             <href>CalendarOwner</href>
@@ -57,7 +57,7 @@
         </propstat>
     </response>
     <response>
-        <href>dcbox:/AccessInfo/AccessInfo.json</href>
+        <href>personium-localbox:/AccessInfo/AccessInfo.json</href>
         <propstat>
             <prop>
                 <getcontenttype>application/json</getcontenttype>
@@ -65,7 +65,7 @@
         </propstat>
     </response>
     <response>
-        <href>dcbox:/Engine</href>
+        <href>personium-localbox:/Engine</href>
         <propstat>
             <prop>
                 <resourcetype>
@@ -91,7 +91,7 @@
         </propstat>
     </response>
     <response>
-        <href>dcbox:/Engine/__src</href>
+        <href>personium-localbox:/Engine/__src</href>
         <propstat>
             <prop>
                 <resourcetype>
@@ -101,7 +101,7 @@
         </propstat>
     </response>
     <response>
-        <href>dcbox:/Engine/__src/setAccessInfo.js</href>
+        <href>personium-localbox:/Engine/__src/setAccessInfo.js</href>
         <propstat>
             <prop>
                 <getcontenttype>text/javascript</getcontenttype>
@@ -109,7 +109,7 @@
         </propstat>
     </response>
     <response>
-        <href>dcbox:/SyncEngine</href>
+        <href>personium-localbox:/SyncEngine</href>
         <propstat>
             <prop>
                 <resourcetype>
@@ -155,7 +155,7 @@
         </propstat>
     </response>
     <response>
-        <href>dcbox:/SyncEngine/__src</href>
+        <href>personium-localbox:/SyncEngine/__src</href>
         <propstat>
             <prop>
                 <resourcetype>
@@ -165,7 +165,7 @@
         </propstat>
     </response>
     <response>
-        <href>dcbox:/SyncEngine/__src/google_cal.js</href>
+        <href>personium-localbox:/SyncEngine/__src/google_cal.js</href>
         <propstat>
             <prop>
                 <getcontenttype>text/javascript</getcontenttype>
@@ -173,7 +173,7 @@
         </propstat>
     </response>
     <response>
-        <href>dcbox:/SyncEngine/__src/moment.js</href>
+        <href>personium-localbox:/SyncEngine/__src/moment.js</href>
         <propstat>
             <prop>
                 <getcontenttype>text/javascript</getcontenttype>
@@ -181,7 +181,7 @@
         </propstat>
     </response>
     <response>
-        <href>dcbox:/SyncEngine/__src/moment_timezone_with_data.js</href>
+        <href>personium-localbox:/SyncEngine/__src/moment_timezone_with_data.js</href>
         <propstat>
             <prop>
                 <getcontenttype>text/javascript</getcontenttype>
@@ -189,7 +189,7 @@
         </propstat>
     </response>
     <response>
-        <href>dcbox:/SyncEngine/__src/outlook_cal.js</href>
+        <href>personium-localbox:/SyncEngine/__src/outlook_cal.js</href>
         <propstat>
             <prop>
                 <getcontenttype>text/javascript</getcontenttype>
@@ -197,7 +197,7 @@
         </propstat>
     </response>
     <response>
-        <href>dcbox:/SyncEngine/__src/personium_cal.js</href>
+        <href>personium-localbox:/SyncEngine/__src/personium_cal.js</href>
         <propstat>
             <prop>
                 <getcontenttype>text/javascript</getcontenttype>
@@ -205,7 +205,7 @@
         </propstat>
     </response>
     <response>
-        <href>dcbox:/SyncEngine/__src/sync.js</href>
+        <href>personium-localbox:/SyncEngine/__src/sync.js</href>
         <propstat>
             <prop>
                 <getcontenttype>text/javascript</getcontenttype>
@@ -213,7 +213,7 @@
         </propstat>
     </response>
     <response>
-        <href>dcbox:/SyncEngine/__src/underscore.js</href>
+        <href>personium-localbox:/SyncEngine/__src/underscore.js</href>
         <propstat>
             <prop>
                 <getcontenttype>text/javascript</getcontenttype>
@@ -221,7 +221,7 @@
         </propstat>
     </response>
     <response>
-        <href>dcbox:/UpdateEngine</href>
+        <href>personium-localbox:/UpdateEngine</href>
         <propstat>
             <prop>
                 <resourcetype>
@@ -257,7 +257,7 @@
         </propstat>
     </response>
     <response>
-        <href>dcbox:/UpdateEngine/__src</href>
+        <href>personium-localbox:/UpdateEngine/__src</href>
         <propstat>
             <prop>
                 <resourcetype>
@@ -267,7 +267,7 @@
         </propstat>
     </response>
     <response>
-        <href>dcbox:/UpdateEngine/__src/google_cal.js</href>
+        <href>personium-localbox:/UpdateEngine/__src/google_cal.js</href>
         <propstat>
             <prop>
                 <getcontenttype>text/javascript</getcontenttype>
@@ -275,7 +275,7 @@
         </propstat>
     </response>
     <response>
-        <href>dcbox:/UpdateEngine/__src/moment.js</href>
+        <href>personium-localbox:/UpdateEngine/__src/moment.js</href>
         <propstat>
             <prop>
                 <getcontenttype>text/javascript</getcontenttype>
@@ -283,7 +283,7 @@
         </propstat>
     </response>
     <response>
-        <href>dcbox:/UpdateEngine/__src/moment_timezone_with_data.js</href>
+        <href>personium-localbox:/UpdateEngine/__src/moment_timezone_with_data.js</href>
         <propstat>
             <prop>
                 <getcontenttype>text/javascript</getcontenttype>
@@ -291,7 +291,7 @@
         </propstat>
     </response>
     <response>
-        <href>dcbox:/UpdateEngine/__src/outlook_cal.js</href>
+        <href>personium-localbox:/UpdateEngine/__src/outlook_cal.js</href>
         <propstat>
             <prop>
                 <getcontenttype>text/javascript</getcontenttype>
@@ -299,7 +299,7 @@
         </propstat>
     </response>
     <response>
-        <href>dcbox:/UpdateEngine/__src/personium_cal.js</href>
+        <href>personium-localbox:/UpdateEngine/__src/personium_cal.js</href>
         <propstat>
             <prop>
                 <getcontenttype>text/javascript</getcontenttype>
@@ -307,7 +307,7 @@
         </propstat>
     </response>
     <response>
-        <href>dcbox:/UpdateEngine/__src/underscore.js</href>
+        <href>personium-localbox:/UpdateEngine/__src/underscore.js</href>
         <propstat>
             <prop>
                 <getcontenttype>text/javascript</getcontenttype>
@@ -315,7 +315,7 @@
         </propstat>
     </response>
     <response>
-        <href>dcbox:/UpdateEngine/__src/updateVEvent.js</href>
+        <href>personium-localbox:/UpdateEngine/__src/updateVEvent.js</href>
         <propstat>
             <prop>
                 <getcontenttype>text/javascript</getcontenttype>
@@ -323,14 +323,14 @@
         </propstat>
     </response>
     <response>
-        <href>dcbox:/OData</href>
+        <href>personium-localbox:/OData</href>
         <propstat>
             <prop>
                 <resourcetype>
                     <collection/>
                     <p:odata xmlns:p="urn:x-personium:xmlns"/>
                 </resourcetype>
-                <acl xml:base="https://demo.personium.io/app-personium-calendar/__role/__/" xmlns:p="urn:x-dcl:xmlns">
+                <acl xml:base="https://demo.personium.io/app-personium-calendar/__role/__/" xmlns:p="urn:x-personium:xmlns">
                     <ace>
                         <principal>
                             <href>CalendarOwner</href>
