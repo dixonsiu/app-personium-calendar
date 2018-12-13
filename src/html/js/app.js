@@ -443,19 +443,6 @@ dispReceivedCellInfo = function(extUrl, uuid, eleId, reqAuth) {
 }
 
 /*
- * Get Transcell Token of the external Cell and prepare its data.
- * When done, execute callback (add external Cell to proper list).
- */
-Common.prepareExtCellForApp = function(extUrl, profObj, no) {
-    $.when(Common.getTranscellToken(extUrl), Common.getAppAuthToken(extUrl))
-        .done(function(result1, result2) {
-            let tempTCAT = result1[0].access_token; // Transcell Access Token
-            let tempAAAT = result2[0].access_token; // App Authentication Access Token
-            Common.perpareExtCellInfo(extUrl, tempTCAT, tempAAAT, Common.appendExtCellToList, profObj.dispName, profObj.dispImage, no);
-        })
-};
-
-/*
  * Render the delete icon.
  * It acts like a confirm dialog.
  * When this icon is clicked, a delete button will be displayed.

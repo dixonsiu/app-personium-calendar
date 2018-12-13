@@ -110,34 +110,82 @@ Common.dispAllowedCellList = function(json) {
 };
 
 Common.dispAllowedCellListAfter = function(extUrl, no) {
-    let dispName = "";
-    Common.getCell(extUrl).done(function(cellObj) {
-        dispName = cellObj.cell.name;
+    Common.getProfile(extUrl, function(profObj) {
+        Common.appendAllowedCellList(extUrl, profObj.dispName, no)
+    });
+};
+
+/**
+ * url : Get cellURL
+ * callback : After acquiring, function to operate
+ * paramObj : An argument object to be passed to callback
+ **/
+Common.getProfile = function(url, callback) {
+    let profObj = {
+        dispName: url,
+        description: "",
+        dispImage: Common.getJdenticon(url)
+    }
+    Common.getCell(url).done(function(cellObj) {
+        profObj.dispName = cellObj.cell.name;
     }).fail(function(xmlObj) {
         if (xmlObj.status == "200" || xmlObj.status == "412") {
-            dispName = Common.getCellNameFromUrl(extUrl);
+            profObj.dispName = Common.getCellNameFromUrl(url);
         } else {
-            dispName = extUrl;
+            profObj.dispName = url;
         }
     }).always(function() {
-        Common.getProfile(extUrl).done(function(data) {
-            if (data !== null) {
-                dispName = data.DisplayName;
+        Common.getProfileLocalesAPI(url).done(function(data) {
+            if (data.DisplayName) {
+                profObj.dispName = data.DisplayName;
             }
-        }).always(function() {
-            Common.appendAllowedCellList(extUrl, dispName, no)
-        });
+            if (data.Description) {
+                profObj.description = data.Description;
+            }
+            if (data.Image) {
+                profObj.dispImage = data.Image;
+            }
+    
+            if ((typeof callback !== "undefined") && $.isFunction(callback)) {
+                callback(profObj);
+            }
+        }).fail(function(error) {
+            Common.getProfileDefaultAPI(url).done(function(data) {
+                if (data.DisplayName) {
+                    profObj.dispName = data.DisplayName;
+                }
+                if (data.Description) {
+                    profObj.description = data.Description;
+                }
+                if (data.Image) {
+                    profObj.dispImage = data.Image;
+                }
+            }).always(function() {
+                if ((typeof callback !== "undefined") && $.isFunction(callback)) {
+                    callback(profObj);
+                }
+            })
+        });  
     })
 };
 
-Common.getProfile = function(url) {
+Common.getProfileLocalesAPI = function(url) {
+    return $.ajax({
+        type: "GET",
+        url: url + '__/locales/' + i18next.language + '/profile.json',
+        dataType: 'json',
+        headers: {'Accept':'application/json'}
+    })
+}
+
+Common.getProfileDefaultAPI = function(url) {
     return $.ajax({
         type: "GET",
         url: url + '__/profile.json',
         dataType: 'json',
         headers: {'Accept':'application/json'}
-    })
-};
+    });
+}
 
 Common.appendAllowedCellList = function(extUrl, dispName, no) {
     $("#allowedCellList")
@@ -209,34 +257,13 @@ Common.dispOtherAllowedCells = function(extUrl, no) {
 };
 
 Common.getProfileName = function(extUrl, callback, no) {
-    let profObj = {
-        dispName: "",
-        description: "",
-        dispImage: Common.getJdenticon(extUrl)
-    };
     let number = no;
-    Common.getCell(extUrl).done(function(cellObj) {
-        profObj.dispName = cellObj.cell.name;
-    }).fail(function(xmlObj) {
-        if (xmlObj.status == "200" || xmlObj.status == "412") {
-            profObj.dispName = Common.getCellNameFromUrl(extUrl);
-        } else {
-            profObj.dispName = extUrl;
+    Common.getProfile(extUrl, function(profObj) {
+        console.log(profObj.dispName);
+        if ((typeof callback !== "undefined") && $.isFunction(callback)) {
+            callback(extUrl, profObj, number);
         }
-    }).always(function() {
-        Common.getProfile(extUrl).done(function(data) {
-            if (data !== null) {
-                profObj.dispName = data.DisplayName;
-                profObj.description = data.Description;
-                profObj.dispImage = data.Image;
-            }
-        }).always(function(){
-            console.log(profObj.dispName);
-            if ((typeof callback !== "undefined") && $.isFunction(callback)) {
-                callback(extUrl, profObj, number);
-            }
-        });
-    })
+    });
 };
 
 /*

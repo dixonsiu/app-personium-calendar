@@ -71,6 +71,7 @@
         }
     },
     "Sharing": {
+        "title": "Show different Calendar",
         "Send": {
             "label": "Send sharing request",
             "description": "Send sharing request with the following authority.",
