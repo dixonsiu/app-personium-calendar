@@ -8,6 +8,8 @@ dispListName = "";
 scheduleDispNum = 10;
 scheduleSkipPrev = 0;
 scheduleSkipNext = 0;
+reqReceivedUUID = {};
+reqRequestAuthority = {};
 
 /* new */
 getEngineEndPoint = function() {
@@ -22,16 +24,41 @@ getNamesapces = function() {
     return ['common', 'glossary'];
 };
 
+getAppDataPath = function() {
+    return 'OData/vevent?$inlinecount=allpages&$top=0';
+};
+
+getAppRequestInfo = function() {
+    return {
+        dataType: 'json'
+    };
+};
+
+getAppRole = function(auth) {
+    if (auth == "read") {
+        // Currently we only allow role with read permission.
+        return 'CalendarViewer';
+    }
+    
+};
+
 additionalCallback = function() {
     Drawer_Menu();
 
-    Common.setIdleTime();
+    Common.setRefreshTimer();
 
-    Common.getProfileName(Common.getCellUrl(), displayMyDisplayName);
+    Common.getProfileName(Common.getTargetCellUrl(), displayMyDisplayName);
 
     renderFullCalendar();
 
     syncData();
+
+    if (Common.getTargetCellUrl() !== Common.getCellUrl()) {
+        $("#other_btn").hide();
+        $(".menu-list").addClass("disable-field");
+    } else {
+        Common.getOtherAllowedCells();
+    }
 
     $('#month').on('click', function () {
         $('#calendar').fullCalendar('changeView', 'month');
@@ -75,21 +102,23 @@ Drawer_Menu = function() {
     return false;
   });
 
+  $('#other_btn').on('click', function () {
+    Common.openOther();
+    return false;
+  });
+
   $('#menu-background').click(function () {
     Common.closeSlide();
   });
 
-  $('#drawer_menu').click(function (event) {
+  $('#drawer_menu,#other_list').click(function (event) {
     event.stopPropagation();
   });
 }
 
-displayMyDisplayName = function(extUrl, dispName) {
-    $("#dispName")
-        .attr("data-i18n", "[html]glossary:msg.info.description")
-        .localize({
-            "name": dispName
-        });
+displayMyDisplayName = function(extUrl, profObj) {
+    $("#calendarTitle")
+        .text(profObj.dispName);
 };
 
 toggleEditMenu = function(aDom) {
@@ -140,6 +169,11 @@ displaySyncListPanel = function() {
  * 2. Register account button
  */
 displayAccountPanel = function() {
+    if (Common.getTargetCellUrl() !== Common.getCellUrl()) {
+        // You can not add accounts on another's calendar
+        return;
+    }
+
     Common.closeSlide();
     Common.loadContent("./templates/_list_template.html").done(function(data) {
         var out_html = $($.parseHTML(data));
@@ -249,6 +283,164 @@ createInfoTd = function(i, accountInfo) {
     
     return infoDiv;
 };
+
+/*
+ * Display the followings:
+ * 1. List of sharing requesters to send
+ */
+displaySendSharingListPanel = function() {
+   if (Common.getTargetCellUrl() !== Common.getCellUrl()) {
+       // You can not sharing request on another's calendar
+       return;
+   }
+
+   Common.closeSlide();
+   Common.loadContent("./templates/_list_template.html").done(function(data) {
+       $('body > div.mySpinner').show();
+       var out_html = $($.parseHTML(data));
+       $("#loadContent").empty();
+       let id = PCalendar.createSubContent(out_html);
+       $(id + " main").empty();
+       $(id + " .header-title").attr("data-i18n", "glossary:Sharing.Send.label").localize();
+       $(id + " footer").hide();
+       $(id + " .header-btn-right").hide();
+       Common.getExtCell().done(function(data) {
+           dispSendSharingList(id + " main", data);
+       });
+   }).fail(function(error) {
+       console.log(error);
+   });
+}
+
+dispSendSharingList = function(id, results) {
+    let eUl = $('<ul>', {
+        class: 'slide-list hover-action',
+        id: 'sendSharingCells'
+    });
+    $(id).append($(eUl)).localize();
+    let res = results.d.results;
+    res.sort(function(val1, val2) {
+        return (val1.Url < val2.Url ? 1 : -1);
+    })
+    reqReceivedUUID = {};
+    reqRequestAuthority = {};
+    for (var i = 0; i < res.length; i++) {
+        let extUrl = Common.changeLocalUnitToUnitUrl(res[i].Url);
+        Common.getProfileName(extUrl, Common.prepareExtCellForApp, i);
+    }
+}
+
+dispSendCellInfo = function(extUrl) {
+    Common.loadContent("./templates/_shared_template.html").done(function(data) {
+        var out_html = $($.parseHTML(data));
+        let id = PCalendar.createSubContent(out_html);
+        $(id + " .doubleBtn").hide();
+        $(id + " .header-btn-right").hide();
+        $(id + " .dispShared").hide();
+        Common.getProfileName(extUrl, function(url, profObj) {
+            $(id + " .header-title").text(profObj.dispName);
+            $(id + " .user-cell-url").text(url);
+            $(id + " .user-description").text(profObj.description);
+            $(id + " .extcell-profile .user-icon").append('<img class="user-icon-large" src="' + profObj.dispImage + '" alt="user">');
+        });
+    }).fail(function(error) {
+        console.log(error);
+    });
+}
+
+sendSharingRequest = function() {
+    Common.showConfirmDialog("msg.info.requestSent", function() {
+        $("#modal-common").modal('hide');
+        var reqRel = $("#sendAuthority option:selected").val();
+        var extUrl = $(".user-cell-url").text();
+        var title = i18next.t("readRequestTitle");
+        var body = i18next.t("readRequestBody");
+        Common.sendMessageAPI(null, extUrl, "request", title, body, "role.add", reqRel, Common.getCellUrl()).done(function(data) {
+            PCalendar.backSubContent();
+        }).fail(function(data) {
+            Common.showWarningDialog("msg.error.failedRequestSent", function(){
+               $("#modal-common").modal('hide'); 
+            });
+        });
+    });
+}
+
+displayReceivedSendSharingListPanel = function() {
+    if (Common.getTargetCellUrl() !== Common.getCellUrl()) {
+       // You can not sharing request on another's calendar
+       return;
+   }
+
+   Common.closeSlide();
+   Common.loadContent("./templates/_list_template.html").done(function(data) {
+       $('body > div.mySpinner').show();
+       var out_html = $($.parseHTML(data));
+       $("#loadContent").empty();
+       let id = PCalendar.createSubContent(out_html);
+       $(id + " main").empty();
+       $(id + " .header-title").attr("data-i18n", "glossary:Sharing.Received.label").localize();
+       $(id + " footer").hide();
+       $(id + " .header-btn-right").hide();
+       PCalendar.getReceivedMessageAPI().done(function(data) {
+           dispReceivedSharingList(id + " main", data);
+       });
+   }).fail(function(error) {
+       console.log(error);
+   });
+}
+
+dispReceivedSharingList = function(id, results) {
+    let eUl = $('<ul>', {
+        class: 'slide-list hover-action',
+        id: 'sendSharingCells'
+    });
+    $(id).append($(eUl)).localize();
+    let res = results.d.results;
+    res.sort(function(val1, val2) {
+        return (val1.Url < val2.Url ? 1 : -1);
+    })
+    reqReceivedUUID = {};
+    reqRequestAuthority = {};
+    for (var i in res) {
+        if (res[i].Status == "approved" || res[i].Status == "rejected" || !res[i].RequestObjects) {
+            continue;
+        }
+
+        reqReceivedUUID[i] = res[i].__id;
+        reqRequestAuthority[i] = res[i].RequestObjects[0].Name;
+        let extUrl = Common.changeLocalUnitToUnitUrl(res[i].From);
+
+        Common.getProfileName(extUrl, Common.prepareExtCellForApp, i);
+    }
+    if (Object.keys(reqReceivedUUID).length == 0) {
+        $('body > div.mySpinner').hide();
+    }
+}
+
+dispReceivedCellInfo = function(extUrl, uuid, eleId, reqAuth) {
+    Common.loadContent("./templates/_shared_template.html").done(function(data) {
+        var out_html = $($.parseHTML(data));
+        let id = PCalendar.createSubContent(out_html);
+        $(id + " .singleBtn").hide();
+        $(id + " .header-btn-right").hide();
+        $(id + " .sendShared").hide();
+        $(id + " #reqAuthority").attr("data-i18n", "glossary:Sharing.Authority." + reqAuth).localize();
+        $(id + " #approvalFooterButton").removeAttr("onclick").on("click", function() {
+            Common.approvalRel(extUrl, uuid, eleId, PCalendar.backSubContent);
+        });
+        $(id + " #refectionFooterButton").removeAttr("onclick").on("click", function() {
+            Common.rejectionRel(extUrl, uuid, eleId, PCalendar.backSubContent);
+        });
+        Common.getProfileName(extUrl, function(url, profObj) {
+            $(id + " .header-title").text(profObj.dispName);
+            $(id + " .user-cell-url").text(url);
+            $(id + " .user-description").text(profObj.description);
+            $(id + " .extcell-profile .user-icon").append('<img class="user-icon-large" src="' + profObj.dispImage + '" alt="user">');
+        });
+    }).fail(function(error) {
+        console.log(error);
+    });
+}
 
 /*
  * Render the delete icon.
@@ -441,6 +633,11 @@ addButtonClick = function() {
 
 // Use date clicked by the user
 displayAddEventDialog = function(date) {
+    if (Common.getTargetCellUrl() !== Common.getCellUrl()) {
+        // You can not add events in another calendar
+        return;
+    }
+    
     Common.loadContent("./templates/_vevent_template.html").done(function(data) {
         var out_html = $($.parseHTML(data));
         $("#loadContent").empty();
@@ -789,6 +986,11 @@ Common.getListOfOData = function(url, token) {
 };
 
 syncData = function() {
+    if (Common.getTargetCellUrl() !== Common.getCellUrl()) {
+        // Synchronization processing is not performed in the calendar of another person
+        return;
+    }
+
     Common.startAnimation();
     Common.closeSlide();
     sync()
@@ -976,7 +1178,7 @@ PCalendar.prepareOAuth2Account = function(srcType) {
     let paramStr = $.param({
         srcType: srcType,
         state: 'hoge',
-        userCellUrl: Common.getCellUrl()
+        userCellUrl: Common.getTargetCellUrl()
     });
     window.location.href = 'https://demo.personium.io/app-personium-calendar/__/Engine/reqOAuthToken?' + paramStr;
 };
@@ -1189,6 +1391,11 @@ PCalendar.editEvent = function(event) {
 }
 
 PCalendar.displayEditVEvent = function(calEvent) {
+    if (Common.getTargetCellUrl() !== Common.getCellUrl()) {
+        // You can not edit event on another's calendar
+        return;
+    }
+
     Common.loadContent("./templates/_vevent_template.html").done(function(data) {
         var out_html = $($.parseHTML(data));
         $("#loadContent").empty();
@@ -1391,6 +1598,17 @@ PCalendar.deleteVEventAPI = function(tempVEvent) {
         headers: {
             'Accept':'application/json',
             'Authorization':'Bearer ' + Common.getToken()
+        }
+    });
+};
+
+PCalendar.getReceivedMessageAPI = function() {
+    return $.ajax({
+        type: "GET",
+        url: Common.getCellUrl() + '__ctl/ReceivedMessage?$filter=startswith%28Title,%27Personium%20Calendar%27%29&$orderby=__published%20desc',
+        headers: {
+            'Authorization':'Bearer ' + Common.getToken(),
+            'Accept':'application/json'
         }
     });
 };

@@ -14,6 +14,7 @@
     "sessionExpiredDialog": {
         "title": "$t(glossary:sessionExpiredDialog.title)",
         "message": "セッションの期限が切れています。<br>$t(glossary:sessionExpiredDialog.action)",
+        "cancelBtn": "キャンセル",
         "btnOk": "$t(glossary:sessionExpiredDialog.btnOk)"
     },
     "irrecoverableErrorDialog": {
@@ -21,6 +22,9 @@
     },
     "warningDialog": {
         "title": "警告"
+    },
+    "confirmDialog": {
+        "title": "確認"
     },
     "readRequestTitle": "$t(glossary:readRequestTarget)_閲覧許可依頼",
     "readRequestBody": "$t(glossary:readRequestBodyTarget)の閲覧許可をお願いします。",
@@ -34,13 +38,18 @@
     "msg": {
         "info": {
             "pleaseSelectTargetCell": "対象$t(glossary:dataSubject.label)を選択して下さい。",
-            "messageSent": "メッセージを送信しました。"
+            "messageSent": "メッセージを送信しました。",
+            "requestSent": "許可依頼を送信します。よろしいですか？",
+            "requestApproval": "要求された権限を付与します。よろしいですか？",
+            "requestRejection": "要求を拒否します。よろしいですか？"
         },
         "warning": {
             "failedToGetLaunchJson": "アプリの起動情報の取得に失敗しました。"
         },
         "error": {
             "failedToSendMessage": "メッセージの送信に失敗しました。",
+            "failedRequestSent": "許可依頼の送信に失敗しました。",
+            "failedChangeStatus": "ステータスの変更に失敗しました。",
             "targetCellNotSelected": "対象セルが設定されていません。",
             "tokenMissing": "トークンが設定されていません。",
             "refreshTokenMissing": "リフレッシュ$t(msg.error.tokenMissing)",

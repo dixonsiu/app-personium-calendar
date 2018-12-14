@@ -14,6 +14,7 @@
     "sessionExpiredDialog": {
         "title": "$t(glossary:sessionExpiredDialog.title)",
         "message": "Session has expired.<br>$t(glossary:sessionExpiredDialog.action)",
+        "cancelBtn": "cencel",
         "btnOk": "$t(glossary:sessionExpiredDialog.btnOk)"
     },
     "irrecoverableErrorDialog": {
@@ -21,6 +22,9 @@
     },
     "warningDialog": {
         "title": "Warning"
+    },
+    "confirmDialog": {
+        "title": "Confirmation"
     },
     "readRequestTitle": "$t(glossary:readRequestTarget)_Read Permission Request",
     "readRequestBody": "Please grant read permission for your $t(glossary:readRequestBodyTarget).",
@@ -34,13 +38,18 @@
     "msg": {
         "info": {
             "pleaseSelectTargetCell": "Please select a $t(glossary:dataSubject.label).",
-            "messageSent": "Succeeded in sending the message."
+            "messageSent": "Succeeded in sending the message.",
+            "requestSent": "Send a permission request. Is it OK?",
+            "requestApproval": "Grant the requested authority. Is it OK?",
+            "requestRejection": "Refuse the request. Is it OK?"
         },
         "warning": {
             "failedToGetLaunchJson": "Failed to get this App's launching information."
         },
         "error": {
             "failedToSendMessage": "Failed to send message.",
+            "failedRequestSent": "Failed to send permission request.",
+            "failedChangeStatus": "Failed to change the status.",
             "targetCellNotSelected": "Target cell not selected.",
             "tokenMissing": "Token is missing.",
             "refreshTokenMissing": "Refresh token is missing.",
