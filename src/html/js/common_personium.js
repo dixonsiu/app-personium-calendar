@@ -241,6 +241,17 @@ Common.getOtherAllowedCells = function() {
     });
 };
 
+Common.getRoleList = function () {
+    return $.ajax({
+        type: "GET",
+        url: Common.getCellUrl() + '__ctl/Role',
+        headers: {
+            'Authorization': 'Bearer ' + Common.getToken(),
+            'Accept': 'application/json'
+        }
+    })
+}
+
 Common.getExtCell = function() {
     return $.ajax({
         type: "GET",
@@ -251,6 +262,57 @@ Common.getExtCell = function() {
         }
     });
 };
+
+Common.getExtCellRoleList = function (extUrl) {
+    var extCellUrl = encodeURIComponent(extUrl);
+    return $.ajax({
+        type: "GET",
+        url: Common.getCellUrl() + '__ctl/ExtCell(\'' + extCellUrl + '\')/$links/_Role',
+        headers: {
+            'Authorization': 'Bearer ' + Common.getToken()
+        }
+    })
+};
+
+Common.restAddExtCellLinkRoleAPI = function (extUrl, boxName, roleName) {
+    var extCellUrl = encodeURIComponent(extUrl);
+    var uri = Common.getCellUrl() + '__ctl/Role';
+    if (!boxName) {
+        uri += '(\'' + roleName + '\')';
+    } else {
+        uri += '(Name=\'' + roleName + '\',_Box\.Name=\'' + boxName + '\')';
+    }
+    var json = { "uri": uri };
+
+    return $.ajax({
+        type: "POST",
+        url: Common.getCellUrl() + '__ctl/ExtCell(\'' + extCellUrl + '\')/$links/_Role',
+        data: JSON.stringify(json),
+        headers: {
+            'Authorization': 'Bearer ' + Common.getToken(),
+            'Accept': 'application/json'
+        }
+    });
+};
+
+Common.restDeleteExtCellLinkRoleAPI = function (extUrl, boxName, roleName) {
+    var extCellUrl = encodeURIComponent(extUrl);
+    var api = '__ctl/ExtCell(\'' + extCellUrl + '\')/$links/_Role';
+    if (!boxName) {
+        api += '(\'' + roleName + '\')';
+    } else {
+        api += '(Name=\'' + roleName + '\',_Box.Name=\'' + boxName + '\')';
+    }
+
+    return $.ajax({
+        type: "DELETE",
+        url: Common.getCellUrl() + api,
+        headers: {
+            'Authorization': 'Bearer ' + Common.getToken()
+        }
+    });
+};
+
 
 Common.dispOtherAllowedCells = function(extUrl, no) {
     Common.getProfileName(extUrl, Common.prepareExtCellForApp, no);
@@ -275,7 +337,7 @@ Common.prepareExtCellForApp = function(extUrl, profObj, no) {
         .done(function(result1, result2) {
             let tempTCAT = result1[0].access_token; // Transcell Access Token
             let tempAAAT = result2[0].access_token; // App Authentication Access Token
-            Common.perpareExtCellInfo(extUrl, tempTCAT, tempAAAT, Common.appendExtCellToList, profObj.dispName, profObj.dispImage, no);
+            Common.perpareExtCellInfo(extUrl, tempTCAT, tempAAAT, Common.appendExtCellToList, profObj, no);
         })
 };
 
@@ -285,7 +347,7 @@ Common.prepareExtCellForApp = function(extUrl, profObj, no) {
  * 2. Get Box URL.
  * 3. Execute callback (add external Cell to proper list).
  */
-Common.perpareExtCellInfo = function(cellUrl, tcat, aaat, callback, dispName, dispImage, no) {
+Common.perpareExtCellInfo = function(cellUrl, tcat, aaat, callback, profObj, no) {
     Common.getProtectedBoxAccessToken4ExtCell(cellUrl, tcat, aaat).done(function(appCellToken) {
         Common.getBoxUrlAPI(cellUrl, appCellToken.access_token)
             .done(function(data, textStatus, request) {
@@ -298,7 +360,7 @@ Common.perpareExtCellInfo = function(cellUrl, tcat, aaat, callback, dispName, di
                 console.log(boxUrl);
 
                 if ((typeof callback !== "undefined") && $.isFunction(callback)) {
-                    callback(boxUrl, tcat, cellUrl, dispName, dispImage, no);
+                    callback(boxUrl, tcat, cellUrl, profObj, no);
                 }
             })
             .fail(function(error) {
@@ -316,34 +378,48 @@ Common.perpareExtCellInfo = function(cellUrl, tcat, aaat, callback, dispName, di
  * - List contains Cell which has read permission
  * - List contains Cell which does not has read permission
  */
-Common.appendExtCellToList = function(extBoxUrl, extTcat, extUrl, dispName, dispImage, no) {
+Common.appendExtCellToList = function(extBoxUrl, extTcat, extUrl, profObj, no) {
     let onclick = "Common.execOtherApp('"+extUrl+"');";
     let noId = no;
     let appendId = "otherAllowedCells";
     let notDispFlg = false;
-    Common.getAppDataAPI(extBoxUrl, extTcat)
-        .fail(function(data) {
-            // Insufficient access privileges
-            if (data.status === 403) {
-                noId = "Share" + no;
-                onclick = "dispSendCellInfo('"+extUrl+"');";
-                appendId = "sendSharingCells";
-            } else {
-                notDispFlg = true;
-            }
-        }).always(function() {
-            if (!notDispFlg && !$("#otherCell" + noId).length) {
-                if (Object.keys(reqReceivedUUID).length > 0) {
+    if (Object.keys(sharingMemberRole).length > 0) {
+        noId = "Share" + no;
+        appendId = "sharing"+addId+"MemberCells";
+        onclick = "displaySharingMemberInfoPanel('"+extUrl+"', '"+no+"', '#otherCell"+noId+"');";
+        profObj.description = i18next.t("glossary:Sharing.Authority.label") + ":";
+        let roleList = sharingMemberRole[no].roleList;
+        profObj.description += getAppRoleAuthorityList(roleList);
+        if (!$("#otherCell" + noId).length) {    
+            let html = Common.createOtherCells(extUrl, profObj, noId, onclick);
+            $("#" + appendId).append(html);
+        }
+    } else {
+        Common.getAppDataAPI(extBoxUrl, extTcat)
+            .fail(function(data) {
+                // Insufficient access privileges
+                if (data.status === 403) {
                     noId = "Share" + no;
+                    onclick = "dispSendCellInfo('"+extUrl+"');";
                     appendId = "sendSharingCells";
-                    onclick = "dispReceivedCellInfo('"+extUrl+"', '"+reqReceivedUUID[no]+"', 'otherCell"+noId+"', '"+reqRequestAuthority[no]+"');";
+                } else {
+                    notDispFlg = true;
                 }
-
-                let html = Common.createOtherCells(extUrl, dispName, dispImage, noId, onclick);
-                $("#" + appendId).append(html);
-            }
-            $('body > div.mySpinner').hide();
-        });
+            }).always(function() {
+                // Current situation, there is nothing to display and make it empty
+                profObj.description = "";
+                if (!notDispFlg && !$("#otherCell" + noId).length) {
+                    if (Object.keys(reqReceivedUUID).length > 0) {
+                        noId = "Share" + no;
+                        appendId = "sendSharingCells";
+                        onclick = "dispReceivedCellInfo('"+extUrl+"', '"+reqReceivedUUID[no]+"', 'otherCell"+noId+"', '"+reqRequestAuthority[no]+"');";
+                    }
+    
+                    let html = Common.createOtherCells(extUrl, profObj, noId, onclick);
+                    $("#" + appendId).append(html);
+                }
+            });
+    }
 };
 
 Common.getTranscellToken = function(extCellUrl) {
@@ -380,19 +456,18 @@ Common.getAppDataAPI = function(targetBoxUrl, token) {
     return $.ajax(requestInfo);
 };
 
-Common.createOtherCells = function(extUrl, dispName, dispImage, no, onclick) {
+Common.createOtherCells = function(extUrl, profObj, no, onclick) {
     let html = [
         '<li id="otherCell' + no + '">',
             '<a href="javascript:void(0)" onClick="'+onclick+'">',
                 '<div class="pn-list">',
                     '<div class="pn-list-icon">',
-                        '<img src="'+dispImage+'">',
+                        '<img src="'+profObj.dispImage+'">',
                     '</div>',
                     '<div class="account-info">',
-                        '<div class="user-name">'+dispName+'</div>',
+                        '<div class="user-name">'+profObj.dispName+'</div>',
                         '<div>',
-                            '<span data-i18n="RegistrationDate"></span>',
-                            '<span></span>',
+                            '<span class="user-description">'+profObj.description+'</span>',
                         '</div>',
                     '</div>',
                 '</div>',

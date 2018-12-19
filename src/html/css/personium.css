@@ -736,3 +736,66 @@ footer {
 .colorGray {
     color: #9c9c9c !important;
 }
+
+.image-circle-small {
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    border: 1px solid #000;
+    margin-right: 10px;
+}
+
+.add-btn {
+    display: flex;
+    width: 100%;
+    position: relative;
+    height: 3.0rem;
+    background-color: #ffffff;
+    height: 80px;
+}
+
+.add-btn>span {
+    flex: 1;
+    position: relative;
+    line-height: 80px;
+    text-align: center;
+    font-size: 1.5rem;
+}
+
+.add-btn>span::before {
+    font-family: "Font Awesome 5 Free";
+    font-size: 1.2em;
+    vertical-align: 0px;
+    font-weight: 900;
+    left: 0;
+    top: 50%;
+    -webkit-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+    padding-right: 10px;
+}
+
+.add-member::before {
+    content: "\f055";
+}
+
+.other-icon {
+    width: 40px;
+    height: 40px;
+    margin-top: 13px;
+    fill: white;
+}
+
+.sharing-menu {
+    text-align: left !important;
+    padding-left: 10px;
+}
+
+.sharing-list {
+    position: relative;
+    display: flex;
+    padding-right: 50px;
+}
+
+.sharing-icon {
+    font-size: 1.5em !important;
+}

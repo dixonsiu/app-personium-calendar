@@ -72,6 +72,16 @@
     },
     "Sharing": {
         "title": "別のカレンダーを表示",
+        "by": {
+            "label": "共有してる"
+        },
+        "with": {
+            "label": "共有してもらう"
+        },
+        "Member": {
+            "label": "共有メンバー",
+            "add": "メンバー追加"
+        },
         "Send": {
             "label": "共有依頼を送信",
             "description": "下記の権限で共有依頼を送信します。",
@@ -84,7 +94,9 @@
             "approvelBtn": "許可"
         },
         "Authority": {
-            "label": "権限:",
+            "label": "権限",
+            "CalendarOwner": "オーナー",
+            "CalendarEditor": "編集",
             "CalendarViewer": "閲覧"
         }
     },

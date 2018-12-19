@@ -72,6 +72,16 @@
     },
     "Sharing": {
         "title": "Show different Calendar",
+        "by": {
+            "label": "sharing by"
+        },
+        "with": {
+            "label": "sharing with"
+        },
+        "Member": {
+            "label": "Sharing Member",
+            "add": "Add Member"
+        },
         "Send": {
             "label": "Send sharing request",
             "description": "Send sharing request with the following authority.",
@@ -84,7 +94,9 @@
             "approvelBtn": "Permit"
         },
         "Authority": {
-            "label": "Authority:",
+            "label": "Authority",
+            "CalendarOwner": "owner",
+            "CalendarEditor": "write",
             "CalendarViewer": "read"
         }
     },

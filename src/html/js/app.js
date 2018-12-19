@@ -8,6 +8,7 @@ dispListName = "";
 scheduleDispNum = 10;
 scheduleSkipPrev = 0;
 scheduleSkipNext = 0;
+sharingMemberRole = {};
 reqReceivedUUID = {};
 reqRequestAuthority = {};
 
@@ -39,8 +40,33 @@ getAppRole = function(auth) {
         // Currently we only allow role with read permission.
         return 'CalendarViewer';
     }
-    
 };
+
+getAppRoleAuthority = function(roleName) {
+    let result = roleName;
+    switch (roleName) {
+        case "CalendarOwner":
+            result = i18next.t("glossary:Sharing.Authority.CalendarOwner");
+            break;
+        case "CalendarEditor":
+            result = i18next.t("glossary:Sharing.Authority.CalendarEditor");
+            break;
+        case "CalendarViewer":
+            result = i18next.t("glossary:Sharing.Authority.CalendarViewer");
+            break;
+    }
+
+    return result;
+}
+
+getAppRoleAuthorityList = function(roleList) {
+    let result = "";
+    for (var i = 0; i < roleList.length; i++) {
+        result += getAppRoleAuthority(roleList[i]) + ", ";
+    }
+    result = result.slice(0,-2);
+    return result;
+}
 
 additionalCallback = function() {
     Drawer_Menu();
@@ -284,6 +310,322 @@ createInfoTd = function(i, accountInfo) {
     return infoDiv;
 };
 
+displaySharingByPanel = function() {
+    if (Common.getTargetCellUrl() !== Common.getCellUrl()) {
+       // You can not sharing request on another's calendar
+       return;
+    }
+
+    Common.closeSlide();
+    Common.loadContent("./templates/_list_template.html").done(function(data) {
+        $('body > div.mySpinner').show();
+        var out_html = $($.parseHTML(data));
+        $("#loadContent").empty();
+        let id = PCalendar.createSubContent(out_html);
+        $(id + " main").empty();
+        $(id + " .header-title").attr("data-i18n", "glossary:Sharing.by.label").localize();
+        $(id + " footer").hide();
+        $(id + " .header-btn-right").hide();
+        let listId = "sharingByList";
+        let eUl = $('<ul>', {
+            class: 'slide-list hover-action',
+            id: listId
+        });
+        $(id + " main").append($(eUl)).localize();
+        createSharingList(listId, "glossary:Sharing.Member.label", "displaySharingMemberListPanel();");
+        createSharingList(listId, "glossary:Sharing.Received.label", "displayReceivedSendSharingListPanel();");
+        $('body > div.mySpinner').hide();
+    }).fail(function(error) {
+        console.log(error);
+    });
+}
+displaySharingWithPanel = function() {
+    if (Common.getTargetCellUrl() !== Common.getCellUrl()) {
+       // You can not sharing request on another's calendar
+       return;
+    }
+
+    Common.closeSlide();
+    Common.loadContent("./templates/_list_template.html").done(function(data) {
+        $('body > div.mySpinner').show();
+        var out_html = $($.parseHTML(data));
+        let id = PCalendar.createSubContent(out_html);
+        $(id + " main").empty();
+        $(id + " .header-title").attr("data-i18n", "glossary:Sharing.with.label").localize();
+        $(id + " footer").hide();
+        $(id + " .header-btn-right").hide();
+        let listId = "sharingWithList";
+        let eUl = $('<ul>', {
+            class: 'slide-list hover-action',
+            id: listId
+        });
+        $(id + " main").append($(eUl)).localize();
+        createSharingList(listId, "glossary:Sharing.Send.label", "displaySendSharingListPanel();");
+        $('body > div.mySpinner').hide();
+    }).fail(function(error) {
+        console.log(error);
+    });
+}
+
+createSharingList = function(id, i18nId, onclick) {
+    let tag = [
+        '<li>',
+            '<a href="javascript:void(0)" onclick="'+onclick+'">',
+                '<div class="add-btn">',
+                    '<span class="sharing-menu" data-i18n="'+i18nId+'"></span>',
+                '</div>',
+            '</a>',
+        '</li>'
+    ].join("");
+    $("#" + id).append(tag).localize();
+}
+
+displaySharingMemberListPanel = function() {
+    if (Common.getTargetCellUrl() !== Common.getCellUrl()) {
+       // You can not sharing request on another's calendar
+       return;
+    }
+
+    Common.closeSlide();
+    Common.loadContent("./templates/_list_template.html").done(function(data) {
+        $('body > div.mySpinner').show();
+        var out_html = $($.parseHTML(data));
+        let id = PCalendar.createSubContent(out_html);
+        $(id + " main").empty();
+        $(id + " .header-title").attr("data-i18n", "glossary:Sharing.Member.label").localize();
+        $(id + " footer").hide();
+        $(id + " .header-btn-right").hide();
+        Common.getExtCell().done(function(data) {
+            sharingMemberRole = {};
+            reqReceivedUUID = {};
+            reqRequestAuthority = {};
+            let eUl = $('<ul>', {
+                class: 'slide-list hover-action',
+                id: 'sharingMemberCells'
+            });
+            $(id + " main").append($(eUl)).localize();
+            eUl = $('<ul>', {
+                class: 'slide-list hover-action',
+                id: 'sharingAddNewMember'
+            });
+            $(id + " main").append($(eUl)).localize();
+            let addMemberTag = [
+                '<li>',
+                    '<a href="javascript:void(0)" onclick="displaySharingAddMemberListPanel();">',
+                        '<div class="add-btn">',
+                            '<span class="add-member" data-i18n="glossary:Sharing.Member.add"></span>',
+                        '</div>',
+                    '</a>',
+                '</li>'
+            ].join("");
+            $("#sharingAddNewMember").append(addMemberTag).localize();
+
+            let res = data.d.results;
+            res.sort(function(val1, val2) {
+                return (val1.Url < val2.Url ? 1 : -1);
+            })
+            addId = "";
+            for (var i = 0; i < res.length; i++) {
+                dispSharingMemberList(id + " main", res[i].Url, i);
+            }
+            $('body > div.mySpinner').hide();
+        });
+    }).fail(function(error) {
+        console.log(error);
+    });
+}
+
+displaySharingAddMemberListPanel = function() {
+    Common.loadContent("./templates/_list_template.html").done(function(data) {
+        $('body > div.mySpinner').show();
+        var out_html = $($.parseHTML(data));
+        let id = PCalendar.createSubContent(out_html);
+        $(id + " main").empty();
+        $(id + " .header-title").attr("data-i18n", "glossary:Sharing.Member.label").localize();
+        $(id + " footer").hide();
+        $(id + " .header-btn-right").hide();
+        Common.getExtCell().done(function(data) {
+            let eUl = $('<ul>', {
+                class: 'slide-list hover-action',
+                id: 'sharingAddMemberCells'
+            });
+            $(id + " main").append($(eUl)).localize();
+
+            let res = data.d.results;
+            res.sort(function(val1, val2) {
+                return (val1.Url < val2.Url ? 1 : -1);
+            })
+            addId = "Add";
+            for (var i = 0; i < res.length; i++) {
+                dispSharingMemberList(id + " main", res[i].Url, i);
+            }
+            $('body > div.mySpinner').hide();
+        });
+    }).fail(function(error) {
+        console.log(error);
+    });
+}
+
+dispSharingMemberList = function(id, url, no) {
+    Common.getExtCellRoleList(url).done(function(data) {
+        var results = data.d.results;
+        results.sort(function (val1, val2) {
+            return (val1.uri < val2.uri ? 1 : -1);
+        });
+        sharingMemberRole[no] = {};
+        sharingMemberRole[no].url = url;
+        sharingMemberRole[no].roleList = [];
+        let extUrl = Common.changeLocalUnitToUnitUrl(url);
+        for (var i = 0; i < results.length; i++) {
+            var uri = results[i].uri;
+            var matchName = uri.match(/\(Name='(.+)',/);
+            var roleName = matchName[1];
+            var matchBox = uri.match(/_Box\.Name='(.+)'/);
+            var roleBox = "";
+            if (matchBox != null) {
+                roleBox = matchBox[1];
+            } else {
+                roleBox = null;
+            }
+            if (Common.getBoxName() == roleBox) {
+                sharingMemberRole[no].roleList.push(roleName);
+            }
+        }
+
+        if (addId != "") {
+            if (sharingMemberRole[no].roleList.length == 0) {
+                Common.getProfileName(extUrl, Common.prepareExtCellForApp, no);
+            }
+        } else {
+            if (sharingMemberRole[no].roleList.length > 0) {
+                Common.getProfileName(extUrl, Common.prepareExtCellForApp, no);
+            }
+        }
+    })
+}
+
+displaySharingMemberInfoPanel = function(extUrl, no, editId) {
+    Common.loadContent("./templates/_list_template.html").done(function(data) {
+        $('body > div.mySpinner').show();
+        var out_html = $($.parseHTML(data));
+        let id = PCalendar.createSubContent(out_html);
+        $(id + " main").empty();
+        $(id + " .header-title").attr("data-i18n", "glossary:Sharing.Authority.label").localize();
+        $(id + " footer").hide();
+        $(id + " .header-btn-right").hide();
+        Common.getRoleList().done(function(data) {
+            let eUl = $('<ul>', {
+                class: 'slide-list hover-action',
+                id: 'memberRoles'
+            });
+            $(id + " main").append($(eUl)).localize();
+            let res = data.d.results;
+            res.sort(function (val1, val2) {
+                return (val1["_Box.Name"] > val2["_Box.Name"] ? 1 : -1);
+            });
+            for (var i in res) {
+                let roleName = res[i].Name;
+                let dispRoleName = getAppRoleAuthority(roleName);
+                let boxName = res[i]["_Box.Name"];
+                if (Common.getBoxName() == boxName) {
+                    let markStyle = "";
+                    if ($.inArray(roleName, sharingMemberRole[no].roleList) >= 0) {
+                        markStyle = "check-mark-left";
+                    }
+                    let html = [
+                        '<li class="pn-check-list check-position-l '+markStyle+'" data-edit-id="'+editId+'" data-edit-no="'+no+'" data-role-name="'+roleName+'">',
+                            '<div class="pn-list pn-list-no-arrow">',
+                                '<div class="account-info">',
+                                    '<div class="user-name">',
+                                    '<img class="image-circle-small '+roleName+'-icon" style="margin-top:0px;" src="./img/role_default.png">',
+                                        '<span>' + dispRoleName + '</span>',
+                                    '</div>',
+                                    '<div></div>',
+                                '</div>',
+                            '</div>',
+                        '</li > '
+                    ].join("");
+                    $("#memberRoles").append(html);
+                }
+            }
+            Add_Check_Mark();
+            $('body > div.mySpinner').hide();
+        })
+    }).fail(function(error) {
+        console.log(error);
+    });
+}
+/**
+   * Add_Check_Mark
+   * param:none
+   */
+Add_Check_Mark = function() {
+    $('.pn-check-list').click(function (event) {
+        //CASE: check list
+        if ($(this).parents('#memberRoles').length != 0) {
+            // Disable click event
+            $(this).css("pointer-events", "none");
+            if ($(this).hasClass('check-mark-left')) {
+                deleteExtCellLink($(this));
+            } else {
+                addExtCellLink($(this));
+            }
+        }
+    });
+}
+
+addExtCellLink = function (obj) {
+    let roleName = obj.data("role-name");
+    let boxName = Common.getBoxName();
+    let no = obj.data("edit-no");
+    let extCell = sharingMemberRole[no].url;
+    Common.restAddExtCellLinkRoleAPI(extCell, boxName, roleName).done(function (data) {
+        if (!$("#sharingMemberCells #otherCellShare" + no).length) {
+            $("#otherCellShare" + no).clone().appendTo('#sharingMemberCells');
+        }
+        let linksNo = $.inArray(roleName, sharingMemberRole[no].roleList);
+        if (linksNo < 0) {
+            sharingMemberRole[no].roleList.push(roleName);
+        }
+        obj.addClass('check-mark-left');
+        let auth = i18next.t("glossary:Sharing.Authority.label") + ":";
+        let roleList = sharingMemberRole[no].roleList;
+        auth += getAppRoleAuthorityList(roleList);
+        let id = obj.data("edit-id");
+        $(id + " .user-description").text(auth);
+    }).fail(function (data) {
+        var res = JSON.parse(data.responseText);
+        alert("An error has occurred.\n" + res.message.value);
+    }).always(function () {
+        // Enable click event
+        obj.css("pointer-events", "auto");
+    });
+}
+deleteExtCellLink = function (obj) {
+    let roleName = obj.data("role-name");
+    let boxName = Common.getBoxName();
+    let no = obj.data("edit-no");
+    let extCell = sharingMemberRole[no].url;
+    Common.restDeleteExtCellLinkRoleAPI(extCell, boxName, roleName).done(function (data) {
+        let linksNo = $.inArray(roleName, sharingMemberRole[no].roleList);
+        if (linksNo >= 0) {
+            sharingMemberRole[no].roleList.splice(linksNo, 1);
+        }
+        obj.removeClass('check-mark-left');
+        let auth = i18next.t("glossary:Sharing.Authority.label") + ":";
+        let roleList = sharingMemberRole[no].roleList;
+        auth += getAppRoleAuthorityList(roleList);
+        let id = obj.data("edit-id");
+        $(id + " .user-description").text(auth);
+    }).fail(function (data) {
+        var res = JSON.parse(data.responseText);
+        alert("An error has occurred.\n" + res.message.value);
+    }).always(function () {
+        // Enable click event
+        obj.css("pointer-events", "auto");
+    });
+};
+
 /*
  * Display the followings:
  * 1. List of sharing requesters to send
@@ -298,7 +640,6 @@ displaySendSharingListPanel = function() {
    Common.loadContent("./templates/_list_template.html").done(function(data) {
        $('body > div.mySpinner').show();
        var out_html = $($.parseHTML(data));
-       $("#loadContent").empty();
        let id = PCalendar.createSubContent(out_html);
        $(id + " main").empty();
        $(id + " .header-title").attr("data-i18n", "glossary:Sharing.Send.label").localize();
@@ -322,12 +663,14 @@ dispSendSharingList = function(id, results) {
     res.sort(function(val1, val2) {
         return (val1.Url < val2.Url ? 1 : -1);
     })
+    sharingMemberRole = {};
     reqReceivedUUID = {};
     reqRequestAuthority = {};
     for (var i = 0; i < res.length; i++) {
         let extUrl = Common.changeLocalUnitToUnitUrl(res[i].Url);
         Common.getProfileName(extUrl, Common.prepareExtCellForApp, i);
     }
+    $('body > div.mySpinner').hide();
 }
 
 dispSendCellInfo = function(extUrl) {
@@ -375,7 +718,6 @@ displayReceivedSendSharingListPanel = function() {
    Common.loadContent("./templates/_list_template.html").done(function(data) {
        $('body > div.mySpinner').show();
        var out_html = $($.parseHTML(data));
-       $("#loadContent").empty();
        let id = PCalendar.createSubContent(out_html);
        $(id + " main").empty();
        $(id + " .header-title").attr("data-i18n", "glossary:Sharing.Received.label").localize();
@@ -399,6 +741,7 @@ dispReceivedSharingList = function(id, results) {
     res.sort(function(val1, val2) {
         return (val1.Url < val2.Url ? 1 : -1);
     })
+    sharingMemberRole = {};
     reqReceivedUUID = {};
     reqRequestAuthority = {};
     for (var i in res) {
@@ -412,9 +755,7 @@ dispReceivedSharingList = function(id, results) {
 
         Common.getProfileName(extUrl, Common.prepareExtCellForApp, i);
     }
-    if (Object.keys(reqReceivedUUID).length == 0) {
-        $('body > div.mySpinner').hide();
-    }
+    $('body > div.mySpinner').hide();
 }
 
 dispReceivedCellInfo = function(extUrl, uuid, eleId, reqAuth) {

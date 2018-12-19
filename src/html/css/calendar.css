@@ -128,6 +128,7 @@ main {
     position: absolute;
     font-size: 1.2rem;
     color: blue;
+    line-height: 2em;
 }
 
 #calendar {
