@@ -213,6 +213,7 @@ Common.deleteExtCellLinkRelation = function(extCell, relName) {
 
 Common.getOtherAllowedCells = function() {
     Common.getExtCell().done(function(json) {
+        $(".subMySpinner").show();
         var objSel = document.getElementById("otherAllowedCells");
         if (objSel.hasChildNodes()) {
             while (objSel.childNodes.length > 0) {
@@ -238,6 +239,7 @@ Common.getOtherAllowedCells = function() {
                 Common.dispOtherAllowedCells(url, i);
             }
         }
+        $(".subMySpinner").hide();
     });
 };
 

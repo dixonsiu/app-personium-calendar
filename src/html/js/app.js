@@ -82,8 +82,6 @@ additionalCallback = function() {
     if (Common.getTargetCellUrl() !== Common.getCellUrl()) {
         $("#other_btn").hide();
         $(".menu-list").addClass("disable-field");
-    } else {
-        Common.getOtherAllowedCells();
     }
 
     $('#month').on('click', function () {
@@ -129,6 +127,7 @@ Drawer_Menu = function() {
   });
 
   $('#other_btn').on('click', function () {
+    Common.getOtherAllowedCells();
     Common.openOther();
     return false;
   });
