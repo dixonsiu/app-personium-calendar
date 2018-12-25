@@ -94,6 +94,37 @@ main {
     background: #ffffff;
 }
 
+.header-ic-01 {
+    width: 1.1rem !important;
+}
+
+.header-ic-02 {
+    width: 22px !important;
+}
+
+.header-ic-03 {
+    width: 2.0rem !important;
+}
+
+/* app common */
+.app-displayname{
+    text-align: center;
+    padding-left: 5rem;
+    padding-right: 5rem;
+    width: auto !important;
+}
+
+.pn-back-btn,
+#drawer_btn,
+.header-btn-right {
+    color: #ffffff;
+}
+
+.header-btn-right {
+    right: 20px;
+    font-size: 1.2rem;
+}
+
 /*personium common button*/
 
 .pn-btn {

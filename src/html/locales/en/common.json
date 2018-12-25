@@ -5,7 +5,8 @@
         "notification": {
             "title": "Notifications",
             "header": "List of notifications"
-        }
+        },
+        "Version": "Version 1.2.1"
     },
     "navbar": {
         "toggleNavigation": "Toggle navigation",
@@ -69,5 +70,41 @@
         "approve": "Approve",
         "decline": "Decline",
         "finish": "OK"
+    },
+    "Authority": {
+        "label": "Authority",
+        "owner": "owner",
+        "editor": "write",
+        "viewer": "read"
+    },
+    "Sharing": {
+        "title": "Show different $t(glossary:label)",
+        "by": {
+            "label": "sharing my $t(glossary:label)"
+        },
+        "with": {
+            "label": "sharing with"
+        },
+        "Member": {
+            "label": "Sharing Member",
+            "add": "Add Member"
+        },
+        "Send": {
+            "label": "Send sharing request",
+            "description": "Send sharing request with the following authority.",
+            "btnFooter": "Send"
+        },
+        "Response": {
+            "label": "Received sharing request",
+            "description": "If you allow it, your $t(glossary:label) will be shared with the following authority.",
+            "rejectionBtn": "Discard",
+            "approvelBtn": "Permit"
+        },
+        "Authority": {
+            "label": "Authority",
+            "CalendarOwner": "owner",
+            "CalendarEditor": "write",
+            "CalendarViewer": "read"
+        }
     }
 }

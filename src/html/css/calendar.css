@@ -71,23 +71,12 @@ main {
     width: 100%;
 }
 
-.pn-back-btn,
-#drawer_btn,
-.header-btn-right {
-    color: #ffffff;
-}
-
 .calendar-arrow-btn {
     padding: 0;
 }
 
 .calendar-arrow-btn svg {
     vertical-align: -0.95rem;
-}
-
-.header-btn-right {
-    right: 20px;
-    font-size: 1.2rem;
 }
 
 .pn-back-btn,
@@ -108,13 +97,6 @@ main {
 }
 
 /*Calendar.html*/
-.calendar-displayname{
-    text-align: center;
-    padding-left: 5rem;
-    padding-right: 5rem;
-    width: auto !important;
-}
-
 .date-header {
     border-bottom: 0.5px solid;
 }
