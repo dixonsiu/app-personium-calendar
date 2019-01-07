@@ -1,8 +1,8 @@
 {
     "title": "Personiumカレンダー",
+    "label": "カレンダー",
     "dispTitle": "{{name}}のPersoniumカレンダー",
     "Calendars": {
-        "label": "カレンダー",
         "VEvent": {
             "label": "イベント",
             "summary": "件名",
@@ -39,8 +39,7 @@
             }
         },
         "NoSync": "連携せずに始める",
-        "Sync": "同期",
-        "Version": "バージョン 1.2.1"
+        "Sync": "同期"
     },
     "Account": {
         "label": "連携アカウントの追加",
@@ -68,24 +67,6 @@
             "title": "アカウントの削除",
             "label": "削除",
             "btnOK": "削除"
-        }
-    },
-    "Sharing": {
-        "title": "別のカレンダーを表示",
-        "Send": {
-            "label": "共有依頼を送信",
-            "description": "下記の権限で共有依頼を送信します。",
-            "btnFooter": "送信"
-        },
-        "Received": {
-            "label": "受信した共有依頼",
-            "description": "許可すると下記の権限で貴方のカレンダーが共有されます。",
-            "rejectionBtn": "破棄",
-            "approvelBtn": "許可"
-        },
-        "Authority": {
-            "label": "権限:",
-            "CalendarViewer": "閲覧"
         }
     },
     "sessionExpiredDialog": {

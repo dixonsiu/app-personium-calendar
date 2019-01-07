@@ -94,6 +94,37 @@ main {
     background: #ffffff;
 }
 
+.header-ic-01 {
+    width: 1.1rem !important;
+}
+
+.header-ic-02 {
+    width: 22px !important;
+}
+
+.header-ic-03 {
+    width: 2.0rem !important;
+}
+
+/* app common */
+.app-displayname{
+    text-align: center;
+    padding-left: 5rem;
+    padding-right: 5rem;
+    width: auto !important;
+}
+
+.pn-back-btn,
+#drawer_btn,
+.header-btn-right {
+    color: #ffffff;
+}
+
+.header-btn-right {
+    right: 20px;
+    font-size: 1.2rem;
+}
+
 /*personium common button*/
 
 .pn-btn {
@@ -102,7 +133,8 @@ main {
 }
 
 /* spinner */
-div.mySpinner {
+div.mySpinner,
+.subMySpinner {
   position: fixed;
   height: 5em;
   width: 5em;
@@ -115,9 +147,17 @@ div.mySpinner {
   background-color: transparent !important;
 }
 
-div.mySpinner > i {
+div.mySpinner > i,
+.subMySpinner > i {
   color: #D3D3D3 !important;
   font-size: 5em;
+}
+
+.subMySpinner {
+    display:none;
+    position: relative;
+    height: 1em;
+    left: 8em;
 }
 
 /*drawer menu*/
@@ -735,4 +775,67 @@ footer {
 
 .colorGray {
     color: #9c9c9c !important;
+}
+
+.image-circle-small {
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    border: 1px solid #000;
+    margin-right: 10px;
+}
+
+.add-btn {
+    display: flex;
+    width: 100%;
+    position: relative;
+    height: 3.0rem;
+    background-color: #ffffff;
+    height: 80px;
+}
+
+.add-btn>span {
+    flex: 1;
+    position: relative;
+    line-height: 80px;
+    text-align: center;
+    font-size: 1.5rem;
+}
+
+.add-btn>span::before {
+    font-family: "Font Awesome 5 Free";
+    font-size: 1.2em;
+    vertical-align: 0px;
+    font-weight: 900;
+    left: 0;
+    top: 50%;
+    -webkit-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+    padding-right: 10px;
+}
+
+.add-member::before {
+    content: "\f055";
+}
+
+.other-icon {
+    width: 40px;
+    height: 40px;
+    margin-top: 13px;
+    fill: white;
+}
+
+.sharing-menu {
+    text-align: left !important;
+    padding-left: 10px;
+}
+
+.sharing-list {
+    position: relative;
+    display: flex;
+    padding-right: 50px;
+}
+
+.sharing-icon {
+    font-size: 1.5em !important;
 }

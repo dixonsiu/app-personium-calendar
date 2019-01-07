@@ -8,6 +8,7 @@ dispListName = "";
 scheduleDispNum = 10;
 scheduleSkipPrev = 0;
 scheduleSkipNext = 0;
+sharingMemberRole = {};
 reqReceivedUUID = {};
 reqRequestAuthority = {};
 
@@ -39,15 +40,57 @@ getAppRole = function(auth) {
         // Currently we only allow role with read permission.
         return 'CalendarViewer';
     }
-    
 };
 
+getAuthorityAppRole = function(auth) {
+    let result = auth;
+    switch (auth) {
+        case "owner":
+            result = "CalendarOwner";
+            break;
+        case "editor":
+            result = "CalendarEditor";
+            break;
+        case "viewer":
+            result = "CalendarViewer";
+            break;
+    }
+
+    return result;
+}
+
+getAppRoleAuthority = function(roleName) {
+    let result = roleName;
+    switch (roleName) {
+        case "CalendarOwner":
+            result = i18next.t("Authority.owner");
+            break;
+        case "CalendarEditor":
+            result = i18next.t("Authority.editor");
+            break;
+        case "CalendarViewer":
+            result = i18next.t("Authority.viewer");
+            break;
+    }
+
+    return result;
+}
+
+getAppRoleAuthorityList = function(roleList) {
+    let result = "";
+    for (var i = 0; i < roleList.length; i++) {
+        result += getAppRoleAuthority(roleList[i]) + ", ";
+    }
+    result = result.slice(0,-2);
+    return result;
+}
+
 additionalCallback = function() {
-    Drawer_Menu();
+    Common.Drawer_Menu();
 
     Common.setRefreshTimer();
 
-    Common.getProfileName(Common.getTargetCellUrl(), displayMyDisplayName);
+    Common.getProfileName(Common.getTargetCellUrl(), Common.displayMyDisplayName);
 
     renderFullCalendar();
 
@@ -56,8 +99,6 @@ additionalCallback = function() {
     if (Common.getTargetCellUrl() !== Common.getCellUrl()) {
         $("#other_btn").hide();
         $(".menu-list").addClass("disable-field");
-    } else {
-        Common.getOtherAllowedCells();
     }
 
     $('#month').on('click', function () {
@@ -91,35 +132,6 @@ additionalCallback = function() {
     result.removeClass('current');
     target.addClass('current');
   }
-
-/**
- * Drawer_Menu
- * param:none
- */
-Drawer_Menu = function() {
-  $('#drawer_btn').on('click', function () {
-    Common.openSlide();
-    return false;
-  });
-
-  $('#other_btn').on('click', function () {
-    Common.openOther();
-    return false;
-  });
-
-  $('#menu-background').click(function () {
-    Common.closeSlide();
-  });
-
-  $('#drawer_menu,#other_list').click(function (event) {
-    event.stopPropagation();
-  });
-}
-
-displayMyDisplayName = function(extUrl, profObj) {
-    $("#calendarTitle")
-        .text(profObj.dispName);
-};
 
 toggleEditMenu = function(aDom) {
     var wide_line = $('.slide-list-line');
@@ -283,164 +295,6 @@ createInfoTd = function(i, accountInfo) {
     
     return infoDiv;
 };
-
-/*
- * Display the followings:
- * 1. List of sharing requesters to send
- */
-displaySendSharingListPanel = function() {
-   if (Common.getTargetCellUrl() !== Common.getCellUrl()) {
-       // You can not sharing request on another's calendar
-       return;
-   }
-
-   Common.closeSlide();
-   Common.loadContent("./templates/_list_template.html").done(function(data) {
-       $('body > div.mySpinner').show();
-       var out_html = $($.parseHTML(data));
-       $("#loadContent").empty();
-       let id = PCalendar.createSubContent(out_html);
-       $(id + " main").empty();
-       $(id + " .header-title").attr("data-i18n", "glossary:Sharing.Send.label").localize();
-       $(id + " footer").hide();
-       $(id + " .header-btn-right").hide();
-       Common.getExtCell().done(function(data) {
-           dispSendSharingList(id + " main", data);
-       });
-   }).fail(function(error) {
-       console.log(error);
-   });
-}
-
-dispSendSharingList = function(id, results) {
-    let eUl = $('<ul>', {
-        class: 'slide-list hover-action',
-        id: 'sendSharingCells'
-    });
-    $(id).append($(eUl)).localize();
-    let res = results.d.results;
-    res.sort(function(val1, val2) {
-        return (val1.Url < val2.Url ? 1 : -1);
-    })
-    reqReceivedUUID = {};
-    reqRequestAuthority = {};
-    for (var i = 0; i < res.length; i++) {
-        let extUrl = Common.changeLocalUnitToUnitUrl(res[i].Url);
-        Common.getProfileName(extUrl, Common.prepareExtCellForApp, i);
-    }
-}
-
-dispSendCellInfo = function(extUrl) {
-    Common.loadContent("./templates/_shared_template.html").done(function(data) {
-        var out_html = $($.parseHTML(data));
-        let id = PCalendar.createSubContent(out_html);
-        $(id + " .doubleBtn").hide();
-        $(id + " .header-btn-right").hide();
-        $(id + " .dispShared").hide();
-        Common.getProfileName(extUrl, function(url, profObj) {
-            $(id + " .header-title").text(profObj.dispName);
-            $(id + " .user-cell-url").text(url);
-            $(id + " .user-description").text(profObj.description);
-            $(id + " .extcell-profile .user-icon").append('<img class="user-icon-large" src="' + profObj.dispImage + '" alt="user">');
-        });
-    }).fail(function(error) {
-        console.log(error);
-    });
-}
-
-sendSharingRequest = function() {
-    Common.showConfirmDialog("msg.info.requestSent", function() {
-        $("#modal-common").modal('hide');
-        var reqRel = $("#sendAuthority option:selected").val();
-        var extUrl = $(".user-cell-url").text();
-        var title = i18next.t("readRequestTitle");
-        var body = i18next.t("readRequestBody");
-        Common.sendMessageAPI(null, extUrl, "request", title, body, "role.add", reqRel, Common.getCellUrl()).done(function(data) {
-            PCalendar.backSubContent();
-        }).fail(function(data) {
-            Common.showWarningDialog("msg.error.failedRequestSent", function(){
-               $("#modal-common").modal('hide'); 
-            });
-        });
-    });
-}
-
-displayReceivedSendSharingListPanel = function() {
-    if (Common.getTargetCellUrl() !== Common.getCellUrl()) {
-       // You can not sharing request on another's calendar
-       return;
-   }
-
-   Common.closeSlide();
-   Common.loadContent("./templates/_list_template.html").done(function(data) {
-       $('body > div.mySpinner').show();
-       var out_html = $($.parseHTML(data));
-       $("#loadContent").empty();
-       let id = PCalendar.createSubContent(out_html);
-       $(id + " main").empty();
-       $(id + " .header-title").attr("data-i18n", "glossary:Sharing.Received.label").localize();
-       $(id + " footer").hide();
-       $(id + " .header-btn-right").hide();
-       PCalendar.getReceivedMessageAPI().done(function(data) {
-           dispReceivedSharingList(id + " main", data);
-       });
-   }).fail(function(error) {
-       console.log(error);
-   });
-}
-
-dispReceivedSharingList = function(id, results) {
-    let eUl = $('<ul>', {
-        class: 'slide-list hover-action',
-        id: 'sendSharingCells'
-    });
-    $(id).append($(eUl)).localize();
-    let res = results.d.results;
-    res.sort(function(val1, val2) {
-        return (val1.Url < val2.Url ? 1 : -1);
-    })
-    reqReceivedUUID = {};
-    reqRequestAuthority = {};
-    for (var i in res) {
-        if (res[i].Status == "approved" || res[i].Status == "rejected" || !res[i].RequestObjects) {
-            continue;
-        }
-
-        reqReceivedUUID[i] = res[i].__id;
-        reqRequestAuthority[i] = res[i].RequestObjects[0].Name;
-        let extUrl = Common.changeLocalUnitToUnitUrl(res[i].From);
-
-        Common.getProfileName(extUrl, Common.prepareExtCellForApp, i);
-    }
-    if (Object.keys(reqReceivedUUID).length == 0) {
-        $('body > div.mySpinner').hide();
-    }
-}
-
-dispReceivedCellInfo = function(extUrl, uuid, eleId, reqAuth) {
-    Common.loadContent("./templates/_shared_template.html").done(function(data) {
-        var out_html = $($.parseHTML(data));
-        let id = PCalendar.createSubContent(out_html);
-        $(id + " .singleBtn").hide();
-        $(id + " .header-btn-right").hide();
-        $(id + " .sendShared").hide();
-        $(id + " #reqAuthority").attr("data-i18n", "glossary:Sharing.Authority." + reqAuth).localize();
-        $(id + " #approvalFooterButton").removeAttr("onclick").on("click", function() {
-            Common.approvalRel(extUrl, uuid, eleId, PCalendar.backSubContent);
-        });
-        $(id + " #refectionFooterButton").removeAttr("onclick").on("click", function() {
-            Common.rejectionRel(extUrl, uuid, eleId, PCalendar.backSubContent);
-        });
-        Common.getProfileName(extUrl, function(url, profObj) {
-            $(id + " .header-title").text(profObj.dispName);
-            $(id + " .user-cell-url").text(url);
-            $(id + " .user-description").text(profObj.description);
-            $(id + " .extcell-profile .user-icon").append('<img class="user-icon-large" src="' + profObj.dispImage + '" alt="user">');
-        });
-    }).fail(function(error) {
-        console.log(error);
-    });
-}
 
 /*
  * Render the delete icon.

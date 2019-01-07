@@ -204,17 +204,6 @@ Common.setAccessData = function() {
     });
 };
 
-Common.getBoxUrlAPI = function(cellUrl, token) {
-    return $.ajax({
-        type: "GET",
-        url: cellUrl + "__box",
-        headers: {
-            'Authorization':'Bearer ' + token,
-            'Accept':'application/json'
-        }
-    });
-};
-
 Common.getBoxUrlFromResponse = function(info) {
     let urlFromHeader = info.request.getResponseHeader("Location");
     let urlFromBody = info.data.Url;
@@ -248,6 +237,36 @@ Common.setInfo = function(url) {
         sessionStorage.setItem("Common.accessData", JSON.stringify(Common.accessData));
     })
 };
+
+Common.displayMyDisplayName = function(extUrl, profObj) {
+    $("#appTitle")
+        .text(profObj.dispName);
+};
+
+/**
+ * Drawer_Menu
+ * param:none
+ */
+Common.Drawer_Menu = function() {
+  $('#drawer_btn').on('click', function () {
+    Common.openSlide();
+    return false;
+  });
+
+  $('#other_btn').on('click', function () {
+    Common.getOtherAllowedCells();
+    Common.openOther();
+    return false;
+  });
+
+  $('#menu-background').click(function () {
+    Common.closeSlide();
+  });
+
+  $('#drawer_menu,#other_list').click(function (event) {
+    event.stopPropagation();
+  });
+}
 
 Common.getUnitUrl = function() {
     return Common.accessData.unitUrl;
@@ -533,44 +552,6 @@ Common.refreshToken = function(callback) {
     });
 };
 
-// Get App Authentication Token
-Common.getAppAuthToken = function(cellUrl) {
-    let engineEndPoint = getEngineEndPoint();
-    return $.ajax({
-        type: "POST",
-        url: engineEndPoint,
-        data: {
-                p_target: cellUrl
-        },
-        headers: {'Accept':'application/json'}
-    });
-};
-
-/*
- * Get access token for protected box(es) which is accessible by the App.
- * client_id belongs to a App's cell URL
- * Example: MyBoard is "https://demo.personium.io/app-myboard/"
- *          Calorie Smile is "https://demo.personium.io/hn-app-genki/"
- */
-Common.getProtectedBoxAccessToken = function(appToken, cellUrl) {
-  return $.ajax({
-                type: "POST",
-                url: cellUrl + '__token',
-                processData: true,
-                dataType: 'json',
-                data: {
-                    grant_type: "refresh_token",
-                    refresh_token: Common.accessData.refToken,
-                    client_id: Common.getAppCellUrl(),
-                    client_secret: appToken
-                },
-                headers: {
-                    'Accept':'application/json',
-                    'content-type': 'application/x-www-form-urlencoded'
-                }
-            });
-};
-
 Common.updateSessionStorage = function(appCellToken) {
     Common.accessData.token = appCellToken.access_token;
     Common.accessData.refToken = appCellToken.refresh_token;
@@ -606,25 +587,6 @@ Common.perpareToCellInfo = function(cellUrl, tcat, aaat, callback) {
     });
 };
 
-Common.getProtectedBoxAccessToken4ExtCell = function(cellUrl, tcat, aaat) {
-    return $.ajax({
-        type: "POST",
-        url: cellUrl + '__token',
-        processData: true,
-        dataType: 'json',
-        data: {
-            grant_type: 'urn:ietf:params:oauth:grant-type:saml2-bearer',
-            assertion: tcat,
-            client_id: Common.getAppCellUrl(),
-            client_secret: aaat
-        },
-        headers: {
-            'Accept':'application/json',
-            'content-type': 'application/x-www-form-urlencoded'
-        }
-    });
-};
-
 Common.showIrrecoverableErrorDialog = function(msg_key) {
     // define your own handler for each App/screen
     if ((typeof irrecoverableErrorHandler !== "undefined") && $.isFunction(irrecoverableErrorHandler)) {
@@ -652,37 +614,6 @@ Common.displayMessageByKey = function(msg_key) {
         $('#dispMsg').hide();
     }
 };
-
-Common.getCell = function (cellUrl) {
-    if (!cellUrl) cellUrl = "https";
-
-    return $.ajax({
-        type: "GET",
-        url: cellUrl,
-        headers: {
-            'Accept': 'application/json'
-        }
-    });
-};
-
-Common.getBox = function (boxUrl, token) {
-    return $.ajax({
-        type: "GET",
-        url: boxUrl,
-        headers: {
-            'Authorization':'Bearer ' + token,
-            'Accept': 'application/json'
-        }
-    });
-};
-
-Common.loadContent = function(contentUrl) {
-    return $.ajax({
-        url: contentUrl,
-        type: "GET",
-        dataType: "html"
-    });
-}
 
 Common.openSlide = function() {
     $('#menu-background').show();
@@ -740,6 +671,661 @@ Common.slideHide = function(id, direction, callback) {
     });
 }
 
+/******************************/
+/*         side menu          */  
+/******************************/
+/* sharing by */
+Common.displaySharingMemberListPanel = function() {
+    if (Common.getTargetCellUrl() !== Common.getCellUrl()) {
+       // You can not sharing request on another's calendar
+       return;
+    }
+
+    Common.closeSlide();
+    Common.loadContent("./templates/_list_template.html").done(function(data) {
+        $('body > div.mySpinner').show();
+        var out_html = $($.parseHTML(data));
+        let id = PCalendar.createSubContent(out_html);
+        $(id + " main").empty();
+        $(id + " .header-title").attr("data-i18n", "Sharing.Member.label").localize();
+        $(id + " footer").hide();
+        $(id + " .header-btn-right").hide();
+        Common.getExtCell().done(function(data) {
+            sharingMemberRole = {};
+            reqReceivedUUID = {};
+            reqRequestAuthority = {};
+            let eUl = $('<ul>', {
+                class: 'slide-list hover-action',
+                id: 'sharingMemberCells'
+            });
+            $(id + " main").append($(eUl)).localize();
+            eUl = $('<ul>', {
+                class: 'slide-list hover-action',
+                id: 'sharingAddNewMember'
+            });
+            $(id + " main").append($(eUl)).localize();
+            let addMemberTag = [
+                '<li>',
+                    '<a href="javascript:void(0)" onclick="Common.displaySharingAddMemberListPanel();">',
+                        '<div class="add-btn">',
+                            '<span class="add-member" data-i18n="Sharing.Member.add"></span>',
+                        '</div>',
+                    '</a>',
+                '</li>'
+            ].join("");
+            $("#sharingAddNewMember").append(addMemberTag).localize();
+
+            let res = data.d.results;
+            res.sort(function(val1, val2) {
+                return (val1.Url < val2.Url ? 1 : -1);
+            })
+            addId = "";
+            for (var i = 0; i < res.length; i++) {
+                Common.dispSharingMemberList(id + " main", res[i].Url, i);
+            }
+            $('body > div.mySpinner').hide();
+        });
+    }).fail(function(error) {
+        console.log(error);
+    });
+}
+Common.displaySharingAddMemberListPanel = function() {
+    Common.loadContent("./templates/_list_template.html").done(function(data) {
+        $('body > div.mySpinner').show();
+        var out_html = $($.parseHTML(data));
+        let id = PCalendar.createSubContent(out_html);
+        $(id + " main").empty();
+        $(id + " .header-title").attr("data-i18n", "Sharing.Member.label").localize();
+        $(id + " footer").hide();
+        $(id + " .header-btn-right").hide();
+        Common.getExtCell().done(function(data) {
+            let eUl = $('<ul>', {
+                class: 'slide-list hover-action',
+                id: 'sharingAddMemberCells'
+            });
+            $(id + " main").append($(eUl)).localize();
+
+            let res = data.d.results;
+            res.sort(function(val1, val2) {
+                return (val1.Url < val2.Url ? 1 : -1);
+            })
+            addId = "Add";
+            for (var i = 0; i < res.length; i++) {
+                Common.dispSharingMemberList(id + " main", res[i].Url, i);
+            }
+            $('body > div.mySpinner').hide();
+        });
+    }).fail(function(error) {
+        console.log(error);
+    });
+}
+Common.dispSharingMemberList = function(id, url, no) {
+    Common.getExtCellRoleList(url).done(function(data) {
+        var results = data.d.results;
+        results.sort(function (val1, val2) {
+            return (val1.uri < val2.uri ? 1 : -1);
+        });
+        sharingMemberRole[no] = {};
+        sharingMemberRole[no].url = url;
+        sharingMemberRole[no].roleList = [];
+        let extUrl = Common.changeLocalUnitToUnitUrl(url);
+        for (var i = 0; i < results.length; i++) {
+            var uri = results[i].uri;
+            var matchName = uri.match(/\(Name='(.+)',/);
+            var roleName = matchName[1];
+            var matchBox = uri.match(/_Box\.Name='(.+)'/);
+            var roleBox = "";
+            if (matchBox != null) {
+                roleBox = matchBox[1];
+            } else {
+                roleBox = null;
+            }
+            if (Common.getBoxName() == roleBox) {
+                sharingMemberRole[no].roleList.push(roleName);
+            }
+        }
+
+        if (addId != "") {
+            if (sharingMemberRole[no].roleList.length == 0) {
+                Common.getProfileName(extUrl, Common.prepareExtCellForApp, no);
+            }
+        } else {
+            if (sharingMemberRole[no].roleList.length > 0) {
+                Common.getProfileName(extUrl, Common.prepareExtCellForApp, no);
+            }
+        }
+    })
+}
+Common.displayReceivedSendSharingListPanel = function() {
+    if (Common.getTargetCellUrl() !== Common.getCellUrl()) {
+       // You can not sharing request on another's calendar
+       return;
+   }
+
+   Common.closeSlide();
+   Common.loadContent("./templates/_list_template.html").done(function(data) {
+       $('body > div.mySpinner').show();
+       var out_html = $($.parseHTML(data));
+       let id = PCalendar.createSubContent(out_html);
+       $(id + " main").empty();
+       $(id + " .header-title").attr("data-i18n", "Sharing.Received.label").localize();
+       $(id + " footer").hide();
+       $(id + " .header-btn-right").hide();
+       PCalendar.getReceivedMessageAPI().done(function(data) {
+           Common.dispReceivedSharingList(id + " main", data);
+       });
+   }).fail(function(error) {
+       console.log(error);
+   });
+}
+Common.dispReceivedSharingList = function(id, results) {
+    let eUl = $('<ul>', {
+        class: 'slide-list hover-action',
+        id: 'sendSharingCells'
+    });
+    $(id).append($(eUl)).localize();
+    let res = results.d.results;
+    res.sort(function(val1, val2) {
+        return (val1.Url < val2.Url ? 1 : -1);
+    })
+    sharingMemberRole = {};
+    reqReceivedUUID = {};
+    reqRequestAuthority = {};
+    for (var i in res) {
+        if (res[i].Status == "approved" || res[i].Status == "rejected" || !res[i].RequestObjects) {
+            continue;
+        }
+
+        reqReceivedUUID[i] = res[i].__id;
+        reqRequestAuthority[i] = res[i].RequestObjects[0].Name;
+        let extUrl = Common.changeLocalUnitToUnitUrl(res[i].From);
+
+        Common.getProfileName(extUrl, Common.prepareExtCellForApp, i);
+    }
+    $('body > div.mySpinner').hide();
+}
+Common.dispReceivedCellInfo = function(extUrl, uuid, eleId, reqAuth) {
+    Common.loadContent("./templates/_shared_template.html").done(function(data) {
+        var out_html = $($.parseHTML(data));
+        let id = PCalendar.createSubContent(out_html);
+        $(id + " .singleBtn").hide();
+        $(id + " .header-btn-right").hide();
+        $(id + " .sendShared").hide();
+        $(id + " #reqAuthority").text(getAppRoleAuthority(reqAuth))
+        $(id + " #approvalFooterButton").removeAttr("onclick").on("click", function() {
+            Common.approvalRel(extUrl, uuid, eleId, PCalendar.backSubContent);
+        });
+        $(id + " #refectionFooterButton").removeAttr("onclick").on("click", function() {
+            Common.rejectionRel(extUrl, uuid, eleId, PCalendar.backSubContent);
+        });
+        Common.getProfileName(extUrl, function(url, profObj) {
+            $(id + " .header-title").text(profObj.dispName);
+            $(id + " .user-cell-url").text(url);
+            $(id + " .user-description").text(profObj.description);
+            $(id + " .extcell-profile .user-icon").append('<img class="user-icon-large" src="' + profObj.dispImage + '" alt="user">');
+        });
+    }).fail(function(error) {
+        console.log(error);
+    });
+}
+
+/* sharing with */
+/*
+ * Display the followings:
+ * 1. List of sharing requesters to send
+ */
+Common.displaySendSharingListPanel = function() {
+   if (Common.getTargetCellUrl() !== Common.getCellUrl()) {
+       // You can not sharing request on another's calendar
+       return;
+   }
+
+   Common.closeSlide();
+   Common.loadContent("./templates/_list_template.html").done(function(data) {
+       $('body > div.mySpinner').show();
+       var out_html = $($.parseHTML(data));
+       let id = PCalendar.createSubContent(out_html);
+       $(id + " main").empty();
+       $(id + " .header-title").attr("data-i18n", "Sharing.Send.label").localize();
+       $(id + " footer").hide();
+       $(id + " .header-btn-right").hide();
+       Common.getExtCell().done(function(data) {
+           Common.dispSendSharingList(id + " main", data);
+       });
+   }).fail(function(error) {
+       console.log(error);
+   });
+}
+Common.dispSendSharingList = function(id, results) {
+    let eUl = $('<ul>', {
+        class: 'slide-list hover-action',
+        id: 'sendSharingCells'
+    });
+    $(id).append($(eUl)).localize();
+    let res = results.d.results;
+    res.sort(function(val1, val2) {
+        return (val1.Url < val2.Url ? 1 : -1);
+    })
+    sharingMemberRole = {};
+    reqReceivedUUID = {};
+    reqRequestAuthority = {};
+    for (var i = 0; i < res.length; i++) {
+        let extUrl = Common.changeLocalUnitToUnitUrl(res[i].Url);
+        Common.getProfileName(extUrl, Common.prepareExtCellForApp, i);
+    }
+    $('body > div.mySpinner').hide();
+}
+Common.dispSendCellInfo = function(extUrl) {
+    Common.loadContent("./templates/_shared_template.html").done(function(data) {
+        var out_html = $($.parseHTML(data));
+        let id = PCalendar.createSubContent(out_html);
+        $(id + " .doubleBtn").hide();
+        $(id + " .header-btn-right").hide();
+        $(id + " .dispShared").hide();
+        Common.getProfileName(extUrl, function(url, profObj) {
+            $(id + " .header-title").text(profObj.dispName);
+            $(id + " .user-cell-url").text(url);
+            $(id + " .user-description").text(profObj.description);
+            $(id + " .extcell-profile .user-icon").append('<img class="user-icon-large" src="' + profObj.dispImage + '" alt="user">');
+        });
+    }).fail(function(error) {
+        console.log(error);
+    });
+}
+Common.sendSharingRequest = function() {
+    Common.showConfirmDialog("msg.info.requestSent", function() {
+        $("#modal-common").modal('hide');
+        var reqRel = getAuthorityAppRole("viewer");
+        var extUrl = $(".user-cell-url").text();
+        var title = i18next.t("readRequestTitle");
+        var body = i18next.t("readRequestBody");
+        Common.sendMessageAPI(null, extUrl, "request", title, body, "role.add", reqRel, Common.getCellUrl()).done(function(data) {
+            PCalendar.backSubContent();
+        }).fail(function(data) {
+            Common.showWarningDialog("msg.error.failedRequestSent", function(){
+               $("#modal-common").modal('hide'); 
+            });
+        });
+    });
+}
+
+/* other cell */
+Common.getAllowedCellList = function(role) {
+    let extCellUrl = [
+        Common.getCellUrl(),
+        '__ctl/Role(Name=\'',
+        role,
+        '\',_Box\.Name=\'',
+        Common.getBoxName(),
+        '\')/$links/_ExtCell'
+    ].join("");
+
+    $.ajax({
+        type: "GET",
+        url: extCellUrl,
+        headers: {
+            'Authorization':'Bearer ' + Common.getToken(),
+            'Accept':'application/json'
+        }
+    }).done(function(data) {
+        Common.dispAllowedCellList(data);
+    });
+};
+Common.dispAllowedCellList = function(json) {
+    $("#allowedCellList").empty();
+    var results = json.d.results;
+    if (results.length > 0) {
+        results.sort(function(val1, val2) {
+          return (val1.uri < val2.uri ? 1 : -1);
+        })
+
+        for (var i in results) {
+            var uri = results[i].uri;
+            var matchUrl = uri.match(/\(\'(.+)\'\)/);
+            var extUrl = matchUrl[1];
+
+            Common.dispAllowedCellListAfter(extUrl, i);
+        }
+    }
+};
+Common.dispAllowedCellListAfter = function(extUrl, no) {
+    Common.getProfile(extUrl, function(profObj) {
+        Common.appendAllowedCellList(extUrl, profObj.dispName, no)
+    });
+};
+Common.appendAllowedCellList = function(extUrl, dispName, no) {
+    $("#allowedCellList")
+        .append('<tr id="deleteExtCellRel' + no + '"><td class="paddingTd">' + dispName + '</td><td><button onClick="Common.notAllowedCell(this)" data-ext-url="' + extUrl + '"data-i18n="btn.release">' + '</button></td></tr>')
+        .localize();
+};
+Common.notAllowedCell = function(aDom) {
+    let extUrl = $(aDom).data("extUrl");
+    Common.deleteExtCellLinkRelation(extUrl, getAppRole()).done(function() {
+        $(aDom).closest("tr").remove();
+    });
+};
+Common.getOtherAllowedCells = function() {
+    Common.getExtCell().done(function(json) {
+        $(".subMySpinner").show();
+        var objSel = document.getElementById("otherAllowedCells");
+        if (objSel.hasChildNodes()) {
+            while (objSel.childNodes.length > 0) {
+                objSel.removeChild(objSel.firstChild);
+            }
+        }
+/*
+        objSel = document.getElementById("requestCells");
+        if (objSel.hasChildNodes()) {
+            while (objSel.childNodes.length > 0) {
+                objSel.removeChild(objSel.firstChild);
+            }
+        }      
+*/
+        var results = json.d.results;
+        if (results.length > 0) {
+            results.sort(function(val1, val2) {
+                return (val1.Url < val2.Url ? 1 : -1);
+            })
+
+            for (var i in results) {
+                var url = Common.changeLocalUnitToUnitUrl(results[i].Url);
+                Common.dispOtherAllowedCells(url, i);
+            }
+        }
+        $(".subMySpinner").hide();
+    });
+};
+Common.dispOtherAllowedCells = function(extUrl, no) {
+    Common.getProfileName(extUrl, Common.prepareExtCellForApp, no);
+};
+/*
+ * Get Transcell Token of the external Cell and prepare its data.
+ * When done, execute callback (add external Cell to proper list).
+ */
+Common.prepareExtCellForApp = function(extUrl, profObj, no) {
+    $.when(Common.getTranscellToken(extUrl), Common.getAppAuthToken(extUrl))
+        .done(function(result1, result2) {
+            let tempTCAT = result1[0].access_token; // Transcell Access Token
+            let tempAAAT = result2[0].access_token; // App Authentication Access Token
+            Common.perpareExtCellInfo(extUrl, tempTCAT, tempAAAT, Common.appendExtCellToList, profObj, no);
+        })
+};
+/*
+ * Perform the followings for an external Cell:
+ * 1. Get access token for protected box(es) which is accessible by the App.
+ * 2. Get Box URL.
+ * 3. Execute callback (add external Cell to proper list).
+ */
+Common.perpareExtCellInfo = function(cellUrl, tcat, aaat, callback, profObj, no) {
+    Common.getProtectedBoxAccessToken4ExtCell(cellUrl, tcat, aaat).done(function(appCellToken) {
+        Common.getBoxUrlAPI(cellUrl, appCellToken.access_token)
+            .done(function(data, textStatus, request) {
+                let tempInfo = {
+                    data: data,
+                    request: request,
+                    targetCellUrl: cellUrl
+                };
+                let boxUrl = Common.getBoxUrlFromResponse(tempInfo);
+                console.log(boxUrl);
+
+                if ((typeof callback !== "undefined") && $.isFunction(callback)) {
+                    callback(boxUrl, tcat, cellUrl, profObj, no);
+                }
+            })
+            .fail(function(error) {
+                console.log(error.responseJSON.code);
+                console.log(error.responseJSON.message.value);
+            });
+    }).fail(function(error) {
+        console.log(error.responseJSON.code);
+        console.log(error.responseJSON.message.value);
+    });
+};
+/* 
+ * Check and append the external Cell to either fo the following lists.
+ * - List contains Cell which has read permission
+ * - List contains Cell which does not has read permission
+ */
+Common.appendExtCellToList = function(extBoxUrl, extTcat, extUrl, profObj, no) {
+    let onclick = "Common.execOtherApp('"+extUrl+"');";
+    let noId = no;
+    let appendId = "otherAllowedCells";
+    let notDispFlg = false;
+    if (Object.keys(sharingMemberRole).length > 0) {
+        noId = "Share" + no;
+        appendId = "sharing"+addId+"MemberCells";
+        onclick = "Common.displaySharingMemberInfoPanel('"+extUrl+"', '"+no+"', '#otherCell"+noId+"');";
+        profObj.description = i18next.t("Authority.label") + ":";
+        let roleList = sharingMemberRole[no].roleList;
+        profObj.description += getAppRoleAuthorityList(roleList);
+        if (!$("#otherCell" + noId).length) {    
+            let html = Common.createOtherCells(extUrl, profObj, noId, onclick);
+            $("#" + appendId).append(html);
+        }
+    } else {
+        Common.getAppDataAPI(extBoxUrl, extTcat)
+            .fail(function(data) {
+                // Insufficient access privileges
+                if (data.status === 403) {
+                    noId = "Share" + no;
+                    onclick = "Common.dispSendCellInfo('"+extUrl+"');";
+                    appendId = "sendSharingCells";
+                } else {
+                    notDispFlg = true;
+                }
+            }).always(function() {
+                // Current situation, there is nothing to display and make it empty
+                profObj.description = "";
+                if (!notDispFlg && !$("#otherCell" + noId).length) {
+                    if (Object.keys(reqReceivedUUID).length > 0) {
+                        noId = "Share" + no;
+                        appendId = "sendSharingCells";
+                        onclick = "Common.dispReceivedCellInfo('"+extUrl+"', '"+reqReceivedUUID[no]+"', 'otherCell"+noId+"', '"+reqRequestAuthority[no]+"');";
+                    }
+    
+                    let html = Common.createOtherCells(extUrl, profObj, noId, onclick);
+                    $("#" + appendId).append(html);
+                }
+            });
+    }
+};
+Common.createOtherCells = function(extUrl, profObj, no, onclick) {
+    let html = [
+        '<li id="otherCell' + no + '">',
+            '<a href="javascript:void(0)" onClick="'+onclick+'">',
+                '<div class="pn-list">',
+                    '<div class="pn-list-icon">',
+                        '<img src="'+profObj.dispImage+'">',
+                    '</div>',
+                    '<div class="account-info">',
+                        '<div class="user-name">'+profObj.dispName+'</div>',
+                        '<div>',
+                            '<span class="user-description">'+profObj.description+'</span>',
+                        '</div>',
+                    '</div>',
+                '</div>',
+            '</a>',
+        '</li>'
+    ].join("");
+    return html;
+};
+Common.displaySharingMemberInfoPanel = function(extUrl, no, editId) {
+    Common.loadContent("./templates/_list_template.html").done(function(data) {
+        $('body > div.mySpinner').show();
+        var out_html = $($.parseHTML(data));
+        let id = PCalendar.createSubContent(out_html);
+        $(id + " main").empty();
+        $(id + " .header-title").attr("data-i18n", "Authority.label").localize();
+        $(id + " footer").hide();
+        $(id + " .header-btn-right").hide();
+        Common.getRoleList().done(function(data) {
+            let eUl = $('<ul>', {
+                class: 'slide-list hover-action',
+                id: 'memberRoles'
+            });
+            $(id + " main").append($(eUl)).localize();
+            let res = data.d.results;
+            res.sort(function (val1, val2) {
+                return (val1["_Box.Name"] > val2["_Box.Name"] ? 1 : -1);
+            });
+            for (var i in res) {
+                let roleName = res[i].Name;
+                let dispRoleName = getAppRoleAuthority(roleName);
+                let boxName = res[i]["_Box.Name"];
+                if (Common.getBoxName() == boxName) {
+                    let markStyle = "";
+                    if ($.inArray(roleName, sharingMemberRole[no].roleList) >= 0) {
+                        markStyle = "check-mark-left";
+                    }
+                    let html = [
+                        '<li class="pn-check-list check-position-l '+markStyle+'" data-edit-id="'+editId+'" data-edit-no="'+no+'" data-role-name="'+roleName+'">',
+                            '<div class="pn-list pn-list-no-arrow">',
+                                '<div class="account-info">',
+                                    '<div class="user-name">',
+                                    '<img class="image-circle-small '+roleName+'-icon" style="margin-top:0px;" src="./img/role_default.png">',
+                                        '<span>' + dispRoleName + '</span>',
+                                    '</div>',
+                                    '<div></div>',
+                                '</div>',
+                            '</div>',
+                        '</li > '
+                    ].join("");
+                    $("#memberRoles").append(html);
+                }
+            }
+            Common.Add_Check_Mark();
+            $('body > div.mySpinner').hide();
+        })
+    }).fail(function(error) {
+        console.log(error);
+    });
+}
+/**
+   * Add_Check_Mark
+   * param:none
+   */
+Common.Add_Check_Mark = function() {
+    $('.pn-check-list').click(function (event) {
+        //CASE: check list
+        if ($(this).parents('#memberRoles').length != 0) {
+            // Disable click event
+            $(this).css("pointer-events", "none");
+            if ($(this).hasClass('check-mark-left')) {
+                Common.deleteExtCellLink($(this));
+            } else {
+                Common.addExtCellLink($(this));
+            }
+        }
+    });
+}
+Common.addExtCellLink = function (obj) {
+    let roleName = obj.data("role-name");
+    let boxName = Common.getBoxName();
+    let no = obj.data("edit-no");
+    let extCell = sharingMemberRole[no].url;
+    Common.restAddExtCellLinkRoleAPI(extCell, boxName, roleName).done(function (data) {
+        if (!$("#sharingMemberCells #otherCellShare" + no).length) {
+            $("#otherCellShare" + no).clone().appendTo('#sharingMemberCells');
+        }
+        let linksNo = $.inArray(roleName, sharingMemberRole[no].roleList);
+        if (linksNo < 0) {
+            sharingMemberRole[no].roleList.push(roleName);
+        }
+        obj.addClass('check-mark-left');
+        let auth = i18next.t("Authority.label") + ":";
+        let roleList = sharingMemberRole[no].roleList;
+        auth += getAppRoleAuthorityList(roleList);
+        let id = obj.data("edit-id");
+        $(id + " .user-description").text(auth);
+    }).fail(function (data) {
+        var res = JSON.parse(data.responseText);
+        alert("An error has occurred.\n" + res.message.value);
+    }).always(function () {
+        // Enable click event
+        obj.css("pointer-events", "auto");
+    });
+}
+Common.deleteExtCellLink = function (obj) {
+    let roleName = obj.data("role-name");
+    let boxName = Common.getBoxName();
+    let no = obj.data("edit-no");
+    let extCell = sharingMemberRole[no].url;
+    Common.restDeleteExtCellLinkRoleAPI(extCell, boxName, roleName).done(function (data) {
+        let linksNo = $.inArray(roleName, sharingMemberRole[no].roleList);
+        if (linksNo >= 0) {
+            sharingMemberRole[no].roleList.splice(linksNo, 1);
+        }
+        obj.removeClass('check-mark-left');
+        let auth = i18next.t("Authority.label") + ":";
+        let roleList = sharingMemberRole[no].roleList;
+        auth += getAppRoleAuthorityList(roleList);
+        let id = obj.data("edit-id");
+        $(id + " .user-description").text(auth);
+    }).fail(function (data) {
+        var res = JSON.parse(data.responseText);
+        alert("An error has occurred.\n" + res.message.value);
+    }).always(function () {
+        // Enable click event
+        obj.css("pointer-events", "auto");
+    });
+};
+Common.execOtherApp = function(extUrl) {
+    let childWindow = window.open('about:blank');
+    let url = location.href;
+    let urlMatch = url.match(/targetCell=(.+)$/);
+    if (urlMatch) {
+        let delStr = urlMatch[1];
+        url = url.replace(delStr, "");
+    } else {
+        url = url + "&targetCell=";
+    }
+    url = url + extUrl;
+
+    childWindow.location.href = url;
+    childWindow = null;
+}
+
+/* side menu */
+Common.approvalRel = function(extCell, uuid, msgId, callback) {
+    Common.showConfirmDialog("msg.info.requestApproval", function() {
+        Common.changeStatusMessageAPI(uuid, "approved").done(function() {
+            $("#" + msgId).remove();
+            var title = i18next.t("readResponseTitle");
+            var body = i18next.t("readResponseApprovedBody");
+            Common.sendMessageAPI(uuid, extCell, "message", title, body).done(function(data) {
+                $("#modal-common").modal('hide');
+                if ((typeof callback !== "undefined") && $.isFunction(callback)) {
+                    callback();
+                }
+            });
+        }).fail(function(data) {
+            Common.showWarningDialog("msg.error.failedChangeStatus", function(){
+                $("#modal-common").modal('hide'); 
+            });
+        });
+    });
+};
+Common.rejectionRel = function(extCell, uuid, msgId, callback) {
+    Common.showConfirmDialog("msg.info.requestRejection", function() {
+        Common.changeStatusMessageAPI(uuid, "rejected").done(function() {
+            $("#" + msgId).remove();
+            var title = i18next.t("readResponseTitle");
+            var body = i18next.t("readResponseDeclinedBody");
+            Common.sendMessageAPI(uuid, extCell, "message", title, body).done(function(data) {
+                $("#modal-common").modal('hide');
+                if ((typeof callback !== "undefined") && $.isFunction(callback)) {
+                    callback();
+                }
+            });
+        }).fail(function(data) {
+            Common.showWarningDialog("msg.error.failedChangeStatus", function(){
+                $("#modal-common").modal('hide'); 
+            });
+        });
+    });
+};
+
+/* util */
 Common.startAnimation = function() {
     Common.displayMessageByKey("glossary:msg.info.syncingData");
     $('#updateIcon').prop('disabled', true);
@@ -751,7 +1337,6 @@ Common.stopAnimation = function() {
     $('#updateIcon').prop('disabled', false);
     $('#updateIcon > i').removeClass("fa-spin");
 };
-
 /*
  * Based on the passed value, we generate an image using jdenticon and return it in base64 format.
  * This function can not be used unless you load jdenticon.
@@ -764,3 +1349,329 @@ Common.getJdenticon = function (value) {
     var icon_quality = 0.8;
     return canvas.toDataURL("image/jpeg", icon_quality);
 }
+Common.getProfileName = function(extUrl, callback, no) {
+    let number = no;
+    Common.getProfile(extUrl, function(profObj) {
+        console.log(profObj.dispName);
+        if ((typeof callback !== "undefined") && $.isFunction(callback)) {
+            callback(extUrl, profObj, number);
+        }
+    });
+};
+/**
+ * url : Get cellURL
+ * callback : After acquiring, function to operate
+ * paramObj : An argument object to be passed to callback
+ **/
+Common.getProfile = function(url, callback) {
+    let profObj = {
+        dispName: url,
+        description: "",
+        dispImage: Common.getJdenticon(url)
+    }
+    Common.getCell(url).done(function(cellObj) {
+        profObj.dispName = cellObj.cell.name;
+    }).fail(function(xmlObj) {
+        if (xmlObj.status == "200" || xmlObj.status == "412") {
+            profObj.dispName = Common.getCellNameFromUrl(url);
+        } else {
+            profObj.dispName = url;
+        }
+    }).always(function() {
+        Common.getProfileLocalesAPI(url).done(function(data) {
+            if (data.DisplayName) {
+                profObj.dispName = data.DisplayName;
+            }
+            if (data.Description) {
+                profObj.description = data.Description;
+            }
+            if (data.Image) {
+                profObj.dispImage = data.Image;
+            }
+    
+            if ((typeof callback !== "undefined") && $.isFunction(callback)) {
+                callback(profObj);
+            }
+        }).fail(function(error) {
+            Common.getProfileDefaultAPI(url).done(function(data) {
+                if (data.DisplayName) {
+                    profObj.dispName = data.DisplayName;
+                }
+                if (data.Description) {
+                    profObj.description = data.Description;
+                }
+                if (data.Image) {
+                    profObj.dispImage = data.Image;
+                }
+            }).always(function() {
+                if ((typeof callback !== "undefined") && $.isFunction(callback)) {
+                    callback(profObj);
+                }
+            })
+        });  
+    })
+};
+
+/* API */
+Common.getBoxUrlAPI = function(cellUrl, token) {
+    return $.ajax({
+        type: "GET",
+        url: cellUrl + "__box",
+        headers: {
+            'Authorization':'Bearer ' + token,
+            'Accept':'application/json'
+        }
+    });
+};
+// Get App Authentication Token
+Common.getAppAuthToken = function(cellUrl) {
+    let engineEndPoint = getEngineEndPoint();
+    return $.ajax({
+        type: "POST",
+        url: engineEndPoint,
+        data: {
+                p_target: cellUrl
+        },
+        headers: {'Accept':'application/json'}
+    });
+};
+/*
+ * Get access token for protected box(es) which is accessible by the App.
+ * client_id belongs to a App's cell URL
+ * Example: MyBoard is "https://demo.personium.io/app-myboard/"
+ *          Calorie Smile is "https://demo.personium.io/hn-app-genki/"
+ */
+Common.getProtectedBoxAccessToken = function(appToken, cellUrl) {
+  return $.ajax({
+                type: "POST",
+                url: cellUrl + '__token',
+                processData: true,
+                dataType: 'json',
+                data: {
+                    grant_type: "refresh_token",
+                    refresh_token: Common.accessData.refToken,
+                    client_id: Common.getAppCellUrl(),
+                    client_secret: appToken
+                },
+                headers: {
+                    'Accept':'application/json',
+                    'content-type': 'application/x-www-form-urlencoded'
+                }
+            });
+};
+Common.getProtectedBoxAccessToken4ExtCell = function(cellUrl, tcat, aaat) {
+    return $.ajax({
+        type: "POST",
+        url: cellUrl + '__token',
+        processData: true,
+        dataType: 'json',
+        data: {
+            grant_type: 'urn:ietf:params:oauth:grant-type:saml2-bearer',
+            assertion: tcat,
+            client_id: Common.getAppCellUrl(),
+            client_secret: aaat
+        },
+        headers: {
+            'Accept':'application/json',
+            'content-type': 'application/x-www-form-urlencoded'
+        }
+    });
+};
+Common.getCell = function (cellUrl) {
+    if (!cellUrl) cellUrl = "https";
+
+    return $.ajax({
+        type: "GET",
+        url: cellUrl,
+        headers: {
+            'Accept': 'application/json'
+        }
+    });
+};
+Common.getBox = function (boxUrl, token) {
+    return $.ajax({
+        type: "GET",
+        url: boxUrl,
+        headers: {
+            'Authorization':'Bearer ' + token,
+            'Accept': 'application/json'
+        }
+    });
+};
+Common.loadContent = function(contentUrl) {
+    return $.ajax({
+        url: contentUrl,
+        type: "GET",
+        dataType: "html"
+    });
+}
+Common.getProfileLocalesAPI = function(url) {
+    return $.ajax({
+        type: "GET",
+        url: url + '__/locales/' + i18next.language + '/profile.json',
+        dataType: 'json',
+        headers: {'Accept':'application/json'}
+    })
+}
+Common.getProfileDefaultAPI = function(url) {
+    return $.ajax({
+        type: "GET",
+        url: url + '__/profile.json',
+        dataType: 'json',
+        headers: {'Accept':'application/json'}
+    });
+}
+Common.getTranscellToken = function(extCellUrl) {
+    return $.ajax({
+        type: "POST",
+        url: Common.getCellUrl() + '__token',
+        processData: true,
+        dataType: 'json',
+        data: {
+            grant_type: "refresh_token",
+            refresh_token: Common.getRefressToken(),
+            p_target: extCellUrl
+        },
+        headers: {
+            'Accept':'application/json',
+            'content-type': 'application/x-www-form-urlencoded'
+        }
+    });
+};
+Common.getRoleList = function () {
+    return $.ajax({
+        type: "GET",
+        url: Common.getCellUrl() + '__ctl/Role',
+        headers: {
+            'Authorization': 'Bearer ' + Common.getToken(),
+            'Accept': 'application/json'
+        }
+    })
+}
+Common.getExtCell = function() {
+    return $.ajax({
+        type: "GET",
+        url: Common.getCellUrl() + '__ctl/ExtCell',
+        headers: {
+            'Authorization':'Bearer ' + Common.getToken(),
+            'Accept':'application/json'
+        }
+    });
+};
+Common.getExtCellRoleList = function (extUrl) {
+    var extCellUrl = encodeURIComponent(extUrl);
+    return $.ajax({
+        type: "GET",
+        url: Common.getCellUrl() + '__ctl/ExtCell(\'' + extCellUrl + '\')/$links/_Role',
+        headers: {
+            'Authorization': 'Bearer ' + Common.getToken()
+        }
+    })
+};
+Common.restAddExtCellLinkRoleAPI = function (extUrl, boxName, roleName) {
+    var extCellUrl = encodeURIComponent(extUrl);
+    var uri = Common.getCellUrl() + '__ctl/Role';
+    if (!boxName) {
+        uri += '(\'' + roleName + '\')';
+    } else {
+        uri += '(Name=\'' + roleName + '\',_Box\.Name=\'' + boxName + '\')';
+    }
+    var json = { "uri": uri };
+
+    return $.ajax({
+        type: "POST",
+        url: Common.getCellUrl() + '__ctl/ExtCell(\'' + extCellUrl + '\')/$links/_Role',
+        data: JSON.stringify(json),
+        headers: {
+            'Authorization': 'Bearer ' + Common.getToken(),
+            'Accept': 'application/json'
+        }
+    });
+};
+Common.restDeleteExtCellLinkRoleAPI = function (extUrl, boxName, roleName) {
+    var extCellUrl = encodeURIComponent(extUrl);
+    var api = '__ctl/ExtCell(\'' + extCellUrl + '\')/$links/_Role';
+    if (!boxName) {
+        api += '(\'' + roleName + '\')';
+    } else {
+        api += '(Name=\'' + roleName + '\',_Box.Name=\'' + boxName + '\')';
+    }
+
+    return $.ajax({
+        type: "DELETE",
+        url: Common.getCellUrl() + api,
+        headers: {
+            'Authorization': 'Bearer ' + Common.getToken()
+        }
+    });
+};
+Common.deleteExtCellLinkRelation = function(extCell, relName) {
+    var cellUrlCnv = encodeURIComponent(extCell);
+    return $.ajax({
+        type: "DELETE",
+        url: Common.getCellUrl() + '__ctl/ExtCell(\'' + cellUrlCnv + '\')/$links/_Role(Name=\'' + relName + '\',_Box.Name=\'' + Common.getBoxName() + '\')',
+        headers: {
+            'Authorization':'Bearer ' + Common.getToken()
+        }
+    });
+};
+Common.changeStatusMessageAPI = function(uuid, command) {
+    var data = {};
+    data.Command = command;
+    return $.ajax({
+        type: "POST",
+        url: Common.getCellUrl() + '__message/received/' + uuid,
+        data: JSON.stringify(data),
+        headers: {
+            'Authorization':'Bearer ' + Common.getToken()
+        }
+    })
+};
+Common.getAppDataAPI = function(targetBoxUrl, token) {
+    let requestInfo = $.extend(true,
+        {
+            type: 'GET',
+            url: targetBoxUrl + getAppDataPath(),
+            headers: {
+                    'Authorization':'Bearer ' + token,
+                    'Accept':'application/json'
+            }
+        },
+        getAppRequestInfo()
+    );
+
+    return $.ajax(requestInfo);
+};
+/*
+ * When the following conditions are satisfied, there is no need to include App URL when specifying the role/relation name.
+ * 1. BoxBound must set to true
+ * 2. Authorization token must be App authenticated token
+ */
+Common.sendMessageAPI = function(uuid, extCell, type, title, body, reqType, reqRel, reqRelTar) {
+    var data = {};
+    data.BoxBound = true;
+    data.InReplyTo = uuid;
+    data.To = extCell;
+    data.ToRelation = null
+    data.Type = type;
+    data.Title = title;
+    data.Body = body;
+    data.Priority = 3;
+    if (reqType) {
+        data.RequestObjects = [];
+        let objArray = {};
+        objArray.RequestType = reqType;
+        objArray.Name = reqRel;
+        objArray.TargetUrl = reqRelTar;
+        data.RequestObjects.push(objArray);
+    }
+
+    return $.ajax({
+        type: "POST",
+        url: Common.getCellUrl() + '__message/send',
+        data: JSON.stringify(data),
+        headers: {
+            'Authorization':'Bearer ' + Common.getToken()
+        }
+    })
+};

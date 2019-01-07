@@ -1,8 +1,8 @@
 {
     "title": "Personium Calendar",
+    "label": "Calendar",
     "dispTitle": "{{name}}'s Personium Calendar",
     "Calendars": {
-        "label": "Calendar",
         "VEvent": {
             "label": "Event",
             "summary": "Title",
@@ -39,8 +39,7 @@
             }
         },
         "NoSync": "Start without syncing",
-        "Sync": "Sync",
-        "Version": "Version 1.2.1"
+        "Sync": "Sync"
     },
     "Account": {
         "label": "Account",
@@ -68,24 +67,6 @@
             "title": "Delete Account",
             "label": "Delete",
             "btnOK": "OK"
-        }
-    },
-    "Sharing": {
-        "title": "Show different Calendar",
-        "Send": {
-            "label": "Send sharing request",
-            "description": "Send sharing request with the following authority.",
-            "btnFooter": "Send"
-        },
-        "Response": {
-            "label": "Received sharing request",
-            "description": "If you allow it, your calendar will be shared with the following authority.",
-            "rejectionBtn": "Discard",
-            "approvelBtn": "Permit"
-        },
-        "Authority": {
-            "label": "Authority:",
-            "CalendarViewer": "read"
         }
     },
     "sessionExpiredDialog": {

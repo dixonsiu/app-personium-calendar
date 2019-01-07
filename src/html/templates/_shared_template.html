@@ -48,32 +48,30 @@
             </div>
             <div class="authority-panel sendShared">
                 <hr style="border: 1px solid #ccc;margin:0;margin-bottom:20px;">
-                <div data-i18n="glossary:Sharing.Send.description" style="margin: 20px 0;"></div>
-                <span class="authority-label" data-i18n="glossary:Sharing.Authority.label" style="float:left;"></span>
-                <select id="sendAuthority" class="form-control" style="width:80%;">
-                    <option value="CalendarViewer" data-i18n="glossary:Sharing.Authority.CalendarViewer"></option>
-                </select>
+                <div data-i18n="Sharing.Send.description" style="margin: 20px 0;"></div>
+                <span class="authority-label" data-i18n="Authority.label" style="float:left;"></span>:
+                <span class="authority-label" data-i18n="Authority.viewer"></span>
             </div>
             <div class="authority-panel dispShared">
                 <hr style="border: 1px solid #ccc;margin:0;margin-bottom:20px;">
-                <div data-i18n="glossary:Sharing.Received.description" style="margin: 20px 0;"></div>
-                <span class="authority-label" data-i18n="glossary:Sharing.Authority.label" style="float:left;"></span>
+                <div data-i18n="Sharing.Received.description" style="margin: 20px 0;"></div>
+                <span class="authority-label" data-i18n="Authority.label" style="float:left;"></span>:
                 <span class="authority-label" id="reqAuthority"></span>
             </div>
         </div>
     </main>
     <footer class="shared-footer">
         <div class="singleBtn">
-            <button id="sendSharedFooterButton" class="width-full-btn" onclick="sendSharingRequest();">
-                <div data-i18n="glossary:Sharing.Send.btnFooter"></div>
+            <button id="sendSharedFooterButton" class="width-full-btn" onclick="Common.sendSharingRequest();">
+                <div data-i18n="Sharing.Send.btnFooter"></div>
             </button>
         </div>
         <div class="doubleBtn">
             <button id="refectionFooterButton" class="width-full-btn colorGray" onclick="PCalendar.backSubContent();">
-                <div data-i18n="glossary:Sharing.Received.rejectionBtn"></div>
+                <div data-i18n="Sharing.Received.rejectionBtn"></div>
             </button>
             <button id="approvalFooterButton" class="width-full-btn" onclick="PCalendar.backSubContent();">
-                <div data-i18n="glossary:Sharing.Received.approvelBtn"></div>
+                <div data-i18n="Sharing.Received.approvelBtn"></div>
             </button>
         </div>
     </footer>
