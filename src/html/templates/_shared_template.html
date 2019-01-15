@@ -33,7 +33,7 @@
 
 <body>
     <header>
-        <button class="header-btn pn-back-btn pn-btn" onclick="PCalendar.backSubContent();">
+        <button class="header-btn pn-back-btn pn-btn" onclick="Common.backSubContent();">
             <i id="back_btn" class="fas fa-angle-left fa-2x header-ic-01"></i>
         </button>
         <div class="header-title"></div>
@@ -50,7 +50,7 @@
                 <hr style="border: 1px solid #ccc;margin:0;margin-bottom:20px;">
                 <div data-i18n="Sharing.Send.description" style="margin: 20px 0;"></div>
                 <span class="authority-label" data-i18n="Authority.label" style="float:left;"></span>:
-                <span class="authority-label" data-i18n="Authority.viewer"></span>
+                <span id="selectAuth" class="authority-label" data-select-auth="viewer" data-i18n="Authority.viewer"></span>
             </div>
             <div class="authority-panel dispShared">
                 <hr style="border: 1px solid #ccc;margin:0;margin-bottom:20px;">
@@ -67,10 +67,10 @@
             </button>
         </div>
         <div class="doubleBtn">
-            <button id="refectionFooterButton" class="width-full-btn colorGray" onclick="PCalendar.backSubContent();">
+            <button id="refectionFooterButton" class="width-full-btn colorGray" onclick="Common.backSubContent();">
                 <div data-i18n="Sharing.Received.rejectionBtn"></div>
             </button>
-            <button id="approvalFooterButton" class="width-full-btn" onclick="PCalendar.backSubContent();">
+            <button id="approvalFooterButton" class="width-full-btn" onclick="Common.backSubContent();">
                 <div data-i18n="Sharing.Received.approvelBtn"></div>
             </button>
         </div>

@@ -99,12 +99,6 @@
             "description": "If you allow it, your $t(glossary:label) will be shared with the following authority.",
             "rejectionBtn": "Discard",
             "approvelBtn": "Permit"
-        },
-        "Authority": {
-            "label": "Authority",
-            "CalendarOwner": "owner",
-            "CalendarEditor": "write",
-            "CalendarViewer": "read"
         }
     }
 }

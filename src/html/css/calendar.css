@@ -9,9 +9,7 @@ header {
 }
 
 main {
-    height: 100%;
     padding-bottom: 5.0rem;
-    background-color: #F7F7F7;
 }
 
 /* form */
@@ -51,24 +49,6 @@ main {
 .account-type {
     text-align: right;
     font-size: 15px;
-}
-
-/* load Content */
-.loadHiddenDiv {
-    height:100%;
-    width:100%;
-    display:none;
-    z-index:10;
-    position:absolute;
-    overflow: hidden;
-}
-
-.subContent {
-    position: absolute;
-    display: none;
-    left: 100%;
-    height: 100%;
-    width: 100%;
 }
 
 .calendar-arrow-btn {
@@ -303,47 +283,12 @@ a.fc-more {
     width: 7px;
 }
 
-footer {
-    height: 5.0rem;
-    flex: 0 0 auto;
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    padding: 10px;
-    background-color: #fafafa;
-    z-index: 2;
-    box-shadow: 0px -3px 4px rgba(0, 0, 0, 0.2);
-}
-
-footer button {
-    min-width: 75px;
-    background: none;
-    border: none;
-    color: #9c9c9c;
-
-}
-
-footer button.current {
-    color: #e56700;
-}
-
-footer button svg{
-    margin: auto;
-    display: block!important;
-}
-
 .switching-menu {
     display: flex;
 }
 
 #add {
     width: 100px;
-}
-
-.width-full-btn {
-    width: 100%;
-    color: #2979FF;
-    font-size: 1.5rem;
 }
 
 .calendar-list {
@@ -356,14 +301,6 @@ footer button svg{
 
 .fc-list-item-time {
     width: 45px;
-}
-
-.app-version {
-    background-color: #F7F7F7;
-}
-
-#drawer_menu>ul>li.app-version>a {
-    color: #BBBBBB;
 }
 
 .fc-list-item {
@@ -532,43 +469,4 @@ input:checked+label::after {
 
 .disable{
     pointer-events: none;
-}
-
-/* shared screen */
-.extcell-profile {
-    text-align: center;
-    padding: 20px;
-}
-
-.authority-panel {
-    padding: 20px;
-}
-
-.authority-label {
-    font-size: 1.5em;
-    font-weight: bold;
-}
-
-.user-icon {
-    background-size: cover;
-    position: relative;
-    display: inline-block;
-    border-radius: 50%;
-    overflow: hidden;
-}
-.user-icon-large {
-    width: 120px;
-    height: 120px;
-}
-.extcell-profile>.user-description, .extcell-profile>.user-cell-url {
-    text-align: left;
-    margin-top: 10px;
-}
-
-.shared-footer>div {
-    display: flex;
-    width: 100%;
-    position: relative;
-    height: 3.0rem;
-    height: 100%;
 }

@@ -78,7 +78,25 @@ header {
 main {
     overflow: hidden;
     -webkit-overflow-scrolling: touch;
+    height: 100%;
     padding-top: 4.0rem;
+    background-color: #F7F7F7;
+}
+
+.subContent > main {
+    overflow: auto;
+}
+
+.subContent > footer {
+    height: 5.0rem;
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 10px;
+    background-color: #fafafa;
+    z-index: 2;
+    box-shadow: 0px -3px 4px rgba(0, 0, 0, 0.2);
 }
 
 .ellipsisText {
@@ -107,6 +125,31 @@ main {
 }
 
 /* app common */
+footer button {
+    min-width: 75px;
+    background: none;
+    border: none;
+    color: #9c9c9c;
+
+}
+
+footer button.current {
+    color: #e56700;
+}
+
+footer button svg{
+    margin: auto;
+    display: block!important;
+}
+
+.app-version {
+    background-color: #F7F7F7;
+}
+
+#drawer_menu>ul>li.app-version>a {
+    color: #BBBBBB;
+}
+
 .app-displayname{
     text-align: center;
     padding-left: 5rem;
@@ -123,6 +166,12 @@ main {
 .header-btn-right {
     right: 20px;
     font-size: 1.2rem;
+}
+
+.width-full-btn {
+    width: 100%;
+    color: #2979FF;
+    font-size: 1.5rem;
 }
 
 /*personium common button*/
@@ -160,8 +209,24 @@ div.mySpinner > i,
     left: 8em;
 }
 
-/*drawer menu*/
+/* load Content */
+.loadHiddenDiv {
+    height:100%;
+    width:100%;
+    display:none;
+    z-index:10;
+    position:absolute;
+    overflow: hidden;
+}
+.subContent {
+    position: absolute;
+    display: none;
+    left: 100%;
+    height: 100%;
+    width: 100%;
+}
 
+/*drawer menu*/
 #drawer {
     z-index: 4;
 }
@@ -838,4 +903,43 @@ footer {
 
 .sharing-icon {
     font-size: 1.5em !important;
+}
+
+/* shared screen */
+.extcell-profile {
+    text-align: center;
+    padding: 20px;
+}
+
+.authority-panel {
+    padding: 20px;
+}
+
+.authority-label {
+    font-size: 1.5em;
+    font-weight: bold;
+}
+
+.user-icon {
+    background-size: cover;
+    position: relative;
+    display: inline-block;
+    border-radius: 50%;
+    overflow: hidden;
+}
+.user-icon-large {
+    width: 120px;
+    height: 120px;
+}
+.extcell-profile>.user-description, .extcell-profile>.user-cell-url {
+    text-align: left;
+    margin-top: 10px;
+}
+
+.shared-footer>div {
+    display: flex;
+    width: 100%;
+    position: relative;
+    height: 3.0rem;
+    height: 100%;
 }

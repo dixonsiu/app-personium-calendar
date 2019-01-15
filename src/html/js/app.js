@@ -8,9 +8,6 @@ dispListName = "";
 scheduleDispNum = 10;
 scheduleSkipPrev = 0;
 scheduleSkipNext = 0;
-sharingMemberRole = {};
-reqReceivedUUID = {};
-reqRequestAuthority = {};
 
 /* new */
 getEngineEndPoint = function() {
@@ -166,7 +163,7 @@ displaySyncListPanel = function() {
     Common.loadContent("./templates/_list_template.html").done(function(data) {
         var out_html = $($.parseHTML(data));
         $("#loadContent").empty();
-        let id = PCalendar.createSubContent(out_html);
+        let id = Common.createSubContent(out_html);
         $(id + " .header-title").attr("data-i18n", "glossary:Account.label").localize();
         $(id + " .pn-back-btn").hide();
         $(id + " .header-btn-right").hide();
@@ -190,7 +187,7 @@ displayAccountPanel = function() {
     Common.loadContent("./templates/_list_template.html").done(function(data) {
         var out_html = $($.parseHTML(data));
         $("#loadContent").empty();
-        let id = PCalendar.createSubContent(out_html);
+        let id = Common.createSubContent(out_html);
         $(id + " main").empty();
         $(id + " .header-title").attr("data-i18n", "glossary:Account.label").localize();
         $("#addAccountFooterButton").removeAttr("onclick").on('click', displayAccountRegistrationDialog);
@@ -213,7 +210,7 @@ displayAccountPanel = function() {
 selectAccountPanel = function() {
     Common.loadContent("./templates/_list_template.html").done(function(data) {
         var out_html = $($.parseHTML(data));
-        let id = PCalendar.createSubContent(out_html);
+        let id = Common.createSubContent(out_html);
         $(id + " main").empty();
         $("#addAccountFooterButton").removeAttr("onclick").on('click', displayAccountRegistrationDialog);
         getAccountList().done(function(data) {
@@ -230,7 +227,7 @@ selectAccountPanel = function() {
                 $("#srcAccountName").text($(this).find("a").text());
                 $('#srcAccountName').data("account", $(this).find("a").text());
                 $('#srcAccountName').data("type", $(this).find("div").text());
-                PCalendar.backSubContent();
+                Common.backSubContent();
             })
         });
         $(id + " .header-btn-right").hide();
@@ -495,7 +492,7 @@ displayAddEventDialog = function(date) {
     Common.loadContent("./templates/_vevent_template.html").done(function(data) {
         var out_html = $($.parseHTML(data));
         $("#loadContent").empty();
-        let id = PCalendar.createSubContent(out_html);
+        let id = Common.createSubContent(out_html);
         $(id + " footer").hide();
         $("#edit-btn").on("click", PCalendar.addEvent);
         if (dispListName == "agendaDay") {
@@ -561,7 +558,7 @@ getListOfVEvents = function() {
             });
         })
         .always(function(){
-            hideSpinner('body');
+            Common.hideSpinner('body');
             $('#calendar').fullCalendar('renderEvents', listOfEvents, true);
             $('#calendar').fullCalendar('refetchEvents');
         });
@@ -634,7 +631,7 @@ getListOfVEventsSchedule = function(startObj, endObj, delPosition) {
             }
         })
         .always(function(){
-            hideSpinner('body');
+            Common.hideSpinner('body');
             if (delPosition == undefined) {
                 $('[data-id="'+moment().format("YYYY-MM-DD")+'"]')[0].scrollIntoView(true);
             } else if (delPosition) {
@@ -927,7 +924,7 @@ sync = function() {
 displayAccountRegistrationDialog = function() {
     Common.loadContent("./templates/_list_template.html").done(function(data) {
         var out_html = $($.parseHTML(data));
-        let id = PCalendar.createSubContent(out_html);
+        let id = Common.createSubContent(out_html);
         $(id + " .header-title").attr("data-i18n", "glossary:Account.label").localize();
         $(id + " .header-btn-right").hide();
         $(id + " footer").hide();
@@ -965,47 +962,10 @@ registerAccount = function() {
     return false;
 };
 
-PCalendar.createSubContent = function(html) {
-    let no = $(".subContent").length;
-    if (no == 0) {
-        $("#loadContent").show();
-    }
-
-    let aDiv = $("<div>", {
-        id: "subContent" + no,
-        class: "subContent subContent" + no,
-        style: "z-index: " + (10 + no)
-    }).append(html);
-    
-    $("#loadContent").append($(aDiv)).localize();
-    Common.slideShow('.subContent' + no);
-    return '.subContent' + no;
-};
-PCalendar.backSubContent = function(allFlag) {
-    let result = "";
-    if (allFlag) {
-        Common.slideHide(".subContent", "right", function() {
-            $(".subContent").remove();
-            $("#loadContent").hide();
-        })
-    } else {
-        let no = $(".subContent").length - 1;
-        Common.slideHide(".subContent" + no, "right", function() {
-            $(".subContent" + no).remove();
-            if (no <= 0) {
-                $("#loadContent").hide();
-            }
-        });
-        result = ".subContent" + (no - 1);
-    }
-
-    return result;
-}
-
 PCalendar.dispPasswordScreen = function() {
     Common.loadContent("./templates/_change_password_template.html").done(function(data) {
         let out_html = $($.parseHTML(data));
-        PCalendar.createSubContent(out_html);
+        Common.createSubContent(out_html);
     }).fail(function(error) {
         console.log(error);
     });
@@ -1079,7 +1039,7 @@ syncFullData = function() {
         .done(function(data, status, response){
             if (data.syncCompleted) {
                 $('#dialogOverlay').hide();
-                PCalendar.backSubContent(true);
+                Common.backSubContent(true);
                 reRenderCalendar();
             } else {
                 syncFullData();
@@ -1100,7 +1060,7 @@ displayAccountModificationDialog = function(aDom, accountInfo) {
     console.log(accountInfo.srcAccountName);
     Common.loadContent("./templates/_change_password_template.html").done(function(data) {
         let out_html = $($.parseHTML(data));
-        let id = PCalendar.createSubContent(out_html);
+        let id = Common.createSubContent(out_html);
         $('#idCalendarAccount')
         .val(accountInfo.srcAccountName)
         .prop("readonly", true);
@@ -1122,7 +1082,7 @@ modifyAccount = function(srcType) {
     setAccessInfoAPI('PUT', srcType)
         .done(function(data, status, response){
             $('#dialogOverlay').hide();
-            let id = PCalendar.backSubContent();
+            let id = Common.backSubContent();
             // Rerender the account list
             getAccountList().done(function(data) {
                 dispAccountList(id + " main", data);
@@ -1202,11 +1162,11 @@ PCalendar.addEvent = function() {
                 scheduleRenderEvent(data);
             }
             
-            PCalendar.backSubContent();
+            Common.backSubContent();
         })
         .fail(function(error){
             console.log(error.responseJSON);
-            PCalendar.backSubContent();
+            Common.backSubContent();
             Common.openWarningDialog(
                 'warningDialog.title',
                 error.responseJSON.error || error.responseJSON.message.value,
@@ -1228,11 +1188,11 @@ PCalendar.editEvent = function(event) {
                 scheduleRenderEvent(data);
             }
             
-            PCalendar.backSubContent();
+            Common.backSubContent();
         })
         .fail(function(error){
             console.log(error.responseJSON);
-            PCalendar.backSubContent();
+            Common.backSubContent();
             Common.openWarningDialog(
                 'warningDialog.title',
                 error.responseJSON.error || error.responseJSON.message.value,
@@ -1253,7 +1213,7 @@ PCalendar.displayEditVEvent = function(calEvent) {
     Common.loadContent("./templates/_vevent_template.html").done(function(data) {
         var out_html = $($.parseHTML(data));
         $("#loadContent").empty();
-        let id = PCalendar.createSubContent(out_html);
+        let id = Common.createSubContent(out_html);
         $("#b-delete-vevent-ok").on("click", function() {
             PCalendar.displayVEventDialog(calEvent);
         });
@@ -1348,7 +1308,7 @@ PCalendar.setEditVEventDisabled = function(disabled) {
 PCalendar.displayVEventDialog = function(calEvent) {
     let eventId = calEvent.id;
     if (window.confirm('Remove Event: ' + PCalendar.displayCalendarTitle(calEvent.title))) {
-        PCalendar.backSubContent();
+        Common.backSubContent();
         $('#dialogOverlay').show();
         PCalendar.deleteVEventAPI({__id: eventId})
             .done(function(){
@@ -1456,29 +1416,8 @@ PCalendar.deleteVEventAPI = function(tempVEvent) {
     });
 };
 
-PCalendar.getReceivedMessageAPI = function() {
-    return $.ajax({
-        type: "GET",
-        url: Common.getCellUrl() + '__ctl/ReceivedMessage?$filter=startswith%28Title,%27Personium%20Calendar%27%29&$orderby=__published%20desc',
-        headers: {
-            'Authorization':'Bearer ' + Common.getToken(),
-            'Accept':'application/json'
-        }
-    });
-};
-
-showSpinner = function(cssSelector) {
-    $(cssSelector + ' > div.mySpinner').show();
-    $(cssSelector + ' > div.myHiddenDiv').hide();
-};
-
-hideSpinner = function(cssSelector) {
-    $(cssSelector + ' > div.mySpinner').hide();
-    $(cssSelector + ' > div.myHiddenDiv').show();
-};
-
 reRenderCalendar = function() {
-    showSpinner('body');
+    Common.showSpinner('body');
     if (dispListName != "schedule") {
         getListOfVEvents();
     } else {
