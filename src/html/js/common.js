@@ -862,7 +862,7 @@ Common.dispReceivedCellInfo = function(extUrl, uuid, eleId, reqAuth) {
         $(id + " .singleBtn").hide();
         $(id + " .header-btn-right").hide();
         $(id + " .sendShared").hide();
-        $(id + " #reqAuthority").text(getAppRoleAuthority(reqAuth))
+        $(id + " #reqAuthority").text(getAppRoleAuthorityName(reqAuth))
         $(id + " #approvalFooterButton").removeAttr("onclick").on("click", function() {
             Common.approvalRel(extUrl, uuid, eleId, Common.backSubContent);
         });
@@ -946,7 +946,8 @@ Common.dispSendCellInfo = function(extUrl) {
 Common.sendSharingRequest = function() {
     Common.showConfirmDialog("msg.info.requestSent", function() {
         $("#modal-common").modal('hide');
-        var reqRel = getAuthorityAppRole("viewer");
+        var selAuth = $("#selectAuth").data("select-auth");
+        var reqRel = getAuthorityAppRole(selAuth);
         var extUrl = $(".user-cell-url").text();
         var title = i18next.t("readRequestTitle");
         var body = i18next.t("readRequestBody");
@@ -961,60 +962,6 @@ Common.sendSharingRequest = function() {
 }
 
 /* other cell */
-Common.getAllowedCellList = function(role) {
-    let extCellUrl = [
-        Common.getCellUrl(),
-        '__ctl/Role(Name=\'',
-        role,
-        '\',_Box\.Name=\'',
-        Common.getBoxName(),
-        '\')/$links/_ExtCell'
-    ].join("");
-
-    $.ajax({
-        type: "GET",
-        url: extCellUrl,
-        headers: {
-            'Authorization':'Bearer ' + Common.getToken(),
-            'Accept':'application/json'
-        }
-    }).done(function(data) {
-        Common.dispAllowedCellList(data);
-    });
-};
-Common.dispAllowedCellList = function(json) {
-    $("#allowedCellList").empty();
-    var results = json.d.results;
-    if (results.length > 0) {
-        results.sort(function(val1, val2) {
-          return (val1.uri < val2.uri ? 1 : -1);
-        })
-
-        for (var i in results) {
-            var uri = results[i].uri;
-            var matchUrl = uri.match(/\(\'(.+)\'\)/);
-            var extUrl = matchUrl[1];
-
-            Common.dispAllowedCellListAfter(extUrl, i);
-        }
-    }
-};
-Common.dispAllowedCellListAfter = function(extUrl, no) {
-    Common.getProfile(extUrl, function(profObj) {
-        Common.appendAllowedCellList(extUrl, profObj.dispName, no)
-    });
-};
-Common.appendAllowedCellList = function(extUrl, dispName, no) {
-    $("#allowedCellList")
-        .append('<tr id="deleteExtCellRel' + no + '"><td class="paddingTd">' + dispName + '</td><td><button onClick="Common.notAllowedCell(this)" data-ext-url="' + extUrl + '"data-i18n="btn.release">' + '</button></td></tr>')
-        .localize();
-};
-Common.notAllowedCell = function(aDom) {
-    let extUrl = $(aDom).data("extUrl");
-    Common.deleteExtCellLinkRelation(extUrl, getAppRole()).done(function() {
-        $(aDom).closest("tr").remove();
-    });
-};
 Common.getOtherAllowedCells = function() {
     Common.getExtCell().done(function(json) {
         $(".subMySpinner").show();
@@ -1024,14 +971,10 @@ Common.getOtherAllowedCells = function() {
                 objSel.removeChild(objSel.firstChild);
             }
         }
-/*
-        objSel = document.getElementById("requestCells");
-        if (objSel.hasChildNodes()) {
-            while (objSel.childNodes.length > 0) {
-                objSel.removeChild(objSel.firstChild);
-            }
-        }      
-*/
+
+        Common.sharingMemberRole = {};
+        Common.reqReceivedUUID = {};
+        Common.reqRequestAuthority = {};
         var results = json.d.results;
         if (results.length > 0) {
             results.sort(function(val1, val2) {
@@ -1181,7 +1124,7 @@ Common.displaySharingMemberInfoPanel = function(extUrl, no, editId) {
             });
             for (var i in res) {
                 let roleName = res[i].Name;
-                let dispRoleName = getAppRoleAuthority(roleName);
+                let dispRoleName = getAppRoleAuthorityName(roleName);
                 let boxName = res[i]["_Box.Name"];
                 if (Common.getBoxName() == boxName) {
                     let markStyle = "";
@@ -1294,6 +1237,67 @@ Common.execOtherApp = function(extUrl) {
 
     childWindow.location.href = url;
     childWindow = null;
+}
+Common.selectSharingRequestRole = function() {
+    let selRoleName = getAuthorityAppRole($("#selectAuth").data("select-auth"));
+    Common.loadContent("./templates/_list_template.html").done(function(data) {
+        $('body > div.mySpinner').show();
+        var out_html = $($.parseHTML(data));
+        let id = Common.createSubContent(out_html);
+        $(id + " main").empty();
+        $(id + " .header-title").attr("data-i18n", "Authority.label").localize();
+        $(id + " footer").hide();
+        $(id + " .header-btn-right").hide();
+        Common.getRoleList().done(function(data) {
+            let eUl = $('<ul>', {
+                class: 'slide-list hover-action',
+                id: 'memberRoles'
+            });
+            $(id + " main").append($(eUl)).localize();
+            let res = data.d.results;
+            res.sort(function (val1, val2) {
+                return (val1["_Box.Name"] > val2["_Box.Name"] ? 1 : -1);
+            });
+            for (var i in res) {
+                let roleName = res[i].Name;
+                let dispRoleName = getAppRoleAuthorityName(roleName);
+                let boxName = res[i]["_Box.Name"];
+                if (Common.getBoxName() == boxName) {
+                    let markStyle = "";
+                    if (roleName == selRoleName) {
+                        markStyle = "check-mark-left";
+                    }
+                    let html = [
+                        '<li class="pn-check-list check-position-l '+markStyle+'" data-role-name="'+roleName+'">',
+                            '<div class="pn-list pn-list-no-arrow">',
+                                '<div class="account-info">',
+                                    '<div class="user-name">',
+                                    '<img class="image-circle-small '+roleName+'-icon" style="margin-top:0px;" src="./img/role_default.png">',
+                                        '<span>' + dispRoleName + '</span>',
+                                    '</div>',
+                                    '<div></div>',
+                                '</div>',
+                            '</div>',
+                        '</li > '
+                    ].join("");
+                    $("#memberRoles").append(html);
+                }
+            }
+            
+            $('.pn-check-list').click(function (event) {
+                //CASE: check list
+                if ($(this).parents('#memberRoles').length != 0) {
+                    let selAuth = getAppRoleAuthority($(this).data("role-name"));
+                    $("#selectAuth").attr("data-i18n", "Authority." + selAuth).localize();
+                    $("#selectAuth").data("select-auth", selAuth);
+                    Common.backSubContent();
+                }
+            });
+            $('body > div.mySpinner').hide();
+        })
+    }).fail(function(error) {
+        console.log(error);
+    });
 }
 
 /* side menu */
