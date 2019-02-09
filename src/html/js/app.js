@@ -72,11 +72,27 @@ getAppRoleAuthority = function(roleName) {
 
     return result;
 }
+getAppRoleAuthorityName = function(roleName) {
+    let result = roleName;
+    switch (roleName) {
+        case "CalendarOwner":
+            result = i18next.t("Authority.owner");
+            break;
+        case "CalendarEditor":
+            result = i18next.t("Authority.editor");
+            break;
+        case "CalendarViewer":
+            result = i18next.t("Authority.viewer");
+            break;
+    }
+
+    return result;
+}
 
 getAppRoleAuthorityList = function(roleList) {
     let result = "";
     for (var i = 0; i < roleList.length; i++) {
-        result += getAppRoleAuthority(roleList[i]) + ", ";
+        result += getAppRoleAuthorityName(roleList[i]) + ", ";
     }
     result = result.slice(0,-2);
     return result;
