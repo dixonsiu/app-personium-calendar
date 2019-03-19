@@ -1010,7 +1010,7 @@ PCalendar.prepareOAuth2Account = function(srcType) {
         state: 'hoge',
         userCellUrl: Common.getTargetCellUrl()
     });
-    window.location.href = 'https://demo.personium.io/app-personium-calendar/__/Engine/reqOAuthToken?' + paramStr;
+    window.location.href = Common.getAppCellUrl() + '__/Engine/reqOAuthToken?' + paramStr;
 };
 
 setAccountData = function(srcType) {
