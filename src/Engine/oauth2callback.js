@@ -170,7 +170,7 @@ function getSrcAccountName(oAuthInfo, srcAccInfo) {
     if (srcType === "Office365") {
         email = data.EmailAddress;
     } else {
-        email = data.data.email;
+        email = data.email;
     }
     return email;
 }

@@ -17,8 +17,8 @@ exports.oauth2Info = (function() {
             "authorizationEp": "https://accounts.google.com/o/oauth2/v2/auth",
             "tokenEp": "https://www.googleapis.com/oauth2/v4/token",
             "resouceEp": "https://www.googleapis.com/calendar/v3/calendars",
-            "userinfoEmailEp": "https://www.googleapis.com/userinfo/email?alt=json",
-            "scope": "https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/userinfo.email"
+            "userinfoEmailEp": "https://openidconnect.googleapis.com/v1/userinfo",
+            "scope": "https://www.googleapis.com/auth/calendar openid email profile"
         }
     ];
     
