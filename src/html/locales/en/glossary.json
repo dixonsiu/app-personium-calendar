@@ -39,7 +39,8 @@
             }
         },
         "NoSync": "Start without syncing",
-        "Sync": "Sync"
+        "Sync": "Sync",
+        "pastSchedule": "Display more past schedules"
     },
     "Account": {
         "label": "Account",

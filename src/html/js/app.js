@@ -414,7 +414,7 @@ renderFullCalendar = function() {
                         $("#prev").show();
                         $("#next").show();
                         $("#container").show();
-                        $("#schedule").hide();
+                        $("#schedule-scroller").hide();
                         sDateObj = moment(currentView.start.valueOf());
                         eDateObj = moment(currentView.end.valueOf());
                         getListOfVEvents();
@@ -425,17 +425,18 @@ renderFullCalendar = function() {
                         $("#prev").hide();
                         $("#next").hide();
                         $("#schedule").empty();
-                        $("#schedule").show();
+                        $("#schedule-scroller").show();
 
                         initSchedule();
-
                         $("#schedule-scroller").on("scroll", function() {
                             if (dispListName == "schedule") {
                                 let now = $("#schedule-scroller").scrollTop();
     
+                                // Display the year and month of scroll position in the title
                                 let dispDate = "";
                                 $("#schedule").children().each(function(index, ele) {
-                                    if (index == 0 || now > ele.offsetTop) {
+                                    // Calculation taking into account the height of the month title
+                                    if (index == 0 || (now+100) > ele.offsetTop) {
                                         dispTitlePos = ele.offsetTop;
                                         dispDate = $(ele).data("date");
                                     } else {
@@ -455,16 +456,8 @@ renderFullCalendar = function() {
                                     let startObj = moment(lastMonth).add(1, "month").startOf("month");
                                     let endObj = moment(lastMonth).add(1, "month").endOf("month");
     
-                                    dispScheduleHeaders(moment(startObj), moment(endObj), false);
-                                    getListOfVEventsSchedule(moment(startObj), moment(endObj), ":first");
-                                } else if (now < pageTop) {
-                                    // Acquire past data
-                                    let firstMonth = $("#schedule").children(":first").data("date");
-                                    let startObj = moment(firstMonth).add(-1, "month").startOf("month");
-                                    let endObj = moment(firstMonth).add(-1, "month").endOf("month");
-    
-                                    dispScheduleHeaders(moment(startObj), moment(endObj), true);
-                                    getListOfVEventsSchedule(moment(startObj), moment(endObj), ":last");
+                                    dispScheduleHeaders(moment(startObj), moment(endObj));
+                                    getListOfVEventsSchedule(moment(startObj), moment(endObj));
                                 }
                             }
                         })
@@ -583,41 +576,82 @@ getListOfVEvents = function() {
 initSchedule = function() {
     $("#schedule-scroller").removeAttr("onscroll");
     $("#schedule").empty();
-    sDateObj = moment().startOf("month");
-    eDateObj = moment().add(11, "month").endOf("month");
+    sDateObj = moment().add(-1, "year").startOf("year");
+    eDateObj = moment().endOf("year");
     dispScheduleHeaders(moment(sDateObj), moment(eDateObj));
-    getListOfVEventsSchedule(moment(sDateObj), moment(eDateObj));
+    getListOfVEventsSchedule(moment(sDateObj), moment(eDateObj), moment().format("YYYY-MM-DD"));
 }
 
-dispScheduleHeaders = function(startObj, endObj, firstFlg) {
+dispScheduleHeaders = function(startObj, endObj, scrollDate) {
     var diff = endObj.diff(startObj);
     var duration = moment.duration(diff);
     var dayCnt = Math.floor(duration.asDays());
+    let aTable = $('<table>', {
+        class: 'fc-list-table',
+        id: 'schedule-'+startObj.format("YYYY-MM"),
+        'data-date': startObj.format("YYYY-MM")
+    })
+    let aTbody = $('<tbody>');
+    let aTr = $('<tr>', {
+        class: 'list-month list-'+startObj.format("M")+'month'
+    })
+    let aTh = $('<th>', {
+        class: 'list-month-title',
+        'colspan': 3
+    }).append(startObj.locale(i18next.language).format(i18next.t('glossary:Calendars.Month_titleFormat')));
+    let tableList = [];
     for (var i = 0; i <= dayCnt; i++) {
-        let html = "";
         if (startObj.date() == 1) {
-            // display month header
-            html = [
-                "<table class='fc-list-table' id='schedule-"+startObj.format("YYYY-MM")+"' data-date='"+startObj.format("YYYY-MM")+"'>",
-                    "<tr class='list-month list-"+startObj.format("M")+"month'>",
-                        "<th class='list-month-title' colspan='3'>"+startObj.locale(i18next.language).format(i18next.t('glossary:Calendars.Month_titleFormat'))+"</th>",
-                    "</tr>",
-                "</table>"
-            ].join("");
-            if (firstFlg) {
-                let preId = $("#schedule").children(":first").attr("id");
-                $("#schedule").prepend(html);
-            } else {
-                $("#schedule").append(html);
+            if (i != 0) {
+                aTable.append($(aTbody));
+                tableList.push(aTable);
             }
+            // display month header
+            aTable = $('<table>', {
+                class: 'fc-list-table',
+                id: 'schedule-'+startObj.format("YYYY-MM"),
+                'data-date': startObj.format("YYYY-MM")
+            });
+            aTbody = $('<tbody>');
+            aTr = $('<tr>', {
+                class: 'list-month list-'+startObj.format("M")+'month'
+            });
+            aTh = $('<th>', {
+                class: 'list-month-title',
+                'colspan': 3
+            }).append(startObj.locale(i18next.language).format(i18next.t('glossary:Calendars.Month_titleFormat')));
+            aTr.append($(aTh));
+            aTbody.append($(aTr));
+            aTable.append($(aTbody));
         }
         var day = startObj.format("YYYY-MM-DD");
-        html = "<table class='fc-list-table' data-id='" + day + "'></table>";
-        $("#schedule-"+startObj.format("YYYY-MM")+">tbody").append(html);
+        let aTableC = $('<table>', {
+            class: 'fc-list-table',
+            'data-id': day
+        })
+        aTbody.append($(aTableC));
         startObj.add(1, "day");
     }
+    aTable.append($(aTbody));
+    tableList.push(aTable);
+
+    if (scrollDate) {
+        for (var i = tableList.length - 1; i >= 0; i--) {
+            $("#schedule").prepend(tableList[i]);
+            if (scrollDate) {
+                $('[data-id="'+scrollDate+'"]')[0].scrollIntoView(true);
+            }
+        }
+    } else {
+        for (var i = 0; i < tableList.length; i++) {
+            $("#schedule").append(tableList[i]);
+            if (scrollDate) {
+                $('[data-id="'+scrollDate+'"]')[0].scrollIntoView(true);
+            }
+        }
+    }
 }
-getListOfVEventsSchedule = function(startObj, endObj, delPosition) {
+getListOfVEventsSchedule = function(startObj, endObj, scrollDate) {
     let fromDay = startObj.toISOString();
     let toDay = endObj.toISOString();
     let urlOData = Common.getBoxUrl() + 'OData/vevent';
@@ -636,22 +670,26 @@ getListOfVEventsSchedule = function(startObj, endObj, delPosition) {
         .done(function(data) {
             _.each(data.d.results, function(item) {
                 scheduleRenderEvent(item);
+                if (scrollDate) {
+                    $('[data-id="'+scrollDate+'"]')[0].scrollIntoView(true);
+                }
             });
 
             while (startObj.isBefore(endObj)) {
                 var month = startObj.format("YYYY-MM");
                 if ($("#schedule-"+month+" .fc-list-heading").length == 0) {
                     scheduleRenderNoEvent(startObj);
+                    if (scrollDate) {
+                        $('[data-id="'+scrollDate+'"]')[0].scrollIntoView(true);
+                    }
                 }
                 startObj.add(1, "month");
             }
         })
         .always(function(){
             Common.hideSpinner('body');
-            if (delPosition == undefined) {
-                $('[data-id="'+moment().format("YYYY-MM-DD")+'"]')[0].scrollIntoView(true);
-            } else if (delPosition) {
-                $("#schedule").children(delPosition).remove();
+            if (scrollDate) {
+                $('[data-id="'+scrollDate+'"]')[0].scrollIntoView(true);
             }
         });
 };
@@ -1440,6 +1478,17 @@ reRenderCalendar = function() {
         initSchedule();
     }
 };
+
+getPastYear = function() {
+    // Acquire data for the next month
+    let lastMonth = $("#schedule").children(":first").data("date");
+    let startObj = moment(lastMonth).add(-1, "year").startOf("year");
+    let endObj = moment(lastMonth).add(-1, "year").endOf("year");
+    
+    dispScheduleHeaders(moment(startObj), moment(endObj), moment(lastMonth).format("YYYY-MM-DD"));
+    getListOfVEventsSchedule(moment(startObj), moment(endObj), moment(lastMonth).format("YYYY-MM-DD"));
+    $("#schedule>table:gt(23)").remove();
+}
 
 /* debug */
 displyAccessInfo = function(aDom) {

@@ -482,3 +482,8 @@ input:checked+label::after {
 .disable{
     pointer-events: none;
 }
+
+.linkMsg {
+    color: #337ab7;
+    cursor: pointer;
+}
