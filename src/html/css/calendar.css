@@ -79,6 +79,10 @@ main {
 /*Calendar.html*/
 .date-header {
     border-bottom: 0.5px solid;
+    width: 100%;
+    background-color: #F6F7FB;
+    position: absolute;
+    top: 4.0rem;
 }
 .date-title {
     text-align: center;
