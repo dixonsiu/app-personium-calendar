@@ -130,8 +130,7 @@
       </a>
       <!--<button id="other_btn" class="header-btn-right header-btn pn-btn" >Other</button>-->
     </header>
-    <main>
-      <div class="date-header">
+    <div class="date-header">
         <div class="date-title">
           <button id="prev" class="calendar-arrow-btn pn-btn">
             <i class="fas fa-angle-left fa-2x header-ic-01"></i>
@@ -143,17 +142,17 @@
           <button id="today-btn" class="pn-btn date-heder-right" data-i18n="glossary:Calendars.Today"></button>
         </div>
       </div>
+    <main>
       <div id="dispMsg" style="display:none;position:absolute;background-color: rgba(255,255,255,0.8);width: 100%;z-index:9;"></div>
-      <div id="container" style="height:92%;">
+      <div id="container" style="height:100%;">
         <div class='panel list-group toggle-panel' id='toggle-panel1' style="display:none;"></div>
         <div id='calendar'></div>
       </div>
-      <div id="schedule-scroller" class="fc fc-unthemed fc-ltr" style="height: 94%;overflow:auto;">
-        <div class="fc-view-container">
-          <div class="fc-view fc-listYear-view fc-list-view fc-widget-content">
-            <div id='schedule' class="fc-scroller"></div>
-          </div>
-        </div>
+      <div id="schedule-scroller" class="fc fc-unthemed fc-ltr" style="height: 100%;overflow:auto;">
+        <a class="linkMsg" onclick="getPastYear();" data-i18n="glossary:Calendars.pastSchedule">
+          
+        </a>
+        <div id='schedule' class="fc-scroller" style="margin-top: 10px;"></div>
       </div>
       <!--<div id="modalDialogContainer"></div>-->
     </main>
