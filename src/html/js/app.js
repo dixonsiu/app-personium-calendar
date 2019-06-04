@@ -735,7 +735,7 @@ scheduleRenderEvent = function(item) {
                             startObj.locale(i18next.language).format(i18next.t('glossary:Calendars.Day_titleFormat')),
                         "</a>",
                         "<a class='fc-list-heading-alt' style='float:left; padding-top: 13px;'>",
-                            startObj.locale(i18next.language).format("ddd"),
+                            i18next.t("glossary:Calendars:Day_of_week", {day_of_week: startObj.locale(i18next.language).format("ddd")}),
                         "</a>",
                     "</td>",
                 "</tr>"
