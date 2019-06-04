@@ -34,6 +34,7 @@
         "Day": "日",
         "Month_titleFormat": "YYYY年MM月",
         "Day_titleFormat": "D",
+        "Day_of_week": "({{day_of_week}})",
         "msg": {
             "info": {
             }
